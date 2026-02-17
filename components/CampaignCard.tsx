@@ -1,0 +1,114 @@
+import Link from "next/link";
+import SafeImage from "./SafeImage";
+import { Calendar, MapPin, Users, CheckCircle2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+
+interface Campaign {
+  id: string;
+  title: string;
+  description: string;
+  creator: string;
+  creatorType?: "individual" | "organization" | "charity";
+  goal: number;
+  raised: number;
+  backers: number;
+  daysLeft: number;
+  category: string;
+  image: string;
+  location?: string;
+  verified?: boolean;
+}
+
+interface CampaignCardProps {
+  campaign: Campaign;
+}
+
+export default function CampaignCard({ campaign }: CampaignCardProps) {
+  const progress = (campaign.raised / campaign.goal) * 100;
+  const progressPercentage = Math.min(progress, 100);
+
+  return (
+    <Link href={`/campaigns/${campaign.id}`} className="h-full flex">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer flex flex-col w-full h-full min-w-0">
+        {/* Image */}
+        <div className="relative h-48 w-full bg-gray-200 overflow-hidden">
+          {campaign.image ? (
+            <div className="absolute inset-0">
+              <SafeImage
+                src={campaign.image}
+                alt={campaign.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                fallback={
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+                    <div className="text-primary-600 text-4xl font-bold">
+                      {campaign.title.charAt(0)}
+                    </div>
+                  </div>
+                }
+              />
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+              <div className="text-primary-600 text-4xl font-bold">
+                {campaign.title.charAt(0)}
+              </div>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          <div className="absolute top-2 right-2 flex gap-2">
+            {campaign.verified && (
+              <div className="bg-success-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
+                <CheckCircle2 className="w-3 h-3" />
+                Verified
+              </div>
+            )}
+            <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-primary-600 shadow-lg">
+              {campaign.category}
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 flex flex-col flex-1">
+          <h3 className="text-xl font-medium text-gray-900 mb-2 line-clamp-2">{campaign.title}</h3>
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{campaign.description}</p>
+
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="font-medium text-primary-600">{formatCurrency(campaign.raised)}</span>
+              <span className="text-gray-500">of {formatCurrency(campaign.goal)}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-primary-600 h-2 rounded-full transition-all"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              <span>{campaign.backers} backers</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              <span>{campaign.daysLeft} days left</span>
+            </div>
+          </div>
+
+          {/* Creator */}
+          <div className="pt-4 border-t border-gray-200 mt-auto">
+            <p className="text-sm text-gray-600">
+              by <Link href={`/profile/${campaign.creator}`} className="font-medium text-gray-900 underline hover:text-primary-600 transition-colors" onClick={(e) => e.stopPropagation()}>{campaign.creator}</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}

@@ -1,0 +1,181 @@
+import { campaigns } from "@/lib/data";
+import { notFound } from "next/navigation";
+import SafeImage from "@/components/SafeImage";
+import { Calendar, MapPin, Users, Share2, Heart, CheckCircle2, FileText } from "lucide-react";
+import DonateButton from "@/components/DonateButton";
+import CampaignUpdates from "@/components/CampaignUpdates";
+import RewardsSection from "@/components/RewardsSection";
+import ProofDocuments from "@/components/ProofDocuments";
+import { formatCurrency } from "@/lib/utils";
+
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function CampaignPage({ params }: PageProps) {
+  const campaign = campaigns.find((c) => c.id === params.id);
+
+  if (!campaign) {
+    notFound();
+  }
+
+  const progress = (campaign.raised / campaign.goal) * 100;
+  const progressPercentage = Math.min(progress, 100);
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Hero Image */}
+      <div className="relative h-96 w-full bg-gray-200 rounded-2xl mb-8 overflow-hidden">
+        {campaign.image ? (
+          <div className="absolute inset-0">
+            <SafeImage
+              src={campaign.image}
+              alt={campaign.title}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+              fallback={
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+                  <div className="text-primary-600 text-8xl font-medium opacity-20">
+                    {campaign.title.charAt(0)}
+                  </div>
+                </div>
+              }
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+            <div className="text-primary-600 text-8xl font-medium opacity-20">
+              {campaign.title.charAt(0)}
+            </div>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="absolute top-4 right-4 flex gap-2">
+          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg">
+            <Share2 className="w-5 h-5 text-gray-700" />
+          </button>
+          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg">
+            <Heart className="w-5 h-5 text-gray-700" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2">
+          {/* Category Badge and Verification */}
+          <div className="mb-4 flex items-center gap-3 flex-wrap">
+            <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium">
+              {campaign.category}
+            </span>
+            {campaign.verified && (
+              <div className="bg-success-100 text-success-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                Verified Campaign
+              </div>
+            )}
+            {campaign.creatorType && (
+              <span className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm">
+                {campaign.creatorType === "individual" ? "Individual" : 
+                 campaign.creatorType === "organization" ? "Organization" : 
+                 "Charity"}
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h1 className="text-4xl font-medium text-gray-900 mb-4">{campaign.title}</h1>
+
+          {/* Creator Info */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 bg-primary-200 rounded-full flex items-center justify-center text-primary-700 font-medium">
+              {campaign.creator.charAt(0)}
+            </div>
+            <div>
+              <p className="font-medium">{campaign.creator}</p>
+              {campaign.location && (
+                <p className="text-sm text-gray-600 flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {campaign.location}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="prose max-w-none mb-8">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              {campaign.fullDescription || campaign.description}
+            </p>
+          </div>
+
+          {/* Proof Documents */}
+          {campaign.proofDocuments && campaign.proofDocuments.length > 0 && (
+            <ProofDocuments documents={campaign.proofDocuments} />
+          )}
+
+          {/* Updates */}
+          {campaign.updates && campaign.updates.length > 0 && (
+            <CampaignUpdates updates={campaign.updates} />
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-lg p-6 sticky top-20">
+            {/* Progress */}
+            <div className="mb-6">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium text-primary-600">
+                  {formatCurrency(campaign.raised)}
+                </span>
+                <span className="text-gray-500">
+                  of {formatCurrency(campaign.goal)} goal
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                <div
+                  className="bg-primary-600 h-3 rounded-full transition-all"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+              <div className="text-sm text-gray-600">
+                {progressPercentage.toFixed(1)}% funded
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-200">
+              <div>
+                <div className="text-2xl font-medium text-gray-900">{campaign.backers}</div>
+                <div className="text-sm text-gray-600 flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  backers
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-medium text-gray-900">{campaign.daysLeft}</div>
+                <div className="text-sm text-gray-600 flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  days left
+                </div>
+              </div>
+            </div>
+
+            {/* Donate Button */}
+            <DonateButton campaignId={campaign.id} campaignTitle={campaign.title} />
+
+            {/* Rewards */}
+            {campaign.rewards && campaign.rewards.length > 0 && (
+              <RewardsSection rewards={campaign.rewards} />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

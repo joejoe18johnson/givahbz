@@ -1,0 +1,32 @@
+import { Campaign } from "./data";
+
+/**
+ * Calculate trending score based on:
+ * - Recent backers (more weight)
+ * - Funding progress percentage
+ * - Days left (urgency factor)
+ * - Total raised amount
+ */
+export function calculateTrendingScore(campaign: Campaign): number {
+  const progressPercentage = (campaign.raised / campaign.goal) * 100;
+  const urgencyFactor = campaign.daysLeft <= 7 ? 1.5 : campaign.daysLeft <= 14 ? 1.2 : 1.0;
+  const backerScore = campaign.backers * 10;
+  const progressScore = progressPercentage * 5;
+  const raisedScore = campaign.raised / 100;
+  
+  return (backerScore + progressScore + raisedScore) * urgencyFactor;
+}
+
+/**
+ * Get trending campaigns sorted by trending score
+ */
+export function getTrendingCampaigns(campaigns: Campaign[], limit: number = 6): Campaign[] {
+  return [...campaigns]
+    .map(campaign => ({
+      campaign,
+      score: calculateTrendingScore(campaign)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(item => item.campaign);
+}
