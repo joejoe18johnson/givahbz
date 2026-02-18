@@ -69,6 +69,12 @@ Redeploy after changing environment variables.
 
 If you see “Access blocked” or “redirect_uri_mismatch”, double-check that the redirect URI in Google Console exactly matches `NEXTAUTH_URL` + `/api/auth/callback/google` (e.g. `https://givahbz.vercel.app/api/auth/callback/google`).
 
+### Troubleshooting
+
+- **redirect_uri_mismatch** — Redirect URI in Google Console must exactly match `NEXTAUTH_URL` + `/api/auth/callback/google`. No trailing slash.
+- **Access blocked / 400** — Complete OAuth consent screen; if app is in Testing, add your email as test user.
+- **Configuration error** — Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env` and restart the dev server.
+
 ## Admin access with Google
 
 To give a Google account admin access, add that account’s email to `ADMIN_EMAILS` in your `.env` (or in your hosting env vars), for example:

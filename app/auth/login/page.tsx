@@ -28,12 +28,18 @@ function LoginForm() {
       setError("Invalid email or password. Please try again.");
     } else if (err === "OAuthAccountNotLinked") {
       setError("This email is already used with email/password. Please sign in with your password, or use the same method you used to sign up.");
-    } else if (err === "AccessDenied" || err === "OAuthCallback") {
-      setError("Access was denied or the sign-in was cancelled. Please try again.");
+    } else if (err === "AccessDenied") {
+      setError("Access was denied. Please try again.");
     } else if (err === "Configuration") {
-      setError("Google sign-in is not configured. Please use email and password, or contact support.");
+      setError("Google sign-in is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env and restart the server.");
+    } else if (err === "OAuthCallback" || err === "Callback") {
+      setError("Google sign-in failed at the callback step. Check that NEXTAUTH_URL and NEXTAUTH_SECRET are set in .env, and that your Google OAuth redirect URI is exactly: " + (typeof window !== "undefined" ? `${window.location.origin}/api/auth/callback/google` : "NEXTAUTH_URL + /api/auth/callback/google"));
+    } else if (err === "OAuthSignin") {
+      setError("Google sign-in could not start. Check GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.");
+    } else if (err === "Default" || err === "OAuthCreateAccount") {
+      setError("Something went wrong with Google sign-in. Please try again or use email and password.");
     } else {
-      setError("Something went wrong signing in. Please try again or use email and password.");
+      setError(`Sign-in error (${err}). Check .env has NEXTAUTH_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and that the Google redirect URI matches your site. Or use email and password.`);
     }
   }, [searchParams]);
 

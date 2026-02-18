@@ -78,10 +78,14 @@ const authOptions = {
       return session;
     },
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
-      // Allow relative callback URLs (e.g. /my-campaigns) and same-origin absolute URLs
-      if (url.startsWith("/")) return `${baseUrl.replace(/\/$/, "")}${url}`;
-      if (new URL(url).origin === baseUrl.replace(/\/$/, "")) return url;
-      return baseUrl;
+      const base = baseUrl.replace(/\/$/, "");
+      if (url.startsWith("/")) return `${base}${url}`;
+      try {
+        if (new URL(url).origin === new URL(base).origin) return url;
+      } catch {
+        // ignore
+      }
+      return base;
     },
   },
   pages: {
