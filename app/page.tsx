@@ -226,7 +226,7 @@ export default function Home() {
 
       {/* CTA Banner */}
       <div className="container mx-auto px-4 mb-12">
-        <section className="bg-gradient-to-r from-success-500 to-success-600 rounded-2xl py-12 md:py-16 shadow-lg">
+        <section className="bg-gradient-to-r from-success-500 to-success-600 rounded-2xl border border-gray-200 py-12 md:py-16 shadow-lg">
           <div className="text-center px-6">
             <h2 className="text-3xl md:text-4xl font-medium text-white mb-6">Ready to Start A Campaign?</h2>
             <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
@@ -345,7 +345,7 @@ export default function Home() {
         </div>
 
         {/* Campaigns Needing Support */}
-        <div className="bg-gradient-to-br from-success-500 to-success-600 rounded-2xl p-6 md:p-8 shadow-lg flex flex-col">
+        <div className="bg-gradient-to-br from-success-500 to-success-600 rounded-2xl border border-gray-200 p-6 md:p-8 shadow-lg flex flex-col">
           <h2 className="text-3xl md:text-4xl font-medium mb-6 text-white">Campaigns Needing Support</h2>
           <div className="flex flex-col flex-1 gap-4">
             {campaigns.slice(0, 4).map((campaign) => {
@@ -353,7 +353,7 @@ export default function Home() {
               const progressPercentage = Math.min(progress, 100);
               return (
                 <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="flex-1 block overflow-visible">
-                  <div className="bg-white/90 rounded-lg overflow-visible hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 cursor-pointer border border-white/30 h-full">
+                  <div className="bg-white/90 rounded-lg overflow-visible hover:scale-[1.02] transition-all duration-300 cursor-pointer border border-white/30 h-full">
                     <div className="flex h-full overflow-hidden rounded-lg">
                       {/* Compact Image */}
                       <div className="relative w-24 flex-shrink-0 bg-gray-200 overflow-hidden h-full rounded-l-lg">
@@ -475,7 +475,7 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <section className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-2xl p-8 mb-12">
+        <section className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-2xl border border-gray-200 p-8 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-4xl font-medium text-primary-600 mb-2">BZ$2.5M+</div>

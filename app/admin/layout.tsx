@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect } from "react";
-import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -74,6 +74,13 @@ export default function AdminLayout({
             >
               <Heart className="w-4 h-4" />
               Donations
+            </Link>
+            <Link
+              href="/admin/under-review"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/under-review" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
+            >
+              <Clock className="w-4 h-4" />
+              Under review
             </Link>
           </div>
         </nav>

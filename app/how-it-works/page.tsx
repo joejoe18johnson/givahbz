@@ -48,8 +48,7 @@ export default function HowItWorksPage() {
       details: [
         "Donations processed securely online",
         "Funds transferred to your account monthly",
-        "Keep receiving donations even after hitting your goal",
-        "No time limit - campaign stays active until you close it"
+        "Keep receiving donations even after hitting your goal"
       ]
     }
   ];
@@ -125,7 +124,7 @@ export default function HowItWorksPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/campaigns/create"
-                className="bg-white text-primary-600 px-8 py-3 rounded-full font-medium hover:bg-primary-50 transition-colors shadow-lg"
+                className="bg-white text-primary-600 px-8 py-3 rounded-full font-medium hover:bg-primary-50 transition-colors"
               >
                 Start Your Campaign
               </Link>
@@ -140,19 +139,6 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* Simple Overview */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-primary-50 border-l-4 border-primary-600 p-6 rounded-lg mb-12">
-              <p className="text-lg text-gray-800 leading-relaxed">
-                <strong>GivahBz</strong> is a Belizean online crowdfunding platform that helps people raise money for causes, charities, individuals, events, or projects. Whether you need support for medical expenses, education, community projects, or personal emergencies, we make it easy to connect with people who want to help.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Steps */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
@@ -161,7 +147,7 @@ export default function HowItWorksPage() {
             {steps.map((step, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow-lg p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start"
+                className="bg-white rounded-lg border border-gray-200 p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start"
               >
                 <div className="flex-shrink-0">
                   <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
@@ -197,7 +183,7 @@ export default function HowItWorksPage() {
             {benefits.map((benefit, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-md transition-shadow"
+                className="bg-white rounded-lg p-6 border border-gray-200 transition-shadow"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
@@ -225,7 +211,7 @@ export default function HowItWorksPage() {
             {useCases.map((useCase, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow group"
+                className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-shadow group"
               >
                 <div className="relative h-48 w-full overflow-hidden">
                   <div className="absolute inset-0">
@@ -305,7 +291,7 @@ export default function HowItWorksPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/campaigns/create"
-                className="bg-success-500 text-white px-8 py-4 rounded-full font-medium hover:bg-success-600 transition-colors text-lg shadow-lg"
+                className="bg-success-500 text-white px-8 py-4 rounded-full font-medium hover:bg-success-600 transition-colors text-lg"
               >
                 Create Your Campaign
               </Link>

@@ -222,4 +222,63 @@ export const campaigns: Campaign[] = [
       }
     ]
   },
+  {
+    id: "7",
+    title: "Fire Recovery for Belize City Family",
+    description: "A family lost their home and belongings in a house fire. Help them rebuild and replace essentials so they can get back on their feet.",
+    fullDescription: "Last month a devastating house fire destroyed the home of the Thompson family in Belize City. They lost everything — clothing, furniture, important documents, and their sense of security. The family of five is currently staying with relatives but needs support to secure temporary housing, replace essential items, and begin rebuilding. The community has rallied, and we are grateful for any contribution to help this family recover and find stability again.",
+    creator: "Sarah Thompson",
+    creatorType: "individual",
+    goal: 18000,
+    raised: 11200,
+    backers: 189,
+    daysLeft: 8,
+    category: "Emergency",
+    image: "https://picsum.photos/seed/emergency1/800/600",
+    location: "Belize City, Belize",
+    createdAt: "2026-02-10",
+    verified: true,
+    proofDocuments: [
+      {
+        id: "doc10",
+        type: "other",
+        name: "Fire Department Report",
+        description: "Official incident report",
+        uploadedAt: "2026-02-10"
+      },
+      {
+        id: "doc11",
+        type: "identification",
+        name: "Proof of Address",
+        description: "Identification and address verification",
+        uploadedAt: "2026-02-10"
+      }
+    ]
+  },
+  {
+    id: "8",
+    title: "Youth Sports Equipment for Cayo District",
+    description: "Raising funds to provide sports equipment and coaching for underprivileged youth in Cayo, promoting health and teamwork.",
+    fullDescription: "Many young people in Cayo District lack access to organized sports and recreational activities. We aim to equip local youth programs with quality sports equipment — footballs, nets, uniforms, and safety gear — and fund trained coaches for after-school programs. Sport builds discipline, teamwork, and confidence. Your support will give hundreds of children a positive outlet and a chance to grow through play.",
+    creator: "Cayo Youth Initiative",
+    creatorType: "organization",
+    goal: 10000,
+    raised: 7350,
+    backers: 124,
+    daysLeft: 14,
+    category: "Community",
+    image: "https://picsum.photos/seed/sports1/800/600",
+    location: "San Ignacio, Cayo District, Belize",
+    createdAt: "2026-02-08",
+    verified: true,
+    proofDocuments: [
+      {
+        id: "doc12",
+        type: "identification",
+        name: "Organization Registration",
+        description: "Community initiative registration",
+        uploadedAt: "2026-02-08"
+      }
+    ]
+  },
 ];

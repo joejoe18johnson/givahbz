@@ -1,12 +1,19 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { campaigns } from "@/lib/data";
 import { adminUsers, adminDonations } from "@/lib/adminData";
+import { getCampaignsUnderReview } from "@/lib/campaignsUnderReview";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { Megaphone, Users, Heart, DollarSign, TrendingUp, ArrowRight } from "lucide-react";
+import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock } from "lucide-react";
 
 export default function AdminDashboardPage() {
+  const [underReviewCount, setUnderReviewCount] = useState(0);
+  useEffect(() => {
+    setUnderReviewCount(getCampaignsUnderReview().length);
+  }, []);
+
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
   const totalDonations = adminDonations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
   const recentCampaigns = campaigns.slice(0, 5);
@@ -66,6 +73,20 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
+        <Link
+          href="/admin/under-review"
+          className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm block hover:border-primary-200 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Under review</p>
+              <p className="text-xl font-semibold text-gray-900">{underReviewCount}</p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Recent data sections */}

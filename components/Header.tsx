@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Search, Heart, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,28 +22,47 @@ export default function Header() {
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = searchQuery.trim();
+    if (query) {
+      router.push(`/campaigns?q=${encodeURIComponent(query)}`);
+      setMobileMenuOpen(false);
+    } else {
+      router.push("/campaigns");
+    }
+  };
+
   return (
     <header className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <Link href="/" className="text-xl sm:text-2xl font-bold text-primary-600 shrink-0">
-            GivahBz
+          <Link href="/" className="shrink-0 flex items-center">
+            <Image
+              src="/givah-logo.png"
+              alt="GivahBz"
+              width={140}
+              height={40}
+              className="h-8 w-auto sm:h-10"
+              priority
+            />
           </Link>
 
           {/* Search Bar - desktop only */}
-          <div className="hidden lg:block flex-1 max-w-md mx-4 min-w-0">
+          <form onSubmit={handleSearch} className="hidden lg:block flex-1 max-w-md mx-4 min-w-0">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search campaigns..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+                aria-label="Search campaigns"
               />
             </div>
-          </div>
+          </form>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-4 xl:gap-6 shrink-0">
@@ -158,16 +178,17 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-gray-200 bg-white shadow-lg">
           <div className="container mx-auto px-4 py-4 space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search campaigns..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+                aria-label="Search campaigns"
               />
-            </div>
+            </form>
             <nav className="flex flex-col gap-1">
               <Link href="/" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Home</Link>
               <Link href="/campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Campaigns</Link>

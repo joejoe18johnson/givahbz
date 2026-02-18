@@ -13,6 +13,8 @@ function CampaignsContent() {
   const [showTrending, setShowTrending] = useState(false);
   const searchParams = useSearchParams();
 
+  const searchQuery = searchParams.get("q")?.trim() ?? "";
+
   useEffect(() => {
     const filter = searchParams.get("filter");
     if (filter === "trending") {
@@ -30,11 +32,27 @@ function CampaignsContent() {
     filteredCampaigns = getTrendingCampaigns(filteredCampaigns, filteredCampaigns.length);
   }
 
+  // Apply search filter (title, description, creator, category)
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filteredCampaigns = filteredCampaigns.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q) ||
+        c.fullDescription?.toLowerCase().includes(q) ||
+        c.creator.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q) ||
+        (c.location?.toLowerCase().includes(q) ?? false)
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-medium">
-          {showTrending ? (
+          {searchQuery ? (
+            `Search results for "${searchQuery}"`
+          ) : showTrending ? (
             <span className="flex items-center gap-3">
               <TrendingUp className="w-10 h-10 text-primary-600" />
               Trending Campaigns
@@ -79,7 +97,7 @@ function CampaignsContent() {
       )}
 
       {/* Campaigns Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {filteredCampaigns.map((campaign) => (
           <div key={campaign.id} className="relative">
             {showTrending && (
@@ -95,7 +113,19 @@ function CampaignsContent() {
 
       {filteredCampaigns.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">No campaigns found in this category.</p>
+          <p className="text-gray-600 text-lg">
+            {searchQuery
+              ? `No campaigns found for "${searchQuery}". Try a different search or browse all campaigns.`
+              : "No campaigns found in this category."}
+          </p>
+          {searchQuery && (
+            <Link
+              href="/campaigns"
+              className="inline-block mt-4 text-primary-600 hover:text-primary-700 font-medium underline"
+            >
+              View all campaigns
+            </Link>
+          )}
         </div>
       )}
     </div>
