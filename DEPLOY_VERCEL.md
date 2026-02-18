@@ -1,10 +1,12 @@
 # Get GivahBz showing on Vercel (https://givahbz.vercel.app)
 
+You're deploying **from GitHub**: when you push to your connected repo, Vercel automatically builds and deploys. Your local `.env` is not in GitHub (it's gitignored), so you must add the same Firebase variables in Vercel.
+
 Follow these steps **in order**. After each deploy, wait for the build to finish.
 
 ---
 
-## 1. Push your latest code
+## 1. Push your latest code to GitHub
 
 From your project folder:
 
@@ -16,7 +18,7 @@ git push origin main
 
 (Use your real branch name if it’s not `main`.)
 
-Vercel will start a new deployment. Wait until it finishes (green check).
+Vercel will detect the push and start a new deployment. In the Vercel dashboard, wait until it finishes (green check).
 
 ---
 
