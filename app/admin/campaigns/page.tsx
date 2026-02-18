@@ -1,11 +1,41 @@
 "use client";
 
-import { campaigns } from "@/lib/data";
+import { useState, useEffect } from "react";
+import { Campaign } from "@/lib/data";
+import { fetchCampaigns } from "@/lib/services/campaignService";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminCampaignsPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCampaigns() {
+      try {
+        const fetchedCampaigns = await fetchCampaigns();
+        setCampaigns(fetchedCampaigns);
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCampaigns();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading campaigns...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>

@@ -61,6 +61,8 @@ export function isCampaignHearted(campaignId: string): boolean {
 
 export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsProps) {
   const [heartedIds, setHeartedIds] = useState<string[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const updateHeartedIds = () => {
     setHeartedIds(getHeartedCampaignIds());
@@ -68,6 +70,18 @@ export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsPr
 
   useEffect(() => {
     if (isOpen) {
+      async function loadCampaigns() {
+        setIsLoading(true);
+        try {
+          const fetchedCampaigns = await fetchCampaigns();
+          setCampaigns(fetchedCampaigns);
+        } catch (error) {
+          console.error("Error loading campaigns:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+      loadCampaigns();
       updateHeartedIds();
       // Listen for changes when modal is open
       window.addEventListener("heartedCampaignsChanged", updateHeartedIds);
