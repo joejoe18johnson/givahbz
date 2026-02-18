@@ -81,6 +81,10 @@ For Google sign-in, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to your `.
 
 **Note:** Firebase Authentication is now the primary authentication system. See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for complete Firebase configuration instructions.
 
+### Connect Firebase to Vercel
+
+To use your Firebase database (and auth/storage) on your Vercel deployment (e.g. [givahbz.vercel.app](https://givahbz.vercel.app)), add the same Firebase env vars in Vercel. **→ [VERCEL_FIREBASE.md](VERCEL_FIREBASE.md)** for step-by-step instructions.
+
 ## Project Structure
 
 ```
