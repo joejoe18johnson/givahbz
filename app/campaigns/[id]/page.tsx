@@ -134,8 +134,8 @@ export default function CampaignPage({ params }: PageProps) {
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-lg p-6 sticky top-20">
+        <div className="lg:col-span-1 lg:self-start">
+          <div className="bg-white rounded-lg shadow-lg p-4">
             {/* Progress */}
             <div className="mb-6">
               <div className="flex justify-between text-sm mb-2">
@@ -158,18 +158,18 @@ export default function CampaignPage({ params }: PageProps) {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-200">
+            <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200">
               <div>
-                <div className="text-2xl font-medium text-gray-900">{campaign.backers}</div>
-                <div className="text-sm text-gray-600 flex items-center gap-1">
-                  <Users className="w-4 h-4" />
+                <div className="text-lg font-medium text-gray-900">{campaign.backers}</div>
+                <div className="text-xs text-gray-600 flex items-center gap-1">
+                  <Users className="w-3 h-3" />
                   backers
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-medium text-gray-900">{campaign.daysLeft}</div>
-                <div className="text-sm text-gray-600 flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
+                <div className="text-lg font-medium text-gray-900">{campaign.daysLeft}</div>
+                <div className="text-xs text-gray-600 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
                   days left
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function CampaignPage({ params }: PageProps) {
               campaignId={campaign.id}
               campaignTitle={campaign.title}
               variant="full"
-              className="mb-6 pb-6 border-b border-gray-200"
+              className="mb-4 pb-4 border-b border-gray-200"
             />
 
             {/* Donate Button (hidden when campaign is stopped) */}

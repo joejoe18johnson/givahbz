@@ -140,16 +140,6 @@ export default function ShareCampaign({
         <Send className="w-4 h-4 flex-shrink-0" />
         Messenger
       </button>
-      {hasNativeShare && (
-        <button
-          type="button"
-          onClick={nativeShare}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm transition-colors w-full text-left border-t border-gray-100 mt-1 pt-2"
-        >
-          <Share2 className="w-4 h-4 flex-shrink-0" />
-          More options…
-        </button>
-      )}
     </>
   );
 
@@ -207,50 +197,40 @@ export default function ShareCampaign({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <p className="text-sm font-medium text-gray-700">Share this campaign</p>
-      <div className="flex flex-wrap gap-2">
+      <p className="text-xs font-medium text-gray-700">Share this campaign</p>
+      <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={copyLink}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
         >
-          <Link2 className="w-4 h-4" />
+          <Link2 className="w-3.5 h-3.5" />
           {copied ? "Copied!" : "Copy link"}
         </button>
         <button
           type="button"
           onClick={shareWhatsApp}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
         >
-          <MessageCircle className="w-4 h-4" />
+          <MessageCircle className="w-3.5 h-3.5" />
           WhatsApp
         </button>
         <button
           type="button"
           onClick={shareFacebook}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
         >
-          <Facebook className="w-4 h-4" />
+          <Facebook className="w-3.5 h-3.5" />
           Facebook
         </button>
         <button
           type="button"
           onClick={shareMessenger}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-3.5 h-3.5" />
           Messenger
         </button>
-        {hasNativeShare && (
-          <button
-            type="button"
-            onClick={nativeShare}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm transition-colors"
-          >
-            <Share2 className="w-4 h-4" />
-            More
-          </button>
-        )}
       </div>
     </div>
   );
