@@ -5,14 +5,12 @@ import { Search, Heart, LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import HeartedCampaigns from "./HeartedCampaigns";
 import { getHeartedCampaignIds } from "./HeartedCampaigns";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showHeartedCampaigns, setShowHeartedCampaigns] = useState(false);
   const [heartedCount, setHeartedCount] = useState(0);
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
@@ -38,12 +36,6 @@ export default function Header() {
     }
   }, []);
 
-  // Update count when modal opens/closes
-  useEffect(() => {
-    if (showHeartedCampaigns) {
-      updateHeartCount();
-    }
-  }, [showHeartedCampaigns]);
 
   const handleLogout = () => {
     logout();
@@ -130,9 +122,18 @@ export default function Header() {
                 >
                   Start Fundraising
                 </Link>
-                <button className="text-gray-700 hover:text-primary-600 transition-colors">
+                <Link
+                  href="/liked-campaigns"
+                  className="relative text-gray-700 hover:text-primary-600 transition-colors"
+                  aria-label="View liked campaigns"
+                >
                   <Heart className="w-5 h-5" />
-                </button>
+                  {heartedCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {heartedCount > 9 ? "9+" : heartedCount}
+                    </span>
+                  )}
+                </Link>
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
@@ -250,6 +251,15 @@ export default function Header() {
               {user ? (
                 <>
                   <Link href="/campaigns/create" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Start Fundraising</Link>
+                  <Link href="/liked-campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 flex items-center gap-2" onClick={closeMobileMenu}>
+                    <Heart className="w-4 h-4" />
+                    Liked Campaigns
+                    {heartedCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {heartedCount > 9 ? "9+" : heartedCount}
+                      </span>
+                    )}
+                  </Link>
                   <Link href="/profile" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>My Profile</Link>
                   <Link href="/my-campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>My Campaigns</Link>
                   <button onClick={handleLogout} className="px-4 py-3 rounded-lg text-left text-gray-700 hover:bg-gray-100 flex items-center gap-2">
@@ -266,12 +276,6 @@ export default function Header() {
           </div>
         </div>
       )}
-
-      {/* Hearted Campaigns Modal */}
-      <HeartedCampaigns
-        isOpen={showHeartedCampaigns}
-        onClose={() => setShowHeartedCampaigns(false)}
-      />
     </header>
   );
 }
