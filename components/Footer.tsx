@@ -6,7 +6,13 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-2xl font-medium mb-4">GivahBz</h3>
+            <Link href="/" className="inline-block mb-4">
+              <img
+                src="/givah-logo.png"
+                alt="GivahBz"
+                className="h-10 w-auto"
+              />
+            </Link>
             <p className="text-gray-400">
               Supporting organizations, charities, and individuals in need across Belize. All campaigns are verified with proof of need.
             </p>

@@ -171,7 +171,8 @@ export default function ShareCampaign({
               aria-hidden
               onClick={() => setOpen(false)}
             />
-            <div className="absolute right-0 top-full mt-2 z-50 w-56 bg-white rounded-xl border border-gray-200 shadow-lg py-2">
+            {/* Mobile: centered popup; desktop: dropdown below button */}
+            <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(20rem,calc(100vw-2rem))] bg-white rounded-xl border border-gray-200 shadow-lg py-2 md:absolute md:right-0 md:left-auto md:top-full md:translate-x-0 md:translate-y-0 md:mt-2 md:w-56">
               <p className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Share campaign
               </p>
