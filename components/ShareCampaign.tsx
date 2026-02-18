@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { Share2, Link2, MessageCircle, Facebook, Send } from "lucide-react";
+import { Share2, Link2, MessageCircle, Facebook, Send, X } from "lucide-react";
 
 interface ShareCampaignProps {
   campaignTitle: string;
@@ -180,12 +180,22 @@ export default function ShareCampaign({
               aria-label="Share campaign"
             >
               <div
-                className="w-full max-w-md max-h-[100vh] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-xl py-4 md:absolute md:right-0 md:top-full md:mt-2 md:w-56 md:max-w-none md:max-h-none md:py-2"
+                className="relative w-full max-w-md max-h-[100vh] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-xl py-4 md:absolute md:right-0 md:top-full md:mt-2 md:w-56 md:max-w-none md:max-h-none md:py-2"
                 onClick={(e) => e.stopPropagation()}
               >
-                <p className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Share campaign
-                </p>
+                <div className="flex items-center justify-between gap-2 px-3 pb-2 md:relative md:pr-10 md:pb-0">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Share campaign
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="flex-shrink-0 p-1.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 md:absolute md:right-2 md:top-2 md:p-1"
+                    aria-label="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
                 {buttons}
               </div>
             </div>
