@@ -2,7 +2,7 @@ import { campaigns } from "@/lib/data";
 import { notFound } from "next/navigation";
 import SafeImage from "@/components/SafeImage";
 import { Calendar, MapPin, Users, Share2, Heart, CheckCircle2, FileText } from "lucide-react";
-import DonateButton from "@/components/DonateButton";
+import CampaignDonateSection from "@/components/CampaignDonateSection";
 import CampaignUpdates from "@/components/CampaignUpdates";
 import RewardsSection from "@/components/RewardsSection";
 import ProofDocuments from "@/components/ProofDocuments";
@@ -166,8 +166,8 @@ export default function CampaignPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Donate Button */}
-            <DonateButton campaignId={campaign.id} campaignTitle={campaign.title} />
+            {/* Donate Button (hidden when campaign is stopped) */}
+            <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
 
             {/* Rewards */}
             {campaign.rewards && campaign.rewards.length > 0 && (

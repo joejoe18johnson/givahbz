@@ -28,8 +28,8 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
   const progressPercentage = Math.min(progress, 100);
 
   return (
-    <Link href={`/campaigns/${campaign.id}`} className="h-full flex">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer flex flex-col w-full h-full min-w-0">
+    <Link href={`/campaigns/${campaign.id}`} className="h-full flex transition-transform duration-300 hover:scale-[1.02]">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] transition-all duration-300 cursor-pointer flex flex-col w-full h-full min-w-0">
         {/* Image */}
         <div className="relative h-48 w-full bg-gray-200 overflow-hidden">
           {campaign.image ? (

@@ -4,14 +4,50 @@ import CampaignCard from "@/components/CampaignCard";
 import { campaigns } from "@/lib/data";
 import { getTrendingCampaigns } from "@/lib/campaignUtils";
 import SafeImage from "@/components/SafeImage";
-import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calendar, Users, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calendar, Users, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
 
+const HOME_FAQS = [
+  {
+    q: "Why was this crowdfunding platform created?",
+    a: "This platform was created because there is a real and growing need for trustworthy financial support within our community. Many individuals and families face urgent situations — medical needs, emergencies, educational expenses, or unexpected hardships — but often struggle to access reliable help.\n\nWe wanted to create a safe, structured, and transparent place where people can give and receive support with confidence.",
+  },
+  {
+    q: "How is this different from asking for help on social media like Facebook?",
+    a: "While platforms like Facebook allow people to share needs quickly, it can be difficult to verify whether a situation is authentic. Donors are often left wondering: Is this story true? Are the documents real? Will the money actually go where it's needed?\n\nOur platform provides verification and accountability. Every campaign is reviewed and vetted before being approved, so donors can give with greater trust and peace of mind.",
+  },
+  {
+    q: "How do you ensure campaigns are legitimate?",
+    a: "All campaigns go through a vetting process that may include:\n• Verification of identity\n• Review of supporting documents\n• Direct communication with the applicant\n• Confirmation of medical, educational, or emergency documentation (when applicable)\n\nWe aim to ensure that every campaign is authentic and truthful before it is published.",
+  },
+  {
+    q: "Why is trust so important?",
+    a: "Trust is the foundation of generosity. When donors feel confident that their contributions are going to a real and verified need, they are more willing to give.\n\nThis platform exists to build that trust — protecting both donors and recipients.",
+  },
+  {
+    q: "Who can start a campaign?",
+    a: "Individuals, families, or representatives seeking assistance for legitimate and verifiable needs may apply. Each request is reviewed before approval.",
+  },
+  {
+    q: "How do donors know their money is used properly?",
+    a: "We encourage:\n• Clear goal amounts\n• Updates from campaign organizers\n• Documentation of how funds are used\n• Ongoing communication\n\nTransparency is a core value of this platform.",
+  },
+  {
+    q: "What kinds of needs can be supported?",
+    a: "Examples include:\n• Medical expenses\n• Emergency housing needs\n• Funeral costs\n• Educational support\n• Disaster recovery\n• Community projects\n\nEach campaign is evaluated individually to ensure it aligns with our guidelines.",
+  },
+  {
+    q: "What is the mission of this platform?",
+    a: "Our mission is simple: To connect real needs with real generosity — through a trusted, verified, and transparent system that strengthens our community.",
+  },
+];
+
 export default function Home() {
   const allTrendingCampaigns = getTrendingCampaigns(campaigns, campaigns.length);
   const [currentPage, setCurrentPage] = useState(1);
+  const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(null);
   const cardsPerPage = 4;
   const totalPages = Math.ceil(allTrendingCampaigns.length / cardsPerPage);
   const startIndex = (currentPage - 1) * cardsPerPage;
@@ -20,9 +56,11 @@ export default function Home() {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-12 md:py-20">
-        {/* Hero Section - Two column layout */}
-        <section className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[70vh]">
+      {/* First viewport: hero + Community Wins heading visible */}
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 min-h-0 max-h-[55vh] container mx-auto px-4 py-8 md:py-12 flex flex-col justify-center">
+          {/* Hero Section - Two column layout */}
+          <section className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Decorative shapes */}
           <div className="absolute top-20 left-10 w-24 h-24 rounded-full bg-success-200/60 -z-10" aria-hidden />
           <div className="absolute bottom-32 right-20 w-32 h-32 rounded-full bg-primary-100/50 -z-10" aria-hidden />
@@ -89,47 +127,51 @@ export default function Home() {
             />
           </div>
         </section>
+        </div>
+
+        {/* Community Wins - visible at bottom of first viewport */}
+        <section id="community-wins" className="flex-shrink-0 pt-4 pb-8 md:pb-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-center break-words max-w-full px-2">
+              <span className="text-primary-600">Community Wins.</span>{" "}
+              <span className="text-success-600">Always.</span>
+            </h2>
+          </div>
+        </section>
       </div>
 
-      {/* Community Wins Section */}
-      <section id="community-wins" className="pt-0 pb-12 md:pb-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-center break-words max-w-full px-2">
-            <span className="text-primary-600">Community Wins.</span>{" "}
-            <span className="text-success-600">Always.</span>
-          </h2>
-        </div>
-      </section>
-
       {/* Trending Campaigns */}
-      <section className="mb-12 relative py-8 md:py-12 overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600">
+      <section className="mb-12 relative py-8 md:py-12 overflow-hidden bg-white">
         <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-white shrink-0" />
-              <h2 className="text-2xl sm:text-3xl font-medium text-white">Trending Campaigns</h2>
-              <div className="bg-gradient-to-r from-accent-500 to-accent-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg animate-pulse shrink-0">
+              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 shrink-0" />
+              <h2 className="text-2xl sm:text-3xl font-medium text-gray-900">Trending Campaigns</h2>
+              <div className="bg-success-100 text-success-700 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
                 <TrendingUp className="w-3 h-3" />
                 TRENDING
               </div>
             </div>
-            <div className="hidden md:block flex-1 min-w-[60px] h-px bg-gradient-to-r from-white/30 to-transparent" />
+            <div className="hidden md:block flex-1 min-w-[60px] h-px bg-gray-200" />
           </div>
           <a
             href="/campaigns?filter=trending"
-            className="text-white hover:text-white/90 font-medium text-sm whitespace-nowrap underline self-start sm:self-auto"
+            className="text-primary-600 hover:text-primary-700 font-medium text-sm whitespace-nowrap underline self-start sm:self-auto"
           >
             View All →
           </a>
         </div>
-        <p className="text-white/90 mb-6">
+        <p className="text-gray-600 mb-6">
           Campaigns gaining momentum and support from the community
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {trendingCampaigns.map((campaign) => (
-            <div key={campaign.id} className="relative flex flex-col min-w-0">
-              <div className="flex-1 min-w-0">
+            <div
+              key={campaign.id}
+              className="relative flex flex-col min-w-0 rounded-lg border border-gray-200 hover:border-success-500 hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 overflow-visible"
+            >
+              <div className="flex-1 min-w-0 rounded-lg overflow-hidden">
                 <CampaignCard campaign={campaign} />
               </div>
             </div>
@@ -142,7 +184,7 @@ export default function Home() {
             <button
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -153,8 +195,8 @@ export default function Home() {
                   onClick={() => setCurrentPage(page)}
                   className={`px-4 py-2 rounded-full font-medium transition-colors ${
                     currentPage === page
-                      ? "bg-white text-success-600"
-                      : "bg-white/20 text-white hover:bg-white/30"
+                      ? "bg-success-500 text-white"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   {page}
@@ -164,7 +206,7 @@ export default function Home() {
             <button
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -174,7 +216,7 @@ export default function Home() {
         <div className="text-center mt-6">
           <Link
             href="/campaigns?filter=trending"
-            className="inline-block bg-white text-success-600 px-8 py-3 rounded-full font-medium hover:bg-white/90 transition-colors shadow-lg"
+            className="inline-block bg-success-500 text-white px-8 py-3 rounded-full font-medium hover:bg-success-600 transition-colors shadow-md"
           >
             View All Trending Campaigns →
           </Link>
@@ -310,11 +352,11 @@ export default function Home() {
               const progress = (campaign.raised / campaign.goal) * 100;
               const progressPercentage = Math.min(progress, 100);
               return (
-                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="flex-1">
-                  <div className="bg-white/90 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-white/30 h-full">
-                    <div className="flex h-full">
+                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="flex-1 block overflow-visible">
+                  <div className="bg-white/90 rounded-lg overflow-visible hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 cursor-pointer border border-white/30 h-full">
+                    <div className="flex h-full overflow-hidden rounded-lg">
                       {/* Compact Image */}
-                      <div className="relative w-24 flex-shrink-0 bg-gray-200 overflow-hidden h-full">
+                      <div className="relative w-24 flex-shrink-0 bg-gray-200 overflow-hidden h-full rounded-l-lg">
                         {campaign.image ? (
                           <div className="absolute inset-0">
                             <SafeImage
@@ -388,6 +430,49 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+        {/* Frequently Asked Questions */}
+        <section className="mb-12 bg-success-50 rounded-2xl p-6 md:p-8">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-gray-900 mb-8 text-center">
+            Frequently Asked Questions
+          </h2>
+          <div className="max-w-3xl mx-auto space-y-3">
+            {HOME_FAQS.map((faq, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:border-primary-200 transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => setFaqOpenIndex(faqOpenIndex === index ? null : index)}
+                  className="w-full flex items-center justify-between gap-4 text-left px-5 py-4 font-medium text-gray-900 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="pr-2">{faq.q}</span>
+                  {faqOpenIndex === index ? (
+                    <ChevronUp className="w-5 h-5 flex-shrink-0 text-primary-600" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 flex-shrink-0 text-gray-400" />
+                  )}
+                </button>
+                {faqOpenIndex === index && (
+                  <div className="px-5 pb-5 pt-0">
+                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                      {faq.a}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-6">
+            <Link
+              href="/faq"
+              className="text-primary-600 hover:text-primary-700 font-medium text-sm underline"
+            >
+              View all FAQs →
+            </Link>
+          </div>
+        </section>
 
         {/* Stats Section */}
         <section className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-2xl p-8 mb-12">

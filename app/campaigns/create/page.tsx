@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Upload, FileText, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
 import Link from "next/link";
 
 export default function CreateCampaignPage() {
@@ -21,6 +22,9 @@ export default function CreateCampaignPage() {
   });
 
   const [proofFiles, setProofFiles] = useState<File[]>([]);
+  const [proofDragOver, setProofDragOver] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageDragOver, setImageDragOver] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -52,25 +56,87 @@ export default function CreateCampaignPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (proofFiles.length === 0) {
       alert("Please upload at least one proof document to verify your need.");
       return;
     }
-    
-    // In a real app, this would submit to a backend API
-    alert("Campaign submitted for review! Our team will verify your documents before publishing. (This is a demo)");
+
+    const goalNum = parseFloat(formData.goal) || 0;
+    addCampaignUnderReview({
+      id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      title: formData.title,
+      description: formData.description,
+      goal: goalNum,
+      category: formData.category,
+      creatorName: user?.name ?? "User",
+      submittedAt: new Date().toISOString(),
+    });
+    router.push("/my-campaigns");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setProofFiles([...proofFiles, ...files]);
+      setProofFiles((prev) => [...prev, ...files]);
     }
+    e.target.value = "";
+  };
+
+  const handleProofDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setProofDragOver(false);
+    if (e.dataTransfer.files) {
+      const files = Array.from(e.dataTransfer.files).filter(
+        (f) =>
+          f.type === "application/pdf" ||
+          f.type.startsWith("image/") ||
+          f.type === "application/msword" ||
+          f.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+      setProofFiles((prev) => [...prev, ...files]);
+    }
+  };
+
+  const handleProofDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setProofDragOver(true);
+  };
+
+  const handleProofDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setProofDragOver(false);
   };
 
   const removeFile = (index: number) => {
     setProofFiles(proofFiles.filter((_, i) => i !== index));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) setImageFile(file);
+    e.target.value = "";
+  };
+
+  const handleImageDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setImageDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) setImageFile(file);
+  };
+
+  const handleImageDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageDragOver(true);
+  };
+
+  const handleImageDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageDragOver(false);
   };
 
   const handleChange = (
@@ -216,19 +282,21 @@ export default function CreateCampaignPage() {
         {/* Campaign Duration */}
         <div>
           <label className="block text-sm font-medium mb-2">
-            Campaign Duration (days) *
+            Campaign Duration *
           </label>
-          <input
-            type="number"
+          <select
             name="daysLeft"
             value={formData.daysLeft}
             onChange={handleChange}
             required
-            min="1"
-            max="60"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            placeholder="30"
-          />
+          >
+            <option value="">Select duration</option>
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="120">120 days</option>
+          </select>
         </div>
 
         {/* Image Upload */}
@@ -236,15 +304,43 @@ export default function CreateCampaignPage() {
           <label className="block text-sm font-medium mb-2">
             Campaign Image
           </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary-500 transition-colors">
-            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-600 mb-2">
-              Click to upload or drag and drop
-            </p>
-            <p className="text-sm text-gray-500">
-              PNG, JPG, GIF up to 10MB
-            </p>
-          </div>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+            onChange={handleImageChange}
+            className="hidden"
+            id="campaign-image-upload"
+          />
+          <label
+            htmlFor="campaign-image-upload"
+            onDragOver={handleImageDragOver}
+            onDragLeave={handleImageDragLeave}
+            onDrop={handleImageDrop}
+            className={`block border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+              imageDragOver
+                ? "border-primary-500 bg-primary-50"
+                : "border-gray-300 hover:border-primary-500"
+            }`}
+          >
+            {imageFile ? (
+              <div className="space-y-2">
+                <p className="text-primary-600 font-medium">{imageFile.name}</p>
+                <p className="text-sm text-gray-500">
+                  ({(imageFile.size / 1024).toFixed(1)} KB) — click or drop to replace
+                </p>
+              </div>
+            ) : (
+              <>
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600 mb-2">
+                  Click to upload or drag and drop
+                </p>
+                <p className="text-sm text-gray-500">
+                  PNG, JPG, GIF up to 10MB
+                </p>
+              </>
+            )}
+          </label>
         </div>
 
         {/* Note about Identity Verification */}
@@ -283,7 +379,15 @@ export default function CreateCampaignPage() {
             </div>
           </div>
           
-          <div className="border-2 border-dashed border-yellow-300 rounded-lg p-6 bg-white">
+          <label
+            htmlFor="proof-upload"
+            onDragOver={handleProofDragOver}
+            onDragLeave={handleProofDragLeave}
+            onDrop={handleProofDrop}
+            className={`block border-2 border-dashed rounded-lg p-6 bg-white cursor-pointer transition-colors ${
+              proofDragOver ? "border-primary-500 bg-primary-50" : "border-yellow-300 hover:border-yellow-500"
+            }`}
+          >
             <input
               type="file"
               multiple
@@ -292,19 +396,16 @@ export default function CreateCampaignPage() {
               className="hidden"
               id="proof-upload"
             />
-            <label
-              htmlFor="proof-upload"
-              className="cursor-pointer flex flex-col items-center"
-            >
+            <div className="flex flex-col items-center text-center">
               <FileText className="w-10 h-10 text-yellow-600 mb-2" />
               <p className="text-sm font-medium text-gray-700 mb-1">
-                Click to upload proof documents
+                Click to upload or drag and drop proof documents
               </p>
               <p className="text-xs text-gray-500">
                 PDF, JPG, PNG, DOC up to 10MB each
               </p>
-            </label>
-          </div>
+            </div>
+          </label>
 
           {/* Uploaded Files List */}
           {proofFiles.length > 0 && (

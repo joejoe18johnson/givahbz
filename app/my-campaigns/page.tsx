@@ -3,6 +3,17 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { campaigns } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
+import {
+  getStoppedCampaignIds,
+  getDeletedCampaignIds,
+  setStoppedCampaignIds,
+  setDeletedCampaignIds,
+} from "@/lib/campaignState";
+import {
+  getCampaignsUnderReview,
+  removeCampaignUnderReview,
+  type CampaignUnderReview,
+} from "@/lib/campaignsUnderReview";
 import Link from "next/link";
 import SafeImage from "@/components/SafeImage";
 import {
@@ -14,19 +25,57 @@ import {
   CheckCircle2,
   MapPin,
   FileText,
+  StopCircle,
+  Trash2,
+  Clock,
+  XCircle,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 export default function MyCampaignsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [stoppedIds, setStoppedIds] = useState<Set<string>>(new Set());
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [underReview, setUnderReview] = useState<CampaignUnderReview[]>([]);
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace("/auth/login?callbackUrl=/my-campaigns");
     }
   }, [user, isLoading, router]);
+
+  useEffect(() => {
+    setStoppedIds(new Set(getStoppedCampaignIds()));
+    setDeletedIds(new Set(getDeletedCampaignIds()));
+    setUnderReview(getCampaignsUnderReview());
+  }, []);
+
+  const handleStop = useCallback((e: React.MouseEvent, campaignId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = new Set(stoppedIds).add(campaignId);
+    setStoppedIds(next);
+    setStoppedCampaignIds(Array.from(next));
+  }, [stoppedIds]);
+
+  const handleDelete = useCallback((e: React.MouseEvent, campaignId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this campaign? This cannot be undone.")) return;
+    const next = new Set(deletedIds).add(campaignId);
+    setDeletedIds(next);
+    setDeletedCampaignIds(Array.from(next));
+  }, [deletedIds]);
+
+  const handleWithdrawReview = useCallback((e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm("Withdraw this campaign from review? You can submit a new one later.")) return;
+    removeCampaignUnderReview(id);
+    setUnderReview((prev) => prev.filter((c) => c.id !== id));
+  }, []);
 
   if (isLoading) {
     return (
@@ -44,8 +93,19 @@ export default function MyCampaignsPage() {
   }
 
   const myCampaigns = campaigns.filter(
-    (c) => c.creator.trim().toLowerCase() === user.name.trim().toLowerCase()
+    (c) =>
+      c.creator.trim().toLowerCase() === user.name.trim().toLowerCase() &&
+      !deletedIds.has(c.id)
   );
+
+  const myUnderReview = underReview.filter(
+    (c) => c.creatorName.trim().toLowerCase() === user.name.trim().toLowerCase()
+  );
+
+  const formatReviewDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -53,9 +113,13 @@ export default function MyCampaignsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-medium text-gray-900">My Campaigns</h1>
           <p className="text-gray-600 mt-1">
-            {myCampaigns.length === 0
-              ? "You haven't started any campaigns yet."
-              : `You have ${myCampaigns.length} campaign${myCampaigns.length === 1 ? "" : "s"}.`}
+            {myCampaigns.length === 0 && myUnderReview.length === 0 && "You haven't started any campaigns yet."}
+            {myCampaigns.length > 0 && (
+              <>You have {myCampaigns.length} live campaign{myCampaigns.length === 1 ? "" : "s"}.</>
+            )}
+            {myUnderReview.length > 0 && (
+              <>{myCampaigns.length > 0 ? " " : "You have "}{myUnderReview.length} under review.</>
+            )}
           </p>
         </div>
         <Link
@@ -67,6 +131,60 @@ export default function MyCampaignsPage() {
         </Link>
       </div>
 
+      {/* Campaigns under review */}
+      {myUnderReview.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xl font-medium text-gray-900 mb-1 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-amber-600" />
+            Campaigns under review
+          </h2>
+          <p className="text-gray-600 text-sm mb-4">
+            These campaigns have been submitted and are awaiting verification. We&apos;ll notify you once they&apos;re approved.
+          </p>
+          <div className="space-y-4">
+            {myUnderReview.map((c) => (
+              <div
+                key={c.id}
+                className="bg-amber-50/80 border border-amber-200 rounded-xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      Under review
+                    </span>
+                    <span className="bg-white/80 px-2.5 py-1 rounded-full text-xs font-medium text-gray-700">
+                      {c.category}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">{c.title}</h3>
+                  <p className="text-gray-600 text-sm line-clamp-2 mb-2">{c.description}</p>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <span className="font-medium text-success-600">
+                      Goal: {formatCurrency(c.goal)}
+                    </span>
+                    <span>Submitted {formatReviewDate(c.submittedAt)}</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => handleWithdrawReview(e, c.id)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-amber-300 text-amber-800 hover:bg-amber-100 text-sm font-medium transition-colors"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Withdraw
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* My live campaigns */}
+      <section>
+        <h2 className="text-xl font-medium text-gray-900 mb-4">Live campaigns</h2>
       {myCampaigns.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 md:p-12 text-center">
           <div className="max-w-md mx-auto">
@@ -91,14 +209,17 @@ export default function MyCampaignsPage() {
         <div className="space-y-6">
           {myCampaigns.map((campaign) => {
             const progress = Math.min((campaign.raised / campaign.goal) * 100, 100);
+            const isStopped = stoppedIds.has(campaign.id);
             return (
-              <Link
+              <div
                 key={campaign.id}
-                href={`/campaigns/${campaign.id}`}
-                className="block group bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-lg hover:border-primary-200 transition-all"
+                className="group bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-lg hover:border-primary-200 transition-all"
               >
                 <div className="flex flex-col md:flex-row">
-                  <div className="relative w-full md:w-64 h-48 md:h-auto md:min-h-[200px] bg-gray-200 flex-shrink-0">
+                  <Link
+                    href={`/campaigns/${campaign.id}`}
+                    className="relative w-full md:w-64 h-48 md:h-auto md:min-h-[200px] bg-gray-200 flex-shrink-0 block"
+                  >
                     <SafeImage
                       src={campaign.image}
                       alt={campaign.title}
@@ -113,7 +234,13 @@ export default function MyCampaignsPage() {
                         </div>
                       }
                     />
-                    <div className="absolute top-3 right-3 flex gap-2">
+                    <div className="absolute top-3 right-3 flex gap-2 flex-wrap">
+                      {isStopped && (
+                        <span className="bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                          <StopCircle className="w-3.5 h-3.5" />
+                          Stopped
+                        </span>
+                      )}
                       {campaign.verified && (
                         <span className="bg-success-500 text-white p-1.5 rounded-full" title="Verified">
                           <CheckCircle2 className="w-4 h-4" />
@@ -123,16 +250,22 @@ export default function MyCampaignsPage() {
                         {campaign.category}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex-1 p-5 md:p-6">
+                  </Link>
+                  <div className="flex-1 p-5 md:p-6 flex flex-col">
                     <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-                      <h2 className="text-lg font-medium text-gray-900 group-hover:text-primary-600 transition-colors">
+                      <Link
+                        href={`/campaigns/${campaign.id}`}
+                        className="text-lg font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                      >
                         {campaign.title}
-                      </h2>
-                      <span className="inline-flex items-center text-gray-500 text-sm">
-                        <ArrowRight className="w-4 h-4 mr-1 opacity-0 group-hover:opacity-100" />
+                      </Link>
+                      <Link
+                        href={`/campaigns/${campaign.id}`}
+                        className="inline-flex items-center text-gray-500 text-sm hover:text-primary-600"
+                      >
+                        <ArrowRight className="w-4 h-4 mr-1" />
                         View campaign
-                      </span>
+                      </Link>
                     </div>
                     <p className="text-gray-600 text-sm line-clamp-2 mb-4">{campaign.description}</p>
 
@@ -180,13 +313,42 @@ export default function MyCampaignsPage() {
                         />
                       </div>
                     </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/campaigns/${campaign.id}`}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-medium transition-colors"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                        View
+                      </Link>
+                      {!isStopped && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleStop(e, campaign.id)}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 text-sm font-medium transition-colors"
+                        >
+                          <StopCircle className="w-4 h-4" />
+                          Stop campaign
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => handleDelete(e, campaign.id)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete campaign
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
       )}
+      </section>
     </div>
   );
 }
