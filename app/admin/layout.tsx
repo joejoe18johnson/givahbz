@@ -27,10 +27,36 @@ export default function AdminLayout({
     }
   }, [user, isAdmin, isLoading, router, pathname]);
 
-  if (isLoading || !user || !isAdmin) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // middleware or auth will redirect to login
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md text-center bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Access denied</h1>
+          <p className="text-gray-600 mb-4">
+            Your account does not have admin access. Only emails listed in <code className="text-sm bg-gray-100 px-1 rounded">ADMIN_EMAILS</code> (in your .env) can view the admin dashboard.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Signed in as <strong>{user.email}</strong>. Add this email to ADMIN_EMAILS and restart the server, or sign in with admin@givahbz.com / Admin123!
+          </p>
+          <Link
+            href="/"
+            className="inline-block bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700"
+          >
+            Back to home
+          </Link>
+        </div>
       </div>
     );
   }
