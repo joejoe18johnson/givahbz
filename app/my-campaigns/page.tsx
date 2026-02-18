@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { campaigns } from "@/lib/data";
+import { Campaign } from "@/lib/data";
+import { fetchCampaigns } from "@/lib/services/campaignService";
 import { formatCurrency } from "@/lib/utils";
 import {
   getStoppedCampaignIds,
@@ -47,6 +48,18 @@ export default function MyCampaignsPage() {
   }, [user, isLoading, router]);
 
   useEffect(() => {
+    async function loadCampaigns() {
+      try {
+        const fetchedCampaigns = await fetchCampaigns();
+        setCampaigns(fetchedCampaigns);
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+      } finally {
+        setCampaignsLoading(false);
+      }
+    }
+    loadCampaigns();
+    
     setStoppedIds(new Set(getStoppedCampaignIds()));
     setDeletedIds(new Set(getDeletedCampaignIds()));
     setUnderReview(getCampaignsUnderReview());
@@ -77,7 +90,7 @@ export default function MyCampaignsPage() {
     setUnderReview((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
-  if (isLoading) {
+  if (isLoading || campaignsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

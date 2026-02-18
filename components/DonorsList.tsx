@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { adminDonations, type AdminDonation } from "@/lib/adminData";
+import { useState, useMemo, useEffect } from "react";
+import { getDonations } from "@/lib/firebase/firestore";
+import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -17,11 +18,26 @@ export default function DonorsList({ campaignId }: DonorsListProps) {
   const [sortBy, setSortBy] = useState<SortBy>("date-desc");
   const [showFilters, setShowFilters] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [donations, setDonations] = useState<AdminDonation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const donations = useMemo(() => {
-    let filtered = adminDonations.filter(
-      (d) => d.campaignId === campaignId && d.status === "completed"
-    );
+  useEffect(() => {
+    async function loadDonations() {
+      try {
+        const fetchedDonations = await getDonations(campaignId);
+        setDonations(fetchedDonations.filter((d) => d.status === "completed"));
+      } catch (error) {
+        console.error("Error loading donations:", error);
+        setDonations([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadDonations();
+  }, [campaignId]);
+
+  const sortedDonations = useMemo(() => {
+    let filtered = [...donations];
 
     // Sort
     filtered.sort((a, b) => {
@@ -37,7 +53,7 @@ export default function DonorsList({ campaignId }: DonorsListProps) {
     });
 
     return filtered;
-  }, [campaignId, sortBy]);
+  }, [donations, sortBy]);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -85,7 +101,7 @@ export default function DonorsList({ campaignId }: DonorsListProps) {
           </div>
         ) : (
           <>
-            {(showAll ? donations : donations.slice(0, INITIAL_DISPLAY_COUNT)).map((donation) => (
+            {(showAll ? sortedDonations : sortedDonations.slice(0, INITIAL_DISPLAY_COUNT)).map((donation) => (
               <div key={donation.id} className="px-5 py-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
@@ -128,9 +144,9 @@ export default function DonorsList({ campaignId }: DonorsListProps) {
         )}
       </div>
 
-      {donations.length > 0 && (
+      {sortedDonations.length > 0 && (
         <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-600">
-          {donations.length} {donations.length === 1 ? "donor" : "donors"}
+          {sortedDonations.length} {sortedDonations.length === 1 ? "donor" : "donors"}
         </div>
       )}
     </div>

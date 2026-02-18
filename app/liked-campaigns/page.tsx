@@ -3,15 +3,40 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, ArrowLeft } from "lucide-react";
-import { campaigns } from "@/lib/data";
+import { Campaign } from "@/lib/data";
+import { fetchCampaigns } from "@/lib/services/campaignService";
 import CampaignCard from "@/components/CampaignCard";
 import { getHeartedCampaignIds } from "@/components/HeartedCampaigns";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LikedCampaignsPage() {
   const [heartedIds, setHeartedIds] = useState<string[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    setHeartedIds(getHeartedCampaignIds());
+    async function loadData() {
+      try {
+        // Load all campaigns from Firestore
+        const fetchedCampaigns = await fetchCampaigns();
+        setCampaigns(fetchedCampaigns);
+        
+        // Load hearted campaign IDs
+        if (user) {
+          // TODO: Load from Firestore user document
+          setHeartedIds(getHeartedCampaignIds());
+        } else {
+          setHeartedIds(getHeartedCampaignIds());
+        }
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+    
     // Listen for changes
     const handleChange = () => {
       setHeartedIds(getHeartedCampaignIds());
@@ -20,7 +45,7 @@ export default function LikedCampaignsPage() {
     return () => {
       window.removeEventListener("heartedCampaignsChanged", handleChange);
     };
-  }, []);
+  }, [user]);
 
   const heartedCampaigns = campaigns.filter((campaign) => heartedIds.includes(campaign.id));
 
@@ -47,7 +72,12 @@ export default function LikedCampaignsPage() {
       </div>
 
       {/* Content */}
-      {heartedCampaigns.length === 0 ? (
+      {isLoading ? (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading campaigns...</p>
+        </div>
+      ) : heartedCampaigns.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
           <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 text-lg mb-2">No liked campaigns yet</p>
