@@ -1,24 +1,46 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { campaigns } from "@/lib/data";
-import { adminUsers, adminDonations } from "@/lib/adminData";
+import { Campaign } from "@/lib/data";
+import { AdminDonation } from "@/lib/adminData";
+import { fetchCampaigns } from "@/lib/services/campaignService";
+import { getDonations } from "@/lib/firebase/firestore";
+import { adminUsers } from "@/lib/adminData";
 import { getCampaignsUnderReview } from "@/lib/campaignsUnderReview";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock } from "lucide-react";
 
 export default function AdminDashboardPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [donations, setDonations] = useState<AdminDonation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [underReviewCount, setUnderReviewCount] = useState(0);
+
   useEffect(() => {
+    async function loadData() {
+      try {
+        const [fetchedCampaigns, fetchedDonations] = await Promise.all([
+          fetchCampaigns(),
+          getDonations(),
+        ]);
+        setCampaigns(fetchedCampaigns);
+        setDonations(fetchedDonations);
+      } catch (error) {
+        console.error("Error loading admin data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
     setUnderReviewCount(getCampaignsUnderReview().length);
   }, []);
 
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
-  const totalDonations = adminDonations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
+  const totalDonations = donations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
   const recentCampaigns = campaigns.slice(0, 5);
   const recentUsers = adminUsers.slice(0, 5);
-  const recentDonations = adminDonations.slice(0, 8);
+  const recentDonations = donations.slice(0, 8);
 
   if (isLoading) {
     return (
@@ -80,7 +102,7 @@ export default function AdminDashboardPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Donations</p>
-              <p className="text-xl font-semibold text-gray-900">{adminDonations.length}</p>
+              <p className="text-xl font-semibold text-gray-900">{donations.length}</p>
             </div>
           </div>
         </div>
