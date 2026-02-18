@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { campaigns } from "@/lib/data";
+import { Campaign } from "@/lib/data";
+import { fetchCampaign } from "@/lib/services/campaignService";
 import { notFound } from "next/navigation";
 import SafeImage from "@/components/SafeImage";
 import { Calendar, MapPin, Users, Heart, CheckCircle2 } from "lucide-react";
@@ -23,16 +24,44 @@ interface PageProps {
 }
 
 export default function CampaignPage({ params }: PageProps) {
-  const campaign = campaigns.find((c) => c.id === params.id);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isHearted, setIsHearted] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    async function loadCampaign() {
+      try {
+        const fetchedCampaign = await fetchCampaign(params.id);
+        if (fetchedCampaign) {
+          setCampaign(fetchedCampaign);
+        }
+      } catch (error) {
+        console.error("Error loading campaign:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCampaign();
+  }, [params.id]);
 
   useEffect(() => {
     if (campaign && user) {
       setIsHearted(isCampaignHearted(campaign.id));
     }
   }, [campaign, user]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading campaign...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!campaign) {
     notFound();

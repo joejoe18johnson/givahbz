@@ -2,13 +2,14 @@
 
 import { Permanent_Marker } from "next/font/google";
 import CampaignCard from "@/components/CampaignCard";
-import { campaigns } from "@/lib/data";
+import { Campaign } from "@/lib/data";
 import { getTrendingCampaigns } from "@/lib/campaignUtils";
+import { fetchCampaigns } from "@/lib/services/campaignService";
 import SafeImage from "@/components/SafeImage";
 import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calendar, Users, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const permanentMarker = Permanent_Marker({ weight: "400", subsets: ["latin"] });
 
@@ -48,9 +49,26 @@ const HOME_FAQS = [
 ];
 
 export default function Home() {
-  const allTrendingCampaigns = getTrendingCampaigns(campaigns, campaigns.length);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function loadCampaigns() {
+      try {
+        const fetchedCampaigns = await fetchCampaigns({ trending: true });
+        setCampaigns(fetchedCampaigns);
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCampaigns();
+  }, []);
+
+  const allTrendingCampaigns = getTrendingCampaigns(campaigns, campaigns.length);
   const cardsPerPage = 4;
   const totalPages = Math.ceil(allTrendingCampaigns.length / cardsPerPage);
   const startIndex = (currentPage - 1) * cardsPerPage;

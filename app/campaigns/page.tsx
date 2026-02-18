@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import CampaignCard from "@/components/CampaignCard";
-import { campaigns } from "@/lib/data";
+import { Campaign } from "@/lib/data";
+import { fetchCampaigns } from "@/lib/services/campaignService";
 import { getTrendingCampaigns } from "@/lib/campaignUtils";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -12,9 +13,25 @@ function CampaignsContent() {
   const categories = ["All", "Medical", "Education", "Disaster Relief", "Community", "Emergency", "Other"];
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showTrending, setShowTrending] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const searchParams = useSearchParams();
 
   const searchQuery = searchParams.get("q")?.trim() ?? "";
+
+  useEffect(() => {
+    async function loadCampaigns() {
+      try {
+        const fetchedCampaigns = await fetchCampaigns();
+        setCampaigns(fetchedCampaigns);
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCampaigns();
+  }, []);
 
   useEffect(() => {
     const filter = searchParams.get("filter");
@@ -110,9 +127,10 @@ function CampaignsContent() {
             <CampaignCard campaign={campaign} />
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
-      {filteredCampaigns.length === 0 && (
+      {!isLoading && filteredCampaigns.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-600 text-lg">
             {searchQuery

@@ -13,14 +13,33 @@ interface HeartedCampaignsProps {
   onClose: () => void;
 }
 
+import { getHeartedCampaignIds as getHeartedIdsFromFirestore, toggleHeartCampaign as toggleHeartInFirestore } from "@/lib/firebase/firestore";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Legacy localStorage functions for backward compatibility (will be removed)
 export function getHeartedCampaignIds(): string[] {
   if (typeof window === "undefined") return [];
   const stored = localStorage.getItem("hearted_campaigns");
   return stored ? JSON.parse(stored) : [];
 }
 
-export function toggleHeartCampaign(campaignId: string): boolean {
+export async function toggleHeartCampaign(campaignId: string): Promise<boolean> {
   if (typeof window === "undefined") return false;
+  
+  // Try to use Firestore if user is logged in
+  const storedUser = localStorage.getItem("belizeFund_user");
+  if (storedUser) {
+    try {
+      const userData = JSON.parse(storedUser);
+      if (userData.id) {
+        return await toggleHeartInFirestore(userData.id, campaignId);
+      }
+    } catch (e) {
+      // Fall back to localStorage
+    }
+  }
+  
+  // Fallback to localStorage for non-authenticated users
   const hearted = getHeartedCampaignIds();
   const index = hearted.indexOf(campaignId);
   

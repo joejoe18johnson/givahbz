@@ -28,7 +28,9 @@ export default function ProfilePage() {
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [phoneInput, setPhoneInput] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profilePhoto || null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Track last saved state
@@ -136,6 +138,7 @@ export default function ProfilePage() {
 
   const handleRemovePhoto = () => {
     setProfilePhoto(null);
+    setProfilePhotoFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -505,6 +508,7 @@ export default function ProfilePage() {
             setPhoneNumber(lastSavedState.phoneNumber);
             setPhoneInput("");
             setProfilePhoto(lastSavedState.profilePhoto);
+            setProfilePhotoFile(null);
             setEditingName(false);
             setEditingBirthday(false);
             setEditingPassword(false);

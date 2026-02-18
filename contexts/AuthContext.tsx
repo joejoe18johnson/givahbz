@@ -2,7 +2,17 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/lib/firebase/config";
+import {
+  signInWithEmail,
+  signInWithGoogle,
+  signUpWithEmail,
+  signOutUser,
+  updateUserProfile,
+  firebaseUserToProfile,
+  UserProfile,
+} from "@/lib/firebase/auth";
 
 interface User {
   id: string;
@@ -24,22 +34,26 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<boolean>;
-  updateUser: (updates: Partial<User>) => void;
-  logout: () => void;
+  updateUser: (updates: Partial<User>) => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function sessionToUser(session: { user?: { id?: string; email?: string | null; name?: string | null; role?: string } }): User {
+function profileToUser(profile: UserProfile): User {
   return {
-    id: (session.user?.id as string) || (session.user?.email as string) || "google",
-    email: session.user?.email ?? "",
-    name: session.user?.name ?? "User",
-    verified: true,
-    idVerified: true,
-    addressVerified: false,
-    role: (session.user?.role as "user" | "admin") ?? "user",
+    id: profile.id,
+    email: profile.email,
+    name: profile.name,
+    verified: profile.verified,
+    idVerified: profile.idVerified,
+    addressVerified: profile.addressVerified,
+    role: profile.role,
+    birthday: profile.birthday,
+    phoneNumber: profile.phoneNumber,
+    phoneVerified: profile.phoneVerified,
+    profilePhoto: profile.profilePhoto,
   };
 }
 
@@ -47,81 +61,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (status === "loading") {
-      return;
-    }
-    if (session?.user) {
-      setUser(sessionToUser(session));
-    } else {
-      const storedUser = localStorage.getItem("belizeFund_user");
-      if (storedUser) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
         try {
-          setUser(JSON.parse(storedUser));
-        } catch (e) {
-          localStorage.removeItem("belizeFund_user");
+          const profile = await firebaseUserToProfile(firebaseUser);
+          if (profile) {
+            setUser(profileToUser(profile));
+          } else {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
           setUser(null);
         }
       } else {
         setUser(null);
       }
-    }
-    setIsLoading(false);
-  }, [session, status]);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const storedUser = localStorage.getItem("belizeFund_user");
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      if (userData.email === email) {
-        setUser(userData);
-        return true;
-      }
+    try {
+      const profile = await signInWithEmail(email, password);
+      setUser(profileToUser(profile));
+      return true;
+    } catch (error: any) {
+      console.error("Login error:", error);
+      return false;
     }
-    return false;
   };
 
   const loginWithGoogle = async () => {
-    await signIn("google", { callbackUrl: "/" });
+    try {
+      const profile = await signInWithGoogle();
+      setUser(profileToUser(profile));
+      router.push("/");
+    } catch (error: any) {
+      console.error("Google login error:", error);
+      throw error;
+    }
   };
 
   const signup = async (email: string, password: string, name: string): Promise<boolean> => {
-    const newUser: User = {
-      id: Date.now().toString(),
-      email,
-      name,
-      verified: false,
-      idVerified: false,
-      addressVerified: false,
-      role: "user",
-    };
-    localStorage.setItem("belizeFund_user", JSON.stringify(newUser));
-    setUser(newUser);
-    return true;
+    try {
+      const profile = await signUpWithEmail(email, password, name);
+      setUser(profileToUser(profile));
+      return true;
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      return false;
+    }
   };
 
-  const updateUser = (updates: Partial<User>) => {
+  const updateUser = async (updates: Partial<User>) => {
     if (!user) return;
     
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    
-    // Update localStorage if user is stored there
-    const storedUser = localStorage.getItem("belizeFund_user");
-    if (storedUser) {
-      localStorage.setItem("belizeFund_user", JSON.stringify(updatedUser));
+    try {
+      await updateUserProfile(user.id, updates as Partial<UserProfile>);
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
     }
-    
-    // TODO: Update backend/database with user changes
   };
 
-  const logout = () => {
-    localStorage.removeItem("belizeFund_user");
-    setUser(null);
-    signOut({ callbackUrl: "/" });
-    router.push("/");
+  const logout = async () => {
+    try {
+      await signOutUser();
+      setUser(null);
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const isAdmin = user?.role === "admin";

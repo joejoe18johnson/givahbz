@@ -22,6 +22,7 @@ A Belizean-based crowdfunding platform for organizations, charities, and individ
 
 - Node.js 18+ installed
 - npm or yarn package manager
+- Firebase account (for production/testing)
 
 ### Installation
 
@@ -30,12 +31,30 @@ A Belizean-based crowdfunding platform for organizations, charities, and individ
 npm install
 ```
 
-2. Run the development server:
+2. Set up Firebase (see [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed instructions):
+   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+   - Enable Authentication (Email/Password and Google)
+   - Create a Firestore database
+   - Set up Storage
+   - Copy your Firebase config to `.env`
+
+3. Configure environment variables:
+```bash
+cp .env.example .env
+```
+   Then edit `.env` and add your Firebase configuration values.
+
+4. Seed Firestore with initial data (optional):
+```bash
+npx ts-node scripts/seedFirestore.ts
+```
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ### Test accounts (email / password)
 
@@ -49,9 +68,16 @@ Use these to sign in on the login page (no signup required):
 
 Add `admin@givahbz.com` to `ADMIN_EMAILS` in your `.env` so the admin account can access the admin dashboard. You can also sign in with any other email/password for ad-hoc testing.
 
-### Google sign-in
+### Authentication
 
-Login and signup support **Sign in with Google**. To enable it, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to your `.env` (see [.env.example](.env.example)). Step-by-step setup: **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)**.
+The app supports multiple authentication methods:
+
+- **Email/Password** - Traditional email and password signup/login
+- **Google Sign-in** - OAuth authentication with Google
+
+For Google sign-in, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to your `.env` (see [.env.example](.env.example)). Step-by-step setup: **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)**.
+
+**Note:** Firebase Authentication is now the primary authentication system. See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for complete Firebase configuration instructions.
 
 ## Project Structure
 
@@ -100,12 +126,20 @@ All campaigns must provide proof of need, such as:
 
 Campaigns are reviewed and verified before being published to ensure transparency and trust.
 
+## Firebase Integration
+
+This project uses Firebase for backend services:
+
+- ✅ **Firebase Authentication** - User signup, login, and session management
+- ✅ **Firestore Database** - Campaigns, users, and donations storage
+- ✅ **Firebase Storage** - Profile photos and campaign images
+
+See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed setup instructions.
+
 ## Future Enhancements
 
-- User authentication and profiles
 - Payment integration (local Belizean payment methods)
 - Real-time updates and notifications
-- Image upload functionality
 - Advanced search and filtering
 - Email notifications
 - Social sharing
