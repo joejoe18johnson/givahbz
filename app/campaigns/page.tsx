@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import CampaignCard from "@/components/CampaignCard";
 import { campaigns } from "@/lib/data";
 import { getTrendingCampaigns } from "@/lib/campaignUtils";
