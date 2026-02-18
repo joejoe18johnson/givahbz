@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { X, Heart } from "lucide-react";
-import { campaigns, type Campaign } from "@/lib/data";
+import { Campaign } from "@/lib/data";
+import { fetchCampaigns } from "@/lib/services/campaignService";
 import SafeImage from "./SafeImage";
 import { formatCurrency } from "@/lib/utils";
 import { Users, Calendar, CheckCircle2 } from "lucide-react";
@@ -61,8 +62,6 @@ export function isCampaignHearted(campaignId: string): boolean {
 
 export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsProps) {
   const [heartedIds, setHeartedIds] = useState<string[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   const updateHeartedIds = () => {
     setHeartedIds(getHeartedCampaignIds());
@@ -70,18 +69,6 @@ export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsPr
 
   useEffect(() => {
     if (isOpen) {
-      async function loadCampaigns() {
-        setIsLoading(true);
-        try {
-          const fetchedCampaigns = await fetchCampaigns();
-          setCampaigns(fetchedCampaigns);
-        } catch (error) {
-          console.error("Error loading campaigns:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-      loadCampaigns();
       updateHeartedIds();
       // Listen for changes when modal is open
       window.addEventListener("heartedCampaignsChanged", updateHeartedIds);
@@ -137,7 +124,12 @@ export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsPr
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto px-6 py-6">
-            {heartedCampaigns.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading campaigns...</p>
+              </div>
+            ) : heartedCampaigns.length === 0 ? (
               <div className="text-center py-12">
                 <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-600 text-lg mb-2">No hearted campaigns yet</p>

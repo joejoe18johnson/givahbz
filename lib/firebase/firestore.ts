@@ -32,9 +32,14 @@ export async function getCampaign(campaignId: string): Promise<Campaign | null> 
   
   if (!docSnap.exists()) return null;
   
+  const data = docSnap.data();
+  // Convert Firestore Timestamp to string date if needed
+  const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString().split('T')[0] : data.createdAt;
+  
   return {
-    ...docSnap.data(),
+    ...data,
     id: docSnap.id,
+    createdAt: createdAt || new Date().toISOString().split('T')[0],
   } as Campaign;
 }
 
@@ -110,10 +115,16 @@ export async function getDonations(campaignId?: string): Promise<AdminDonation[]
   }
   
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({
-    ...doc.data(),
-    id: doc.id,
-  })) as AdminDonation[];
+  return querySnapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
+    // Convert Firestore Timestamp to string date if needed
+    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt;
+    return {
+      ...data,
+      id: docSnap.id,
+      createdAt: createdAt || new Date().toISOString(),
+    };
+  }) as AdminDonation[];
 }
 
 export async function createDonation(donation: Omit<AdminDonation, "id">): Promise<string> {
