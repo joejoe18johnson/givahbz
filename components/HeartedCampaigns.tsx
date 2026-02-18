@@ -62,6 +62,8 @@ export function isCampaignHearted(campaignId: string): boolean {
 
 export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsProps) {
   const [heartedIds, setHeartedIds] = useState<string[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const updateHeartedIds = () => {
     setHeartedIds(getHeartedCampaignIds());
@@ -76,6 +78,25 @@ export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsPr
         window.removeEventListener("heartedCampaignsChanged", updateHeartedIds);
       };
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setIsLoading(true);
+    fetchCampaignsFromAPI()
+      .then((data) => {
+        if (!cancelled) setCampaigns(data);
+      })
+      .catch(() => {
+        if (!cancelled) setCampaigns([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   const heartedCampaigns = campaigns.filter((campaign) => heartedIds.includes(campaign.id));
