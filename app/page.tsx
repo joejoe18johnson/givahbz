@@ -62,6 +62,8 @@ export default function Home() {
     if (!el) return;
     setTrendingCanScrollLeft(el.scrollLeft > 0);
     setTrendingCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
+    const page = Math.min(totalPages, Math.round(el.scrollLeft / TRENDING_PAGE_WIDTH) + 1);
+    setCurrentPage((p) => (page >= 1 && page <= totalPages ? page : p));
   };
 
   useEffect(() => {
@@ -81,6 +83,19 @@ export default function Home() {
   }, []);
 
   const allTrendingCampaigns = getTrendingCampaigns(campaigns, campaigns.length);
+  const cardsPerPage = 4;
+  const totalPages = Math.max(1, Math.ceil(allTrendingCampaigns.length / cardsPerPage));
+  const TRENDING_PAGE_WIDTH = 280 * cardsPerPage + 24 * (cardsPerPage - 1); // card w + gap
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const scrollTrendingToPage = (page: number) => {
+    const el = trendingScrollRef.current;
+    if (!el) return;
+    const left = (page - 1) * TRENDING_PAGE_WIDTH;
+    el.scrollTo({ left, behavior: "smooth" });
+    setCurrentPage(page);
+  };
 
   useEffect(() => {
     const el = trendingScrollRef.current;
@@ -285,6 +300,28 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          {/* Pagination numbers (desktop only) */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => scrollTrendingToPage(page)}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full font-medium transition-colors ${
+                    currentPage === page
+                      ? "bg-success-500 text-white"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                  aria-label={`Go to page ${page}`}
+                  aria-current={currentPage === page ? "true" : undefined}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="text-center mt-6">
