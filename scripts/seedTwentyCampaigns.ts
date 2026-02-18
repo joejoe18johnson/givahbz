@@ -348,16 +348,20 @@ async function seedTwentyCampaigns() {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    console.log("Adding 20 fictitious campaigns to Firestore...\n");
+    // Use same ID naming as original seed: "1"-"8" exist, so use "9" through "28"
+    const startId = 9;
+    console.log("Adding 20 fictitious campaigns to Firestore (ids 9–28)...\n");
     for (let i = 0; i < twentyCampaigns.length; i++) {
       const campaign = twentyCampaigns[i];
-      const campaignRef = doc(collection(db, "campaigns"));
+      const id = String(startId + i);
+      const campaignRef = doc(db, "campaigns", id);
       await setDoc(campaignRef, {
         ...campaign,
+        id,
         createdAt: campaign.createdAt ? Timestamp.fromDate(new Date(campaign.createdAt)) : serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      console.log(`✓ ${i + 1}/20: ${campaign.title}`);
+      console.log(`✓ ${i + 1}/20: [${id}] ${campaign.title}`);
     }
 
     console.log("\n✅ Done! 20 campaigns added to Firestore.");
