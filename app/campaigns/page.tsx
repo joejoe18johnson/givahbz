@@ -15,6 +15,7 @@ function CampaignsContent() {
   const [showTrending, setShowTrending] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   const searchQuery = searchParams.get("q")?.trim() ?? "";
@@ -22,10 +23,12 @@ function CampaignsContent() {
   useEffect(() => {
     async function loadCampaigns() {
       try {
+        setError(null);
         const fetchedCampaigns = await fetchCampaigns();
         setCampaigns(fetchedCampaigns);
-      } catch (error) {
-        console.error("Error loading campaigns:", error);
+      } catch (err) {
+        console.error("Error loading campaigns:", err);
+        setError("Unable to load campaigns. Please check your connection and try again.");
       } finally {
         setIsLoading(false);
       }
@@ -114,23 +117,46 @@ function CampaignsContent() {
         </p>
       )}
 
-      {/* Campaigns Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filteredCampaigns.map((campaign) => (
-          <div key={campaign.id} className="relative">
-            {showTrending && (
-              <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-                <TrendingUp className="w-3 h-3" />
-                TRENDING
-              </div>
-            )}
-            <CampaignCard campaign={campaign} />
-          </div>
-        ))}
+      {/* Loading state */}
+      {isLoading && (
+        <div className="text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading campaigns...</p>
         </div>
       )}
 
-      {!isLoading && filteredCampaigns.length === 0 && (
+      {/* Error state */}
+      {!isLoading && error && (
+        <div className="text-center py-16">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Campaigns Grid */}
+      {!isLoading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredCampaigns.map((campaign) => (
+            <div key={campaign.id} className="relative">
+              {showTrending && (
+                <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
+                  <TrendingUp className="w-3 h-3" />
+                  TRENDING
+                </div>
+              )}
+              <CampaignCard campaign={campaign} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && !error && filteredCampaigns.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-600 text-lg">
             {searchQuery

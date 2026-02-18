@@ -2,6 +2,8 @@
 
 A Belizean-based crowdfunding platform for organizations, charities, and individuals in need. Built with Next.js, React, TypeScript, and Tailwind CSS.
 
+**Live site:** [https://givahbz.vercel.app](https://givahbz.vercel.app) · [Campaigns](https://givahbz.vercel.app/campaigns)
+
 ## Features
 
 - ✅ **Verification System** - All campaigns require proof of need and are verified before publication

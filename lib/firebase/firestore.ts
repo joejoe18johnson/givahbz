@@ -3,6 +3,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  getDocsFromServer,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -56,9 +57,9 @@ export async function getCampaigns(filters?: {
   trending?: boolean;
   limitCount?: number;
 }): Promise<Campaign[]> {
-  // Fetch all campaigns with no orderBy/where to avoid index requirements and ensure all docs are returned
+  // Fetch all campaigns from server (bypass cache so we always get latest count)
   const q = query(collection(db, campaignsCollection));
-  const querySnapshot = await getDocs(q);
+  const querySnapshot = await getDocsFromServer(q);
 
   let campaigns = querySnapshot.docs.map((docSnap) => {
     const data = docSnap.data() as Record<string, unknown>;
