@@ -74,34 +74,32 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute top-2 left-2 z-10" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+          <div className="absolute top-2 left-2 z-10 flex items-center gap-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
             <ShareCampaign
               campaignId={campaign.id}
               campaignTitle={campaign.title}
               variant="compact"
               className="[&_button]:!p-2 [&_button]:!bg-white/90"
             />
+            <button
+              onClick={handleToggleHeart}
+              className={`p-2 rounded-full backdrop-blur-sm shadow-lg transition-colors ${
+                isHearted
+                  ? "bg-red-500/90 hover:bg-red-500 text-white"
+                  : "bg-white/90 hover:bg-white text-gray-700"
+              }`}
+              aria-label={isHearted ? "Remove from hearted" : "Add to hearted"}
+            >
+              <Heart className={`w-4 h-4 ${isHearted ? "fill-white" : ""}`} />
+            </button>
           </div>
-          <div className="absolute top-2 right-2 flex gap-2 items-start">
-            <div className="flex flex-col gap-2">
-              {campaign.verified && (
-                <div className="bg-verified-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Verified
-                </div>
-              )}
-              <button
-                onClick={handleToggleHeart}
-                className={`p-2 rounded-full backdrop-blur-sm shadow-lg transition-colors ${
-                  isHearted
-                    ? "bg-red-500/90 hover:bg-red-500 text-white"
-                    : "bg-white/90 hover:bg-white text-gray-700"
-                }`}
-                aria-label={isHearted ? "Remove from hearted" : "Add to hearted"}
-              >
-                <Heart className={`w-4 h-4 ${isHearted ? "fill-white" : ""}`} />
-              </button>
-            </div>
+          <div className="absolute top-2 right-2 flex gap-2">
+            {campaign.verified && (
+              <div className="bg-verified-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
+                <CheckCircle2 className="w-3 h-3" />
+                Verified
+              </div>
+            )}
             <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-primary-600 shadow-lg">
               {campaign.category}
             </div>
