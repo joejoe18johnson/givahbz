@@ -85,6 +85,8 @@ For Google sign-in, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to your `.
 
 **Localhost works but Vercel doesn’t?** Vercel doesn’t use your `.env`. Add the **same 6** `NEXT_PUBLIC_FIREBASE_*` variables in **Vercel → Project → Settings → Environment Variables**, then **Redeploy**. See **[VERCEL_FIREBASE.md](VERCEL_FIREBASE.md)** for step-by-step instructions and **[api/firebase-check](https://givahbz.vercel.app/api/firebase-check)** to verify after deploy.
 
+**Campaign list data** is loaded dynamically from the server API (`GET /api/campaigns`), which reads from Firestore. The home page, campaigns page, my-campaigns, liked-campaigns, admin, and hearted-campaigns modal all use this API so Vercel gets live data when env vars are set.
+
 ## Project Structure
 
 ```
