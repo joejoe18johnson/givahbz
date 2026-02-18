@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { campaigns } from "@/lib/data";
 import { notFound } from "next/navigation";
 import SafeImage from "@/components/SafeImage";
@@ -9,6 +12,7 @@ import ProofDocuments from "@/components/ProofDocuments";
 import ShareCampaign from "@/components/ShareCampaign";
 import DonorsList from "@/components/DonorsList";
 import { formatCurrency } from "@/lib/utils";
+import { toggleHeartCampaign, isCampaignHearted } from "@/components/HeartedCampaigns";
 
 interface PageProps {
   params: {
@@ -18,6 +22,13 @@ interface PageProps {
 
 export default function CampaignPage({ params }: PageProps) {
   const campaign = campaigns.find((c) => c.id === params.id);
+  const [isHearted, setIsHearted] = useState(false);
+
+  useEffect(() => {
+    if (campaign) {
+      setIsHearted(isCampaignHearted(campaign.id));
+    }
+  }, [campaign]);
 
   if (!campaign) {
     notFound();
@@ -25,6 +36,13 @@ export default function CampaignPage({ params }: PageProps) {
 
   const progress = (campaign.raised / campaign.goal) * 100;
   const progressPercentage = Math.min(progress, 100);
+
+  const handleToggleHeart = () => {
+    if (campaign) {
+      const newState = toggleHeartCampaign(campaign.id);
+      setIsHearted(newState);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -62,8 +80,14 @@ export default function CampaignPage({ params }: PageProps) {
             campaignTitle={campaign.title}
             variant="compact"
           />
-          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg" aria-label="Save">
-            <Heart className="w-5 h-5 text-gray-700" />
+          <button
+            onClick={handleToggleHeart}
+            className={`bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg ${
+              isHearted ? "text-red-500" : "text-gray-700"
+            }`}
+            aria-label={isHearted ? "Remove from hearted" : "Add to hearted"}
+          >
+            <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : ""}`} />
           </button>
         </div>
       </div>

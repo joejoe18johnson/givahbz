@@ -2,16 +2,48 @@
 
 import Link from "next/link";
 import { Search, Heart, LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import HeartedCampaigns from "./HeartedCampaigns";
+import { getHeartedCampaignIds } from "./HeartedCampaigns";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showHeartedCampaigns, setShowHeartedCampaigns] = useState(false);
+  const [heartedCount, setHeartedCount] = useState(0);
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
+  
+  // Update heart count
+  const updateHeartCount = () => {
+    if (typeof window !== "undefined") {
+      setHeartedCount(getHeartedCampaignIds().length);
+    }
+  };
+
+  // Initialize and listen for storage changes
+  useEffect(() => {
+    updateHeartCount();
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", updateHeartCount);
+      // Custom event for same-tab updates
+      window.addEventListener("heartedCampaignsChanged", updateHeartCount);
+      return () => {
+        window.removeEventListener("storage", updateHeartCount);
+        window.removeEventListener("heartedCampaignsChanged", updateHeartCount);
+      };
+    }
+  }, []);
+
+  // Update count when modal opens/closes
+  useEffect(() => {
+    if (showHeartedCampaigns) {
+      updateHeartCount();
+    }
+  }, [showHeartedCampaigns]);
 
   const handleLogout = () => {
     logout();
@@ -106,16 +138,37 @@ export default function Header() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-2 text-gray-700 hover:text-primary-600 transition-colors"
                   >
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-medium">
-                      {user.name.charAt(0).toUpperCase()}
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-700 font-medium">
+                      {user.profilePhoto ? (
+                        <img 
+                          src={user.profilePhoto} 
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{user.name.charAt(0).toUpperCase()}</span>
+                      )}
                     </div>
                     <span className="hidden md:inline">{user.name}</span>
                   </button>
                   {showUserMenu && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
-                      <div className="px-4 py-2 border-b border-gray-200">
-                        <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-600">{user.email}</p>
+                      <div className="px-4 py-2 border-b border-gray-200 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-700 font-medium flex-shrink-0">
+                          {user.profilePhoto ? (
+                            <img 
+                              src={user.profilePhoto} 
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm">{user.name.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+                          <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                        </div>
                       </div>
                       <Link
                         href="/profile"
@@ -213,6 +266,12 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Hearted Campaigns Modal */}
+      <HeartedCampaigns
+        isOpen={showHeartedCampaigns}
+        onClose={() => setShowHeartedCampaigns(false)}
+      />
     </header>
   );
 }

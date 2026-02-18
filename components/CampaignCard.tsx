@@ -1,8 +1,12 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import SafeImage from "./SafeImage";
 import ShareCampaign from "./ShareCampaign";
-import { Calendar, Users, CheckCircle2 } from "lucide-react";
+import { Calendar, Users, CheckCircle2, Heart } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { toggleHeartCampaign, isCampaignHearted } from "./HeartedCampaigns";
 
 interface Campaign {
   id: string;
@@ -25,8 +29,20 @@ interface CampaignCardProps {
 }
 
 export default function CampaignCard({ campaign }: CampaignCardProps) {
+  const [isHearted, setIsHearted] = useState(false);
   const progress = (campaign.raised / campaign.goal) * 100;
   const progressPercentage = Math.min(progress, 100);
+
+  useEffect(() => {
+    setIsHearted(isCampaignHearted(campaign.id));
+  }, [campaign.id]);
+
+  const handleToggleHeart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newState = toggleHeartCampaign(campaign.id);
+    setIsHearted(newState);
+  };
 
   return (
     <Link href={`/campaigns/${campaign.id}`} className="h-full flex transition-transform duration-300 hover:scale-[1.02]">
@@ -66,13 +82,26 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
               className="[&_button]:!p-2 [&_button]:!bg-white/90"
             />
           </div>
-          <div className="absolute top-2 right-2 flex gap-2">
-            {campaign.verified && (
-              <div className="bg-verified-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-                <CheckCircle2 className="w-3 h-3" />
-                Verified
-              </div>
-            )}
+          <div className="absolute top-2 right-2 flex gap-2 items-start">
+            <div className="flex flex-col gap-2">
+              {campaign.verified && (
+                <div className="bg-verified-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Verified
+                </div>
+              )}
+              <button
+                onClick={handleToggleHeart}
+                className={`p-2 rounded-full backdrop-blur-sm shadow-lg transition-colors ${
+                  isHearted
+                    ? "bg-red-500/90 hover:bg-red-500 text-white"
+                    : "bg-white/90 hover:bg-white text-gray-700"
+                }`}
+                aria-label={isHearted ? "Remove from hearted" : "Add to hearted"}
+              >
+                <Heart className={`w-4 h-4 ${isHearted ? "fill-white" : ""}`} />
+              </button>
+            </div>
             <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-primary-600 shadow-lg">
               {campaign.category}
             </div>

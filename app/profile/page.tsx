@@ -18,18 +18,48 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, updateUser } = useAuth();
   const [editingName, setEditingName] = useState(false);
   const [editingBirthday, setEditingBirthday] = useState(false);
   const [editingPassword, setEditingPassword] = useState(false);
   const [editingPhone, setEditingPhone] = useState(false);
   const [name, setName] = useState(user?.name || "Johannes Johnson");
-  const [birthday, setBirthday] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [birthday, setBirthday] = useState(user?.birthday || "");
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [phoneInput, setPhoneInput] = useState("");
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profilePhoto || null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Track last saved state
+  const [lastSavedState, setLastSavedState] = useState({
+    name: user?.name || "Johannes Johnson",
+    birthday: user?.birthday || "",
+    phoneNumber: user?.phoneNumber || "",
+    profilePhoto: user?.profilePhoto || null,
+  });
+
+  // Sync state with user data when user changes
+  useEffect(() => {
+    if (user) {
+      const userState = {
+        name: user.name || "Johannes Johnson",
+        birthday: user.birthday || "",
+        phoneNumber: user.phoneNumber || "",
+        profilePhoto: user.profilePhoto || null,
+      };
+      setName(userState.name);
+      setBirthday(userState.birthday);
+      setPhoneNumber(userState.phoneNumber);
+      setProfilePhoto(userState.profilePhoto);
+      // Update last saved state to match current user data
+      setLastSavedState(userState);
+      // If phone is verified, don't allow editing
+      if (user.phoneVerified) {
+        setEditingPhone(false);
+      }
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -93,12 +123,12 @@ export default function ProfilePage() {
         alert('Image size must be less than 5MB');
         return;
       }
-      // Create preview URL
+      // Create preview URL - only update state, don't save yet
       const reader = new FileReader();
       reader.onloadend = () => {
         const photoUrl = reader.result as string;
         setProfilePhoto(photoUrl);
-        updateUser({ profilePhoto: photoUrl });
+        // Don't save immediately - wait for "Save Settings" button
       };
       reader.readAsDataURL(file);
     }
@@ -109,14 +139,15 @@ export default function ProfilePage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    updateUser({ profilePhoto: undefined });
+    // Don't save immediately - wait for "Save Settings" button
   };
 
   const handleSavePhone = () => {
     if (phoneInput.trim()) {
       const newPhone = phoneInput.trim();
       setPhoneNumber(newPhone);
-      updateUser({ phoneNumber: newPhone });
+      // When saving a new phone number, it's not verified yet
+      updateUser({ phoneNumber: newPhone, phoneVerified: false });
       setEditingPhone(false);
       setPhoneInput("");
     }
@@ -134,7 +165,7 @@ export default function ProfilePage() {
 
   const handleRemovePhone = () => {
     setPhoneNumber("");
-    updateUser({ phoneNumber: undefined });
+    updateUser({ phoneNumber: undefined, phoneVerified: false });
     setEditingPhone(false);
     setPhoneInput("");
   };
@@ -245,71 +276,34 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Verification Phone Number Section */}
+      {/* Verified Phone Number Section */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Phone className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-medium text-gray-900">Verification phone number</h2>
+            <h2 className="text-lg font-medium text-gray-900">Verified Phone Number</h2>
           </div>
         </div>
         <div className="px-6 py-4">
-          {editingPhone ? (
-            <div className="space-y-3">
-              <input
-                type="tel"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
-                placeholder="Enter phone number"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                autoFocus
-              />
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSavePhone}
-                  className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingPhone(false);
-                    setPhoneInput("");
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                {phoneNumber && (
-                  <button
-                    onClick={handleRemovePhone}
-                    className="px-4 py-2 border border-red-300 rounded-lg text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
-                  >
-                    Remove
-                  </button>
-                )}
+          {phoneNumber ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <p className="text-gray-900 font-medium">{phoneNumber}</p>
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Verified
+                </span>
               </div>
-            </div>
-          ) : phoneNumber ? (
-            <div className="flex items-center justify-between">
-              <p className="text-gray-900">{phoneNumber}</p>
-              <button
-                onClick={handleEditPhone}
-                className="flex items-center gap-2 text-primary-600 hover:text-primary-700 text-sm font-medium"
-              >
-                <Edit className="w-4 h-4" />
-                Edit
-              </button>
+              <p className="text-sm text-gray-600">
+                This is the phone number used during account registration. It cannot be changed.
+              </p>
             </div>
           ) : (
-            <div className="flex items-center justify-between">
-              <p className="text-gray-600">No phone number</p>
-              <button
-                onClick={handleAddPhone}
-                className="flex items-center gap-2 px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium"
-              >
-                Add
-              </button>
+            <div>
+              <p className="text-gray-600 mb-2">No phone number on file</p>
+              <p className="text-sm text-gray-500">
+                Phone number is set during account registration and cannot be changed later.
+              </p>
             </div>
           )}
         </div>
@@ -470,20 +464,34 @@ export default function ProfilePage() {
       <div className="flex gap-4 mb-6">
         <button
           onClick={() => {
-            // Save all current settings
-            updateUser({
-              name,
-              birthday: birthday || undefined,
-              phoneNumber: phoneNumber || undefined,
-              profilePhoto: profilePhoto || undefined,
-            });
-            // Close all editing modes
-            setEditingName(false);
-            setEditingBirthday(false);
-            setEditingPassword(false);
-            setEditingPhone(false);
-            setPhoneInput("");
-            alert("Settings saved successfully!");
+            try {
+              // Save all current settings (phone number is read-only and cannot be changed)
+              updateUser({
+                name,
+                birthday: birthday || undefined,
+                profilePhoto: profilePhoto || undefined,
+              });
+              
+              // Update last saved state to current values
+              setLastSavedState({
+                name,
+                birthday: birthday || "",
+                phoneNumber: phoneNumber || "",
+                profilePhoto: profilePhoto || null,
+              });
+              
+              // Close all editing modes
+              setEditingName(false);
+              setEditingBirthday(false);
+              setEditingPassword(false);
+              setEditingPhone(false);
+              setPhoneInput("");
+              
+              alert("Settings saved successfully!");
+            } catch (error) {
+              console.error("Error saving settings:", error);
+              alert("Failed to save settings. Please try again.");
+            }
           }}
           className="flex-1 px-6 py-3 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors font-medium"
         >
@@ -491,12 +499,12 @@ export default function ProfilePage() {
         </button>
         <button
           onClick={() => {
-            // Reset all changes to original user data
-            setName(user?.name || "Johannes Johnson");
-            setBirthday(user?.birthday || "");
-            setPhoneNumber(user?.phoneNumber || "");
+            // Revert all changes to last saved state
+            setName(lastSavedState.name);
+            setBirthday(lastSavedState.birthday);
+            setPhoneNumber(lastSavedState.phoneNumber);
             setPhoneInput("");
-            setProfilePhoto(user?.profilePhoto || null);
+            setProfilePhoto(lastSavedState.profilePhoto);
             setEditingName(false);
             setEditingBirthday(false);
             setEditingPassword(false);
