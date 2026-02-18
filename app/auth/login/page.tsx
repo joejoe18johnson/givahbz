@@ -88,7 +88,7 @@ function LoginForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" data-auth-form>
           <div>
             <label className="block text-sm font-medium mb-2">
               Email Address *
@@ -98,8 +98,9 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 placeholder:text-gray-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900 placeholder:text-gray-500 [-webkit-text-fill-color:theme(colors.gray.900)]"
               placeholder="your.email@example.com"
+              style={{ color: "#111827" }}
             />
           </div>
 
@@ -113,8 +114,9 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 pr-10 text-gray-900 placeholder:text-gray-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 pr-10 bg-white text-gray-900 placeholder:text-gray-500"
                 placeholder="Enter your password"
+                style={{ color: "#111827" }}
               />
               <button
                 type="button"

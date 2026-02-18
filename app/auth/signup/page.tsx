@@ -136,7 +136,7 @@ export default function SignupPage() {
         )}
 
         {step === 1 && (
-          <form onSubmit={handleStep1Submit} className="space-y-6">
+          <form onSubmit={handleStep1Submit} className="space-y-6" data-auth-form>
             <button
               type="button"
               onClick={() => signIn("google", { callbackUrl: "/my-campaigns" })}
@@ -255,7 +255,7 @@ export default function SignupPage() {
         )}
 
         {step === 2 && (
-          <form onSubmit={handleStep2Submit} className="space-y-6">
+          <form onSubmit={handleStep2Submit} className="space-y-6" data-auth-form>
             <div className="bg-primary-50 border-2 border-primary-300 rounded-lg p-6">
               <div className="flex items-start gap-3 mb-4">
                 <AlertCircle className="w-5 h-5 text-primary-600 mt-0.5" />

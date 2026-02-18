@@ -26,6 +26,18 @@ body {
   overflow-x: hidden;
 }
 
+/* Auth forms: force dark, visible text on inputs (mobile + dark mode) */
+[data-auth-form] input[type="email"],
+[data-auth-form] input[type="password"],
+[data-auth-form] input[type="text"] {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+[data-auth-form] input::placeholder {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
