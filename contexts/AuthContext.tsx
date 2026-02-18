@@ -14,6 +14,7 @@ interface User {
   role?: "user" | "admin";
   birthday?: string;
   phoneNumber?: string;
+  phoneVerified?: boolean;
   profilePhoto?: string;
 }
 

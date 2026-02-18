@@ -14,9 +14,7 @@ import {
   Upload,
   Trash2,
   CheckCircle2,
-  AlertTriangle,
-  Eye,
-  EyeOff
+  AlertTriangle
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -31,7 +29,6 @@ export default function ProfilePage() {
   const [phoneInput, setPhoneInput] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (isLoading) {
@@ -451,30 +448,18 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              {showPassword ? (
-                <div className="flex-1">
-                  <p className="text-gray-600 text-sm mb-1">Password cannot be displayed for security reasons.</p>
-                  <p className="text-gray-400 text-xs">Passwords are encrypted and cannot be retrieved. Use "Edit" to change your password.</p>
-                </div>
-              ) : (
-                <p className="text-gray-900">●●●●●●●●●●●●</p>
-              )}
+              <p className="text-gray-900">●●●●●●●●●●●●</p>
               <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-700 text-sm font-medium ml-4"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => {
+                  // TODO: Implement password reset email functionality
+                  const userEmail = user?.email || "";
+                  alert(`Password reset email will be sent to ${userEmail}`);
+                  // In production, this would call an API endpoint to send reset email
+                  console.log("Password reset requested for:", userEmail);
+                }}
+                className="text-primary-600 hover:text-primary-700 text-sm font-medium underline"
               >
-                {showPassword ? (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    Hide
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Show
-                  </>
-                )}
+                Forgot password?
               </button>
             </div>
           )}
@@ -516,7 +501,6 @@ export default function ProfilePage() {
             setEditingBirthday(false);
             setEditingPassword(false);
             setEditingPhone(false);
-            setShowPassword(false);
             if (fileInputRef.current) {
               fileInputRef.current.value = '';
             }
