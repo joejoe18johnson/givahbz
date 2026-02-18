@@ -52,8 +52,13 @@ const authOptions = {
     async session({ session, token }: { session: any; token: any }) {
       if (session?.user) {
         session.user.id = token.sub ?? token.id;
+        const email = (session.user.email as string)?.toLowerCase() ?? "";
         const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-        session.user.role = adminEmails.includes((session.user.email as string)?.toLowerCase()) ? "admin" : "user";
+        // Fallback: test admin account is always admin when ADMIN_EMAILS not set (e.g. fresh .env)
+        const isAdmin = adminEmails.length > 0
+          ? adminEmails.includes(email)
+          : email === "admin@givahbz.com";
+        session.user.role = isAdmin ? "admin" : "user";
       }
       return session;
     },
