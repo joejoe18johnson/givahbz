@@ -9,12 +9,8 @@ import {
   query,
   where,
   orderBy,
-  limit,
-  startAfter,
   serverTimestamp,
   Timestamp,
-  QueryDocumentSnapshot,
-  DocumentData,
 } from "firebase/firestore";
 import { db } from "./config";
 import { Campaign } from "@/lib/data";
@@ -43,36 +39,54 @@ export async function getCampaign(campaignId: string): Promise<Campaign | null> 
   } as Campaign;
 }
 
+/** Normalize createdAt to YYYY-MM-DD string (handles Firestore Timestamp or string) */
+function normalizeCreatedAt(data: Record<string, unknown>): string {
+  const raw = data.createdAt;
+  if (!raw) return new Date().toISOString().split("T")[0];
+  if (typeof raw === "string") return raw.split("T")[0];
+  if (raw && typeof raw === "object" && "toDate" in raw && typeof (raw as { toDate: () => Date }).toDate === "function") {
+    return (raw as { toDate: () => Date }).toDate().toISOString().split("T")[0];
+  }
+  return new Date().toISOString().split("T")[0];
+}
+
 export async function getCampaigns(filters?: {
   category?: string;
   search?: string;
   trending?: boolean;
   limitCount?: number;
 }): Promise<Campaign[]> {
-  let q = query(collection(db, campaignsCollection));
-  
-  if (filters?.category) {
-    q = query(q, where("category", "==", filters.category));
-  }
-  
-  if (filters?.trending) {
-    // For trending, you might want to order by a trending score or backers
-    q = query(q, orderBy("backers", "desc"));
-  } else {
-    q = query(q, orderBy("createdAt", "desc"));
-  }
-  
-  if (filters?.limitCount) {
-    q = query(q, limit(filters.limitCount));
-  }
-  
+  // Fetch all campaigns with no orderBy/where to avoid index requirements and ensure all docs are returned
+  const q = query(collection(db, campaignsCollection));
   const querySnapshot = await getDocs(q);
-  let campaigns = querySnapshot.docs.map((doc) => ({
-    ...doc.data(),
-    id: doc.id,
-  })) as Campaign[];
-  
-  // Client-side search filter if needed
+
+  let campaigns = querySnapshot.docs.map((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const createdAt = normalizeCreatedAt(data);
+    return {
+      ...data,
+      id: docSnap.id,
+      createdAt,
+    } as Campaign;
+  });
+
+  // Filter by category in memory (avoids composite index)
+  if (filters?.category && filters.category !== "All") {
+    campaigns = campaigns.filter((c) => c.category === filters.category);
+  }
+
+  // Sort in memory
+  if (filters?.trending) {
+    campaigns.sort((a, b) => (b.backers ?? 0) - (a.backers ?? 0));
+  } else {
+    campaigns.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  }
+
+  // Client-side search filter
   if (filters?.search) {
     const searchLower = filters.search.toLowerCase();
     campaigns = campaigns.filter(
@@ -81,7 +95,12 @@ export async function getCampaigns(filters?: {
         campaign.description.toLowerCase().includes(searchLower)
     );
   }
-  
+
+  // Apply limit in memory if requested
+  if (filters?.limitCount && filters.limitCount > 0) {
+    campaigns = campaigns.slice(0, filters.limitCount);
+  }
+
   return campaigns;
 }
 
