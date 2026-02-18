@@ -70,10 +70,7 @@ export default function Home() {
           <div className="order-2 lg:order-1">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-900 mb-4">
               Supporting{" "}
-              <span className="relative inline-block">
-                Belizean
-                <span className="absolute bottom-1 left-0 w-full h-1.5 bg-success-500 rounded-full" />
-              </span>{" "}
+              <span className="text-success-600">Belizean</span>{" "}
               Communities
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-xl">
