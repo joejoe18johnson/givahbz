@@ -163,8 +163,9 @@ export default function Home() {
           Campaigns gaining momentum and support from the community
         </p>
 
-        {/* Mobile: horizontal carousel */}
-        <div className="md:hidden -mx-4 px-4 mb-6 overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory touch-pan-x scrollbar-hide">
+        {/* Mobile: horizontal carousel — pan-y on wrapper so vertical scroll (page) works; pan-x on inner for carousel swipe */}
+        <div className="md:hidden -mx-4 px-4 mb-6 touch-pan-y">
+          <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory touch-pan-x scrollbar-hide">
           <div className="flex gap-4 pb-2">
             {allTrendingCampaigns.map((campaign) => (
               <div
@@ -178,6 +179,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </div>
 
@@ -284,7 +286,7 @@ export default function Home() {
             {/* Step 1 */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-success-500 rounded-full flex items-center justify-center">
                   <FileText className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -298,7 +300,7 @@ export default function Home() {
             {/* Step 2 */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-success-500 rounded-full flex items-center justify-center">
                   <Share2 className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -312,7 +314,7 @@ export default function Home() {
             {/* Step 3 */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-success-500 rounded-full flex items-center justify-center">
                   <ArrowUpRight className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -326,7 +328,7 @@ export default function Home() {
             {/* Step 4 */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-success-500 rounded-full flex items-center justify-center">
                   <Shield className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -340,7 +342,7 @@ export default function Home() {
             {/* Step 5 */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-success-500 rounded-full flex items-center justify-center">
                   <DollarSign className="w-8 h-8 text-white" />
                 </div>
               </div>
