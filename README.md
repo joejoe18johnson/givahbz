@@ -83,7 +83,7 @@ For Google sign-in, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to your `.
 
 ### Connect Firebase to Vercel
 
-To use your Firebase database (and auth/storage) on your Vercel deployment (e.g. [givahbz.vercel.app](https://givahbz.vercel.app)), add the same Firebase env vars in Vercel. **→ [VERCEL_FIREBASE.md](VERCEL_FIREBASE.md)** for step-by-step instructions.
+**Localhost works but Vercel doesn’t?** Vercel doesn’t use your `.env`. Add the **same 6** `NEXT_PUBLIC_FIREBASE_*` variables in **Vercel → Project → Settings → Environment Variables**, then **Redeploy**. See **[VERCEL_FIREBASE.md](VERCEL_FIREBASE.md)** for step-by-step instructions and **[api/firebase-check](https://givahbz.vercel.app/api/firebase-check)** to verify after deploy.
 
 ## Project Structure
 

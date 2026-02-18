@@ -4,6 +4,18 @@ Follow these steps so your Vercel deployment (e.g. **https://givahbz.vercel.app*
 
 ---
 
+## If localhost works but Vercel does not
+
+**Local works** = your `.env` and Firebase project are correct.  
+**Vercel** does not read your `.env` file. You must add the **same 6 variables** in the Vercel dashboard and **redeploy**.
+
+1. Copy the 6 values from your **`.env`** (the ones that make localhost work).
+2. In Vercel: **Project → Settings → Environment Variables** → add each variable (name + value, no quotes).
+3. **Deployments → ⋯ on latest → Redeploy.** Env vars only apply after a new deployment.
+4. Check: **https://givahbz.vercel.app/api/firebase-check** — must show `"firebase": "connected"`.
+
+---
+
 ## Step 1: Get your Firebase config values
 
 1. Open [Firebase Console](https://console.firebase.google.com/)
