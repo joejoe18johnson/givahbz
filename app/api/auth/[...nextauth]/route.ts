@@ -11,12 +11,27 @@ const TEST_ACCOUNTS = [
   { email: "admin@givahbz.com", password: "Admin123!", name: "Admin User" },
 ];
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+const hasGoogle = Boolean(googleClientId && googleClientSecret);
+
 const authOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
+    ...(hasGoogle
+      ? [
+          GoogleProvider({
+            clientId: googleClientId!,
+            clientSecret: googleClientSecret!,
+            authorization: {
+              params: {
+                prompt: "consent",
+                access_type: "offline",
+                response_type: "code",
+              },
+            },
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: "Email and password",
       credentials: {
@@ -62,12 +77,19 @@ const authOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // Allow relative callback URLs (e.g. /my-campaigns) and same-origin absolute URLs
+      if (url.startsWith("/")) return `${baseUrl.replace(/\/$/, "")}${url}`;
+      if (new URL(url).origin === baseUrl.replace(/\/$/, "")) return url;
+      return baseUrl;
+    },
   },
   pages: {
     signIn: "/auth/login",
   },
   session: { strategy: "jwt" as const, maxAge: 30 * 24 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
 };
 
 const handler = NextAuth(authOptions);
