@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * GET /api/firebase-check
  * Call this on your Vercel URL to see if Firebase env vars are set.

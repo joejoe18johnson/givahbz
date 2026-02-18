@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaigns } from "@/lib/firebase/firestore";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * GET /api/campaigns
  * Fetches campaigns from Firestore on the server (uses Vercel runtime env vars).

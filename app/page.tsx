@@ -51,16 +51,19 @@ const HOME_FAQS = [
 export default function Home() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [campaignsError, setCampaignsError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadCampaigns() {
+      setCampaignsError(null);
       try {
         const fetchedCampaigns = await fetchCampaignsFromAPI({ trending: true });
         setCampaigns(fetchedCampaigns);
       } catch (error) {
         console.error("Error loading campaigns:", error);
+        setCampaignsError("Campaigns could not be loaded. Check Firebase is connected.");
       } finally {
         setIsLoading(false);
       }
@@ -183,6 +186,17 @@ export default function Home() {
         <p className="text-gray-600 mb-6">
           Campaigns gaining momentum and support from the community
         </p>
+
+        {campaignsError && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+            <p className="font-medium">{campaignsError}</p>
+            <p className="text-sm mt-1">
+              <a href="/api/firebase-check" className="underline" target="_blank" rel="noopener noreferrer">Check Firebase connection</a>
+              {" · "}
+              <a href="/campaigns" className="underline">Try campaigns page</a>
+            </p>
+          </div>
+        )}
 
         {/* Mobile: horizontal carousel — allows both horizontal and vertical scrolling */}
         <div className="md:hidden -mx-4 px-4 mb-6">
