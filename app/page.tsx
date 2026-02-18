@@ -4,7 +4,7 @@ import { Permanent_Marker } from "next/font/google";
 import CampaignCard from "@/components/CampaignCard";
 import { Campaign } from "@/lib/data";
 import { getTrendingCampaigns } from "@/lib/campaignUtils";
-import { fetchCampaigns } from "@/lib/services/campaignService";
+import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import SafeImage from "@/components/SafeImage";
 import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calendar, Users, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
@@ -57,7 +57,7 @@ export default function Home() {
   useEffect(() => {
     async function loadCampaigns() {
       try {
-        const fetchedCampaigns = await fetchCampaigns({ trending: true });
+        const fetchedCampaigns = await fetchCampaignsFromAPI({ trending: true });
         setCampaigns(fetchedCampaigns);
       } catch (error) {
         console.error("Error loading campaigns:", error);

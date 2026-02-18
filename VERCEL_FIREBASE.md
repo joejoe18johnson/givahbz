@@ -76,12 +76,23 @@ Or push a new commit to your connected Git branch; that will trigger a new deplo
 
 ## Step 5: Confirm Firebase is connected
 
-1. Open **https://givahbz.vercel.app/campaigns**
-2. You should see campaigns loading from Firestore (same data as in Firebase Console).
+1. Open **https://givahbz.vercel.app/api/firebase-check** — if `firebase` is `"not_connected"`, the response lists missing vars; add them in Vercel and redeploy.
+2. Open **https://givahbz.vercel.app/campaigns** — you should see campaigns loading from Firestore (same data as in Firebase Console).
 3. If you see “Unable to load campaigns” or an error:
    - Double-check every `NEXT_PUBLIC_FIREBASE_*` value in Vercel (no typos, no extra spaces).
    - Ensure Firestore (and Auth/Storage if you use them) are enabled for that project in Firebase Console.
    - Redeploy again after changing env vars.
+
+---
+
+## Troubleshooting: "Firebase still not connected"
+
+- **Check endpoint:** Open **https://givahbz.vercel.app/api/firebase-check** — it lists which env vars are missing. Add them in Vercel → Settings → Environment Variables, then **Redeploy**.
+- **Redeploy after every change:** Env vars are applied at **build** time. Deployments → ⋯ → Redeploy.
+- **Exact variable names** (no typos): `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`.
+- **Same values as local:** Copy from your working `.env` or Firebase Console.
+- **No quotes** when pasting values in Vercel (e.g. `AIzaSy...`, not `"AIzaSy..."`).
+- **Firestore rules:** Firebase Console → Firestore → Rules — ensure read is allowed for your campaigns collection.
 
 ---
 

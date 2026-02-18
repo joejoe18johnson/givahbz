@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Campaign } from "@/lib/data";
-import { fetchCampaigns } from "@/lib/services/campaignService";
+import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import { formatCurrency } from "@/lib/utils";
 import {
   getStoppedCampaignIds,
@@ -50,7 +50,7 @@ export default function MyCampaignsPage() {
   useEffect(() => {
     async function loadCampaigns() {
       try {
-        const fetchedCampaigns = await fetchCampaigns();
+        const fetchedCampaigns = await fetchCampaignsFromAPI();
         setCampaigns(fetchedCampaigns);
       } catch (error) {
         console.error("Error loading campaigns:", error);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import CampaignCard from "@/components/CampaignCard";
 import { Campaign } from "@/lib/data";
-import { fetchCampaigns } from "@/lib/services/campaignService";
+import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import { getTrendingCampaigns } from "@/lib/campaignUtils";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -24,7 +24,7 @@ function CampaignsContent() {
     async function loadCampaigns() {
       try {
         setError(null);
-        const fetchedCampaigns = await fetchCampaigns();
+        const fetchedCampaigns = await fetchCampaignsFromAPI();
         setCampaigns(fetchedCampaigns);
       } catch (err) {
         console.error("Error loading campaigns:", err);

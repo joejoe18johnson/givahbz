@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, ArrowLeft } from "lucide-react";
 import { Campaign } from "@/lib/data";
-import { fetchCampaigns } from "@/lib/services/campaignService";
+import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import CampaignCard from "@/components/CampaignCard";
 import { getHeartedCampaignIds } from "@/components/HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +19,7 @@ export default function LikedCampaignsPage() {
     async function loadData() {
       try {
         // Load all campaigns from Firestore
-        const fetchedCampaigns = await fetchCampaigns();
+        const fetchedCampaigns = await fetchCampaignsFromAPI();
         setCampaigns(fetchedCampaigns);
         
         // Load hearted campaign IDs

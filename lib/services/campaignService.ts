@@ -1,6 +1,38 @@
 import { Campaign } from "@/lib/data";
 import { getCampaigns, getCampaign } from "@/lib/firebase/firestore";
 
+/** Build query string for /api/campaigns */
+function campaignsApiQuery(filters?: {
+  category?: string;
+  trending?: boolean;
+  limitCount?: number;
+}): string {
+  const params = new URLSearchParams();
+  if (filters?.trending) params.set("trending", "true");
+  if (filters?.category && filters.category !== "All") params.set("category", filters.category);
+  if (filters?.limitCount && filters.limitCount > 0) params.set("limitCount", String(filters.limitCount));
+  const q = params.toString();
+  return q ? `?${q}` : "";
+}
+
+/**
+ * Fetch campaigns from the server API (Firestore on Vercel uses runtime env vars).
+ * Use this for the campaigns list and home so data is never static/cached.
+ */
+export async function fetchCampaignsFromAPI(filters?: {
+  category?: string;
+  trending?: boolean;
+  limitCount?: number;
+}): Promise<Campaign[]> {
+  const url = `/api/campaigns${campaignsApiQuery(filters)}`;
+  const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error ?? "Failed to load campaigns");
+  }
+  return res.json();
+}
+
 // Always fetch from Firestore - no fallback to mock data
 export async function fetchCampaigns(filters?: {
   category?: string;

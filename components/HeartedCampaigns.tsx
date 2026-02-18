@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { X, Heart } from "lucide-react";
 import { Campaign } from "@/lib/data";
-import { fetchCampaigns } from "@/lib/services/campaignService";
+import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import SafeImage from "./SafeImage";
 import { formatCurrency } from "@/lib/utils";
 import { Users, Calendar, CheckCircle2 } from "lucide-react";

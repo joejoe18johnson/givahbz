@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
-import { fetchCampaigns } from "@/lib/services/campaignService";
+import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import { getDonations } from "@/lib/firebase/firestore";
 import { adminUsers } from "@/lib/adminData";
 import { getCampaignsUnderReview } from "@/lib/campaignsUnderReview";
@@ -21,7 +21,7 @@ export default function AdminDashboardPage() {
     async function loadData() {
       try {
         const [fetchedCampaigns, fetchedDonations] = await Promise.all([
-          fetchCampaigns(),
+          fetchCampaignsFromAPI(),
           getDonations(),
         ]);
         setCampaigns(fetchedCampaigns);
