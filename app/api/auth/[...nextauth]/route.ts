@@ -11,9 +11,16 @@ const TEST_ACCOUNTS = [
   { email: "admin@givahbz.com", password: "Admin123!", name: "Admin User" },
 ];
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
-const hasGoogle = Boolean(googleClientId && googleClientSecret);
+// Parse Google OAuth env vars (strip quotes and whitespace so .env values load reliably)
+function readEnv(name: string): string {
+  const raw = process.env[name];
+  if (raw == null || typeof raw !== "string") return "";
+  const trimmed = raw.trim().replace(/^["']|["']$/g, "");
+  return trimmed.trim();
+}
+const googleClientId = readEnv("GOOGLE_CLIENT_ID");
+const googleClientSecret = readEnv("GOOGLE_CLIENT_SECRET");
+const hasGoogle = Boolean(googleClientId.length > 0 && googleClientSecret.length > 0);
 
 const authOptions = {
   providers: [
