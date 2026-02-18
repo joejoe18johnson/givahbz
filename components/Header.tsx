@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Search, Heart, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,13 +38,12 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link href="/" className="shrink-0 flex items-center">
-            <Image
+            <img
               src="/givah-logo.png"
               alt="GivahBz"
+              className="h-8 w-auto sm:h-10"
               width={140}
               height={40}
-              className="h-8 w-auto sm:h-10"
-              priority
             />
           </Link>
 
