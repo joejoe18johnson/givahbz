@@ -126,11 +126,6 @@ export default function CampaignPage({ params }: PageProps) {
           {campaign.updates && campaign.updates.length > 0 && (
             <CampaignUpdates updates={campaign.updates} />
           )}
-
-          {/* Donors List */}
-          <div className="mt-8">
-            <DonorsList campaignId={campaign.id} />
-          </div>
         </div>
 
         {/* Sidebar */}
@@ -192,6 +187,11 @@ export default function CampaignPage({ params }: PageProps) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Donors List */}
+      <div className="mt-8">
+        <DonorsList campaignId={campaign.id} />
       </div>
     </div>
   );
