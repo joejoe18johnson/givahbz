@@ -56,10 +56,12 @@ export default function CampaignPage({ params }: PageProps) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
         <div className="absolute top-4 right-4 flex gap-2">
-          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg">
-            <Share2 className="w-5 h-5 text-gray-700" />
-          </button>
-          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg">
+          <ShareCampaign
+            campaignId={campaign.id}
+            campaignTitle={campaign.title}
+            variant="compact"
+          />
+          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg" aria-label="Save">
             <Heart className="w-5 h-5 text-gray-700" />
           </button>
         </div>
