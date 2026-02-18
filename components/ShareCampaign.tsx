@@ -167,16 +167,27 @@ export default function ShareCampaign({
         {open && (
           <>
             <div
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-40 bg-black/50"
               aria-hidden
               onClick={() => setOpen(false)}
             />
-            {/* Mobile: centered popup; desktop: dropdown below button */}
-            <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(20rem,calc(100vw-2rem))] bg-white rounded-xl border border-gray-200 shadow-lg py-2 md:absolute md:right-0 md:left-auto md:top-full md:translate-x-0 md:translate-y-0 md:mt-2 md:w-56">
-              <p className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Share campaign
-              </p>
-              {buttons}
+            {/* Full-screen centered modal on mobile; dropdown on desktop */}
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 md:contents"
+              onClick={() => setOpen(false)}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Share campaign"
+            >
+              <div
+                className="w-full max-w-md max-h-[100vh] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-xl py-4 md:absolute md:right-0 md:top-full md:mt-2 md:w-56 md:max-w-none md:max-h-none md:py-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Share campaign
+                </p>
+                {buttons}
+              </div>
             </div>
           </>
         )}
