@@ -12,6 +12,9 @@ interface User {
   idVerified: boolean;
   addressVerified: boolean;
   role?: "user" | "admin";
+  birthday?: string;
+  phoneNumber?: string;
+  profilePhoto?: string;
 }
 
 interface AuthContextType {
@@ -20,6 +23,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<boolean>;
+  updateUser: (updates: Partial<User>) => void;
   logout: () => void;
   isLoading: boolean;
 }
@@ -97,6 +101,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  const updateUser = (updates: Partial<User>) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    
+    // Update localStorage if user is stored there
+    const storedUser = localStorage.getItem("belizeFund_user");
+    if (storedUser) {
+      localStorage.setItem("belizeFund_user", JSON.stringify(updatedUser));
+    }
+    
+    // TODO: Update backend/database with user changes
+  };
+
   const logout = () => {
     localStorage.removeItem("belizeFund_user");
     setUser(null);
@@ -107,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === "admin";
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, login, loginWithGoogle, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, isAdmin, login, loginWithGoogle, signup, updateUser, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
