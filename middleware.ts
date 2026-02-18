@@ -11,9 +11,17 @@ export async function middleware(request: NextRequest) {
   if (!isProtected) return NextResponse.next();
 
   const secret = process.env.NEXTAUTH_SECRET;
-  const token = secret
-    ? await getToken({ req: request, secret })
-    : null;
+  if (!secret) {
+    // No secret: let request through; admin layout will redirect to login if needed
+    return NextResponse.next();
+  }
+
+  let token = null;
+  try {
+    token = await getToken({ req: request, secret });
+  } catch {
+    return NextResponse.next();
+  }
 
   if (!token) {
     const loginUrl = new URL("/auth/login", request.url);
