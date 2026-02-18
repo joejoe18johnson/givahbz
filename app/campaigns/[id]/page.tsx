@@ -1,11 +1,12 @@
 import { campaigns } from "@/lib/data";
 import { notFound } from "next/navigation";
 import SafeImage from "@/components/SafeImage";
-import { Calendar, MapPin, Users, Share2, Heart, CheckCircle2, FileText } from "lucide-react";
+import { Calendar, MapPin, Users, Heart, CheckCircle2 } from "lucide-react";
 import CampaignDonateSection from "@/components/CampaignDonateSection";
 import CampaignUpdates from "@/components/CampaignUpdates";
 import RewardsSection from "@/components/RewardsSection";
 import ProofDocuments from "@/components/ProofDocuments";
+import ShareCampaign from "@/components/ShareCampaign";
 import { formatCurrency } from "@/lib/utils";
 
 interface PageProps {
@@ -165,6 +166,14 @@ export default function CampaignPage({ params }: PageProps) {
                 </div>
               </div>
             </div>
+
+            {/* Share */}
+            <ShareCampaign
+              campaignId={campaign.id}
+              campaignTitle={campaign.title}
+              variant="full"
+              className="mb-6 pb-6 border-b border-gray-200"
+            />
 
             {/* Donate Button (hidden when campaign is stopped) */}
             <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
