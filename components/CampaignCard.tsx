@@ -59,7 +59,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute top-2 right-2 flex gap-2">
             {campaign.verified && (
-              <div className="bg-success-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
+              <div className="bg-verified-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
                 <CheckCircle2 className="w-3 h-3" />
                 Verified
               </div>

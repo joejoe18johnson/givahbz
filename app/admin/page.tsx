@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
                     <td className="px-5 py-3 text-gray-600">{c.creator}</td>
                     <td className="px-5 py-3 font-medium">{formatCurrency(c.raised)}</td>
                     <td className="px-5 py-3">
-                      <span className={c.verified ? "text-success-600" : "text-amber-600"}>{c.verified ? "Verified" : "Pending"}</span>
+                      <span className={c.verified ? "text-verified-600" : "text-amber-600"}>{c.verified ? "Verified" : "Pending"}</span>
                     </td>
                   </tr>
                 ))}

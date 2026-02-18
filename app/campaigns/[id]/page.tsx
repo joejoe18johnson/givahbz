@@ -73,7 +73,7 @@ export default function CampaignPage({ params }: PageProps) {
               {campaign.category}
             </span>
             {campaign.verified && (
-              <div className="bg-success-100 text-success-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
+              <div className="bg-verified-100 text-verified-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 Verified Campaign
               </div>

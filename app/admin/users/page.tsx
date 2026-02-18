@@ -39,7 +39,7 @@ export default function AdminUsersPage() {
                     {u.verified ? <span className="text-success-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span> : <span className="text-amber-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>}
                   </td>
                   <td className="px-5 py-3">
-                    {u.idVerified ? <span className="text-success-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span> : <span className="text-amber-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>}
+                    {u.idVerified ? <span className="text-verified-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span> : <span className="text-amber-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>}
                   </td>
                   <td className="px-5 py-3 text-gray-600">{u.createdAt}</td>
                   <td className="px-5 py-3 text-gray-600">{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : "—"}</td>

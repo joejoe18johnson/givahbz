@@ -242,7 +242,7 @@ export default function MyCampaignsPage() {
                         </span>
                       )}
                       {campaign.verified && (
-                        <span className="bg-success-500 text-white p-1.5 rounded-full" title="Verified">
+                        <span className="bg-verified-500 text-white p-1.5 rounded-full" title="Verified">
                           <CheckCircle2 className="w-4 h-4" />
                         </span>
                       )}

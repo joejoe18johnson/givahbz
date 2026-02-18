@@ -50,7 +50,7 @@ export default function AdminCampaignsPage() {
                   <td className="px-5 py-3 text-gray-600">{c.createdAt}</td>
                   <td className="px-5 py-3">
                     {c.verified ? (
-                      <span className="inline-flex items-center gap-1 text-success-600"><CheckCircle2 className="w-4 h-4" /> Yes</span>
+                      <span className="inline-flex items-center gap-1 text-verified-600"><CheckCircle2 className="w-4 h-4" /> Yes</span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-amber-600"><XCircle className="w-4 h-4" /> No</span>
                     )}
