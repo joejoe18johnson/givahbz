@@ -274,7 +274,7 @@ export default function CreateCampaignPage() {
                 To ensure transparency and build trust, please upload supporting documents such as:
               </p>
               <ul className="text-sm text-yellow-800 list-disc list-inside mb-4 space-y-1">
-                <li>Medical reports or doctor's notes (for medical campaigns)</li>
+                <li>Medical reports or doctor&apos;s notes (for medical campaigns)</li>
                 <li>Financial statements or income proof</li>
                 <li>Official identification</li>
                 <li>Organization registration documents (for organizations/charities)</li>

@@ -72,7 +72,7 @@ export default function AboutPage() {
                 <Heart className="w-12 h-12 text-primary-600 mb-4" />
                 <h3 className="text-2xl font-medium mb-3">Community First</h3>
                 <p className="text-gray-700">
-                  We're committed to supporting Belizean communities. Every Belizean Dollar raised goes directly to the cause - we charge zero platform fees.
+                  We&apos;re committed to supporting Belizean communities. Every Belizean Dollar raised goes directly to the cause - we charge zero platform fees.
                 </p>
               </div>
               <div className="bg-white rounded-lg p-8 shadow-md">
@@ -107,7 +107,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-2xl font-medium mb-3">Verified Campaigns</h3>
                   <p className="text-gray-700 leading-relaxed">
-                    We verify every campaign organizer's identity and review proof documents to ensure campaigns are legitimate and transparent. This builds trust and protects donors.
+                    We verify every campaign organizer&apos;s identity and review proof documents to ensure campaigns are legitimate and transparent. This builds trust and protects donors.
                   </p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-2xl font-medium mb-3">Zero Platform Fees</h3>
                   <p className="text-gray-700 leading-relaxed">
-                    Unlike many platforms, we charge zero platform fees. Every Belizean Dollar raised goes directly to the cause. We only charge what's necessary for secure payment processing.
+                    Unlike many platforms, we charge zero platform fees. Every Belizean Dollar raised goes directly to the cause. We only charge what&apos;s necessary for secure payment processing.
                   </p>
                 </div>
               </div>
@@ -140,7 +140,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-2xl font-medium mb-3">Flexible Campaigns</h3>
                   <p className="text-gray-700 leading-relaxed">
-                    Campaigns stay active as long as you need them. There's no time pressure - you can continue receiving donations even after reaching your goal.
+                    Campaigns stay active as long as you need them. There&apos;s no time pressure - you can continue receiving donations even after reaching your goal.
                   </p>
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default function AboutPage() {
               </div>
             </div>
             <p className="text-xl text-primary-100">
-              Together, we're making a difference in communities across Belize
+              Together, we&apos;re making a difference in communities across Belize
             </p>
           </div>
         </div>

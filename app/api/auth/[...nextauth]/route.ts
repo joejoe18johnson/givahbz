@@ -1,4 +1,6 @@
 import NextAuth from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { User } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 
@@ -9,7 +11,7 @@ const TEST_ACCOUNTS = [
   { email: "admin@givahbz.com", password: "Admin123!", name: "Admin User" },
 ];
 
-export const authOptions = {
+const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
@@ -40,7 +42,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role;
@@ -59,7 +61,7 @@ export const authOptions = {
   pages: {
     signIn: "/auth/login",
   },
-  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  session: { strategy: "jwt" as const, maxAge: 30 * 24 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
 };
 

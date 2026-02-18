@@ -43,7 +43,7 @@ export default function FeesPayoutsPage() {
               <h2 className="text-3xl font-medium mb-6">Payment Processing Fees</h2>
               <div className="bg-white rounded-lg p-8">
                 <p className="text-gray-700 mb-4">
-                  While we don't charge platform fees, third-party payment processors may apply small fees for handling transactions. These fees are standard across the industry and help ensure secure, reliable payment processing.
+                  While we don&apos;t charge platform fees, third-party payment processors may apply small fees for handling transactions. These fees are standard across the industry and help ensure secure, reliable payment processing.
                 </p>
                 <div className="bg-white rounded-lg p-6 mt-6">
                   <h3 className="text-xl font-medium mb-4">Typical Payment Processing Fees:</h3>
@@ -69,7 +69,7 @@ export default function FeesPayoutsPage() {
                   </ul>
                   <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Note:</strong> Payment processing fees are deducted automatically from each donation before funds are transferred to your account. You'll see the net amount received in your payout summary.
+                      <strong>Note:</strong> Payment processing fees are deducted automatically from each donation before funds are transferred to your account. You&apos;ll see the net amount received in your payout summary.
                     </p>
                   </div>
                 </div>
@@ -131,7 +131,7 @@ export default function FeesPayoutsPage() {
               <div className="bg-primary-50 rounded-lg p-8">
                 <h3 className="text-xl font-medium mb-4">Bank Account Setup</h3>
                 <p className="text-gray-700 mb-6">
-                  To receive payouts, you'll need to provide your bank account details during campaign setup. We support transfers to Belizean bank accounts.
+                  To receive payouts, you&apos;ll need to provide your bank account details during campaign setup. We support transfers to Belizean bank accounts.
                 </p>
                 <div className="bg-white rounded-lg p-6">
                   <h4 className="font-medium mb-3">Required Information:</h4>
@@ -165,7 +165,7 @@ export default function FeesPayoutsPage() {
                   <h3 className="text-xl font-medium text-gray-900 mb-3">Important Notes</h3>
                   <ul className="space-y-2 text-gray-700">
                     <li>• All payouts are processed in Belizean Dollars (BZ$)</li>
-                    <li>• You'll receive a detailed payout summary via email each month</li>
+                    <li>• You&apos;ll receive a detailed payout summary via email each month</li>
                     <li>• Processing times may vary depending on your bank</li>
                     <li>• Contact us if you need to update your bank account information</li>
                     <li>• Funds are only transferred to verified campaign organizers</li>

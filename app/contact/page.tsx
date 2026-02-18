@@ -42,7 +42,7 @@ export default function ContactPage() {
               Contact Us
             </h1>
             <p className="text-xl md:text-2xl text-primary-100">
-              We're here to help. Get in touch with any questions or concerns.
+              We&apos;re here to help. Get in touch with any questions or concerns.
             </p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function ContactPage() {
                     <CheckCircle2 className="w-16 h-16 text-success-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-medium text-success-900 mb-2">Thank You!</h3>
                     <p className="text-success-800">
-                      Your message has been sent. We'll get back to you as soon as possible.
+                      Your message has been sent. We&apos;ll get back to you as soon as possible.
                     </p>
                   </div>
                 ) : (

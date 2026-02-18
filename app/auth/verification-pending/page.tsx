@@ -31,7 +31,7 @@ export default function VerificationPendingPage() {
             <li>Proof of Address</li>
           </ul>
           <p className="text-sm text-yellow-800 mt-4">
-            This process typically takes 24-48 hours. You'll receive an email notification once your account is verified.
+            This process typically takes 24-48 hours. You&apos;ll receive an email notification once your account is verified.
           </p>
         </div>
 
@@ -43,7 +43,7 @@ export default function VerificationPendingPage() {
             Go to Homepage
           </Link>
           <p className="text-sm text-gray-600">
-            Once verified, you'll be able to create campaigns and support others.
+            Once verified, you&apos;ll be able to create campaigns and support others.
           </p>
         </div>
       </div>

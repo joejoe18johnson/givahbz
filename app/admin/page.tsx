@@ -4,7 +4,7 @@ import { campaigns } from "@/lib/data";
 import { adminUsers, adminDonations } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { Campaign, Users, Heart, DollarSign, TrendingUp, ArrowRight } from "lucide-react";
+import { Megaphone, Users, Heart, DollarSign, TrendingUp, ArrowRight } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-              <Campaign className="w-5 h-5 text-primary-600" />
+              <Megaphone className="w-5 h-5 text-primary-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Campaigns</p>

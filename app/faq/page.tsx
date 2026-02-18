@@ -158,7 +158,7 @@ export default function FAQPage() {
             <div className="mt-12 bg-primary-50 rounded-lg p-8 text-center">
               <h2 className="text-2xl font-medium mb-4">Still Have Questions?</h2>
               <p className="text-gray-700 mb-6">
-                Can't find what you're looking for? We're here to help.
+                Can&apos;t find what you&apos;re looking for? We&apos;re here to help.
               </p>
               <Link
                 href="/contact"

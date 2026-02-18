@@ -383,7 +383,7 @@ export default function DonationModal({
                       </p>
                       <ol className="text-sm text-primary-700 list-decimal list-inside space-y-1">
                         <li>Open your DigiWallet app</li>
-                        <li>Select "Send Money" or "Pay"</li>
+                        <li>Select &quot;Send Money&quot; or &quot;Pay&quot;</li>
                         <li>Enter phone number: <strong>{digiWalletDetails.phoneNumber}</strong></li>
                         <li>Enter amount: <strong>{formatCurrency(amount)}</strong></li>
                         <li>Add reference: Campaign {campaignId}</li>
@@ -414,7 +414,7 @@ export default function DonationModal({
                         {formatCurrency(amount)}
                       </p>
                       <p className="text-sm text-gray-600">
-                        After payment, you'll be redirected back to this page.
+                        After payment, you&apos;ll be redirected back to this page.
                       </p>
                     </div>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
