@@ -49,6 +49,10 @@ Use these to sign in on the login page (no signup required):
 
 Add `admin@givahbz.com` to `ADMIN_EMAILS` in your `.env` so the admin account can access the admin dashboard. You can also sign in with any other email/password for ad-hoc testing.
 
+### Google sign-in
+
+Login and signup support **Sign in with Google**. To enable it, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to your `.env` (see [.env.example](.env.example)). Step-by-step setup: **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)**.
+
 ## Project Structure
 
 ```

@@ -162,6 +162,27 @@ export default function Home() {
         <p className="text-gray-600 mb-6">
           Campaigns gaining momentum and support from the community
         </p>
+
+        {/* Mobile: horizontal carousel */}
+        <div className="md:hidden -mx-4 px-4 mb-6 overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory touch-pan-x scrollbar-hide">
+          <div className="flex gap-4 pb-2">
+            {allTrendingCampaigns.map((campaign) => (
+              <div
+                key={campaign.id}
+                className="flex-shrink-0 w-[85vw] max-w-[340px] snap-center snap-always"
+              >
+                <div className="relative flex flex-col min-w-0 h-full rounded-lg border border-gray-200 hover:border-success-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white">
+                  <div className="flex-1 min-w-0 rounded-lg overflow-hidden">
+                    <CampaignCard campaign={campaign} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: grid + pagination */}
+        <div className="hidden md:block">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {trendingCampaigns.map((campaign) => (
             <div
@@ -209,6 +230,7 @@ export default function Home() {
             </button>
           </div>
         )}
+        </div>
         
         <div className="text-center mt-6">
           <Link

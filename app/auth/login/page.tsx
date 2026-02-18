@@ -19,11 +19,20 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/my-campaigns";
 
-  // Show error when NextAuth redirects back with error=CredentialsSignin
+  // Show error when NextAuth redirects back with an error
   useEffect(() => {
     const err = searchParams.get("error");
+    if (!err) return;
     if (err === "CredentialsSignin") {
       setError("Invalid email or password. Please try again.");
+    } else if (err === "OAuthAccountNotLinked") {
+      setError("This email is already used with email/password. Please sign in with your password, or use the same method you used to sign up.");
+    } else if (err === "AccessDenied" || err === "OAuthCallback") {
+      setError("Access was denied or the sign-in was cancelled. Please try again.");
+    } else if (err === "Configuration") {
+      setError("Google sign-in is not configured. Please use email and password, or contact support.");
+    } else {
+      setError("Something went wrong signing in. Please try again or use email and password.");
     }
   }, [searchParams]);
 
