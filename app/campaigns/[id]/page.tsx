@@ -7,6 +7,7 @@ import CampaignUpdates from "@/components/CampaignUpdates";
 import RewardsSection from "@/components/RewardsSection";
 import ProofDocuments from "@/components/ProofDocuments";
 import ShareCampaign from "@/components/ShareCampaign";
+import DonorsList from "@/components/DonorsList";
 import { formatCurrency } from "@/lib/utils";
 
 interface PageProps {
@@ -125,6 +126,11 @@ export default function CampaignPage({ params }: PageProps) {
           {campaign.updates && campaign.updates.length > 0 && (
             <CampaignUpdates updates={campaign.updates} />
           )}
+
+          {/* Donors List */}
+          <div className="mt-8">
+            <DonorsList campaignId={campaign.id} />
+          </div>
         </div>
 
         {/* Sidebar */}
