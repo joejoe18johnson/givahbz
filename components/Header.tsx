@@ -129,7 +129,7 @@ export default function Header() {
                 >
                   <Heart className="w-5 h-5" />
                   {heartedCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {heartedCount > 9 ? "9+" : heartedCount}
                     </span>
                   )}

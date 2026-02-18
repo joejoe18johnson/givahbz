@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import SafeImage from "./SafeImage";
 import ShareCampaign from "./ShareCampaign";
 import { Calendar, Users, CheckCircle2, Heart } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toggleHeartCampaign, isCampaignHearted } from "./HeartedCampaigns";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Campaign {
   id: string;
@@ -30,16 +32,26 @@ interface CampaignCardProps {
 
 export default function CampaignCard({ campaign }: CampaignCardProps) {
   const [isHearted, setIsHearted] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
   const progress = (campaign.raised / campaign.goal) * 100;
   const progressPercentage = Math.min(progress, 100);
 
   useEffect(() => {
-    setIsHearted(isCampaignHearted(campaign.id));
-  }, [campaign.id]);
+    if (user) {
+      setIsHearted(isCampaignHearted(campaign.id));
+    }
+  }, [campaign.id, user]);
 
   const handleToggleHeart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!user) {
+      router.push("/auth/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+      return;
+    }
+    
     const newState = toggleHeartCampaign(campaign.id);
     setIsHearted(newState);
   };
@@ -84,13 +96,16 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
             <button
               onClick={handleToggleHeart}
               className={`p-2 rounded-full backdrop-blur-sm shadow-lg transition-colors ${
-                isHearted
+                !user
+                  ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
+                  : isHearted
                   ? "bg-red-500/90 hover:bg-red-500 text-white"
                   : "bg-white/90 hover:bg-white text-gray-700"
               }`}
-              aria-label={isHearted ? "Remove from hearted" : "Add to hearted"}
+              aria-label={!user ? "Log in to like campaigns" : isHearted ? "Remove from hearted" : "Add to hearted"}
+              title={!user ? "Log in to like campaigns" : undefined}
             >
-              <Heart className={`w-4 h-4 ${isHearted ? "fill-white" : ""}`} />
+              <Heart className={`w-4 h-4 ${isHearted ? "fill-white" : !user ? "opacity-50" : ""}`} />
             </button>
           </div>
           <div className="absolute top-2 right-2 flex gap-2">

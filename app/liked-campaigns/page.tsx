@@ -60,13 +60,32 @@ export default function LikedCampaignsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {heartedCampaigns.map((campaign) => (
-            <div key={campaign.id}>
-              <CampaignCard campaign={campaign} />
+        <>
+          {/* Mobile: horizontal carousel */}
+          <div className="md:hidden -mx-4 px-4 mb-6">
+            <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide">
+              <div className="flex gap-4 pb-2">
+                {heartedCampaigns.map((campaign) => (
+                  <div
+                    key={campaign.id}
+                    className="flex-shrink-0 w-[85vw] max-w-[340px] snap-center snap-always"
+                  >
+                    <CampaignCard campaign={campaign} />
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+          </div>
+
+          {/* Desktop: grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {heartedCampaigns.map((campaign) => (
+              <div key={campaign.id}>
+                <CampaignCard campaign={campaign} />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { campaigns } from "@/lib/data";
 import { notFound } from "next/navigation";
 import SafeImage from "@/components/SafeImage";
@@ -13,6 +14,7 @@ import ShareCampaign from "@/components/ShareCampaign";
 import DonorsList from "@/components/DonorsList";
 import { formatCurrency } from "@/lib/utils";
 import { toggleHeartCampaign, isCampaignHearted } from "@/components/HeartedCampaigns";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PageProps {
   params: {
@@ -23,12 +25,14 @@ interface PageProps {
 export default function CampaignPage({ params }: PageProps) {
   const campaign = campaigns.find((c) => c.id === params.id);
   const [isHearted, setIsHearted] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    if (campaign) {
+    if (campaign && user) {
       setIsHearted(isCampaignHearted(campaign.id));
     }
-  }, [campaign]);
+  }, [campaign, user]);
 
   if (!campaign) {
     notFound();
@@ -38,6 +42,11 @@ export default function CampaignPage({ params }: PageProps) {
   const progressPercentage = Math.min(progress, 100);
 
   const handleToggleHeart = () => {
+    if (!user) {
+      router.push("/auth/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+      return;
+    }
+    
     if (campaign) {
       const newState = toggleHeartCampaign(campaign.id);
       setIsHearted(newState);
@@ -83,11 +92,16 @@ export default function CampaignPage({ params }: PageProps) {
           <button
             onClick={handleToggleHeart}
             className={`bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg ${
-              isHearted ? "text-red-500" : "text-gray-700"
+              !user
+                ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
+                : isHearted
+                ? "text-red-500"
+                : "text-gray-700"
             }`}
-            aria-label={isHearted ? "Remove from hearted" : "Add to hearted"}
+            aria-label={!user ? "Log in to like campaigns" : isHearted ? "Remove from hearted" : "Add to hearted"}
+            title={!user ? "Log in to like campaigns" : undefined}
           >
-            <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : ""}`} />
+            <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : !user ? "opacity-50" : ""}`} />
           </button>
         </div>
       </div>
