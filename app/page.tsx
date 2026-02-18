@@ -58,7 +58,7 @@ export default function Home() {
     <>
       {/* First viewport: hero + Community Wins heading visible */}
       <div className="min-h-screen flex flex-col">
-        <div className="flex-1 min-h-0 max-h-[55vh] container mx-auto px-4 py-8 md:py-12 flex flex-col justify-center">
+        <div className="flex-1 container mx-auto px-4 py-8 md:py-12 flex flex-col justify-center">
           {/* Hero Section - Two column layout */}
           <section className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Decorative shapes */}
@@ -130,7 +130,7 @@ export default function Home() {
         </div>
 
         {/* Community Wins - visible at bottom of first viewport */}
-        <section id="community-wins" className="flex-shrink-0 pt-4 pb-8 md:pb-12">
+        <section id="community-wins" className="flex-shrink-0 -mt-[40px] pt-4 pb-8 md:pb-12">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-center break-words max-w-full px-2">
               <span className="text-primary-600">Community Wins.</span>{" "}
