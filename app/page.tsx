@@ -166,9 +166,9 @@ export default function Home() {
           Campaigns gaining momentum and support from the community
         </p>
 
-        {/* Mobile: horizontal carousel — inner only handles horizontal (pan-x) so vertical swipes scroll the page */}
-        <div className="md:hidden -mx-4 px-4 mb-6" style={{ touchAction: "pan-y" }}>
-          <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide" style={{ touchAction: "pan-x" }}>
+        {/* Mobile: horizontal carousel — allows both horizontal and vertical scrolling */}
+        <div className="md:hidden -mx-4 px-4 mb-6">
+          <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide">
           <div className="flex gap-4 pb-2">
             {allTrendingCampaigns.map((campaign) => (
               <div
