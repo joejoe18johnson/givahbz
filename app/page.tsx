@@ -9,7 +9,7 @@ import SafeImage from "@/components/SafeImage";
 import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calendar, Users, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const permanentMarker = Permanent_Marker({ weight: "400", subsets: ["latin"] });
 
@@ -52,8 +52,17 @@ export default function Home() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [campaignsError, setCampaignsError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(null);
+  const trendingScrollRef = useRef<HTMLDivElement>(null);
+  const [trendingCanScrollLeft, setTrendingCanScrollLeft] = useState(false);
+  const [trendingCanScrollRight, setTrendingCanScrollRight] = useState(false);
+
+  const updateTrendingScrollState = () => {
+    const el = trendingScrollRef.current;
+    if (!el) return;
+    setTrendingCanScrollLeft(el.scrollLeft > 0);
+    setTrendingCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
+  };
 
   useEffect(() => {
     async function loadCampaigns() {
@@ -72,11 +81,32 @@ export default function Home() {
   }, []);
 
   const allTrendingCampaigns = getTrendingCampaigns(campaigns, campaigns.length);
-  const cardsPerPage = 4;
-  const totalPages = Math.ceil(allTrendingCampaigns.length / cardsPerPage);
-  const startIndex = (currentPage - 1) * cardsPerPage;
-  const endIndex = startIndex + cardsPerPage;
-  const trendingCampaigns = allTrendingCampaigns.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    const el = trendingScrollRef.current;
+    const onScroll = () => updateTrendingScrollState();
+    const runAfterLayout = () => {
+      updateTrendingScrollState();
+    };
+    runAfterLayout();
+    const t = setTimeout(runAfterLayout, 100);
+    if (el) {
+      el.addEventListener("scroll", onScroll);
+    }
+    window.addEventListener("resize", onScroll);
+    return () => {
+      clearTimeout(t);
+      if (el) el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [allTrendingCampaigns.length]);
+
+  const scrollTrending = (direction: "left" | "right") => {
+    const el = trendingScrollRef.current;
+    if (!el) return;
+    const step = el.clientWidth;
+    el.scrollBy({ left: direction === "left" ? -step : step, behavior: "smooth" });
+  };
 
   return (
     <>
@@ -198,77 +228,65 @@ export default function Home() {
           </div>
         )}
 
-        {/* Mobile: horizontal carousel — allows both horizontal and vertical scrolling */}
+        {/* Mobile: horizontal carousel, equal-height cards */}
         <div className="md:hidden -mx-4 px-4 mb-6">
           <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide">
-          <div className="flex gap-4 pb-2">
-            {allTrendingCampaigns.map((campaign) => (
-              <div
-                key={campaign.id}
-                className="flex-shrink-0 w-[85vw] max-w-[340px] snap-center snap-always"
-              >
-                <div className="relative flex flex-col min-w-0 h-full rounded-lg border border-gray-200 hover:border-success-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white">
-                  <div className="flex-1 min-w-0 rounded-lg overflow-hidden">
+            <div className="flex gap-4 pb-2">
+              {allTrendingCampaigns.map((campaign) => (
+                <div
+                  key={campaign.id}
+                  className="flex-shrink-0 w-[85vw] max-w-[340px] h-[420px] snap-center snap-always"
+                >
+                  <div className="h-full rounded-lg border border-gray-200 hover:border-success-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white">
                     <CampaignCard campaign={campaign} />
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Desktop: grid + pagination */}
-        <div className="hidden md:block">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          {trendingCampaigns.map((campaign) => (
-            <div
-              key={campaign.id}
-              className="relative flex flex-col min-w-0 rounded-lg border border-gray-200 hover:border-success-500 hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 overflow-visible"
-            >
-              <div className="flex-1 min-w-0 rounded-lg overflow-hidden">
-                <CampaignCard campaign={campaign} />
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                    currentPage === page
-                      ? "bg-success-500 text-white"
-                      : "border border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
+        {/* Desktop: swipeable carousel with side arrows, equal-height cards */}
+        <div className="hidden md:block relative">
+          {/* Left arrow */}
+          <button
+            type="button"
+            onClick={() => scrollTrending("left")}
+            disabled={!trendingCanScrollLeft}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-20 w-12 h-12 rounded-full bg-white border border-gray-200 shadow-lg flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-success-500 hover:text-success-600 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            aria-label="Previous campaigns"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          {/* Right arrow */}
+          <button
+            type="button"
+            onClick={() => scrollTrending("right")}
+            disabled={!trendingCanScrollRight}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-20 w-12 h-12 rounded-full bg-white border border-gray-200 shadow-lg flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-success-500 hover:text-success-600 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            aria-label="Next campaigns"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+
+          <div
+            ref={trendingScrollRef}
+            className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide -mx-2 px-2"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            <div className="flex gap-6 py-2">
+              {allTrendingCampaigns.map((campaign) => (
+                <div
+                  key={campaign.id}
+                  className="flex-shrink-0 w-[280px] h-[420px] snap-start rounded-lg border border-gray-200 hover:border-success-500 hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 overflow-hidden bg-white"
                 >
-                  {page}
-                </button>
+                  <CampaignCard campaign={campaign} />
+                </div>
               ))}
             </div>
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
-        )}
         </div>
-        
+
         <div className="text-center mt-6">
           <Link
             href="/campaigns?filter=trending"
