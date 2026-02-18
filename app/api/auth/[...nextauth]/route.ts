@@ -2,6 +2,13 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+// Sample test accounts for local/dev testing (see README or TEST_ACCOUNTS.md)
+const TEST_ACCOUNTS = [
+  { email: "user@test.com", password: "Test123!", name: "Test User" },
+  { email: "maria@test.com", password: "Test123!", name: "Maria Gonzalez" },
+  { email: "admin@givahbz.com", password: "Admin123!", name: "Admin User" },
+];
+
 export const authOptions = {
   providers: [
     GoogleProvider({
@@ -16,7 +23,13 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email) return null;
-        // MVP: accept any email/password; in production validate against your database
+        const match = TEST_ACCOUNTS.find(
+          (a) => a.email.toLowerCase() === credentials!.email!.toLowerCase() && a.password === credentials!.password
+        );
+        if (match) {
+          return { id: match.email, email: match.email, name: match.name };
+        }
+        // MVP fallback: accept any email/password for ad-hoc testing
         const name = credentials.email.split("@")[0].replace(/[._]/g, " ") || "User";
         return {
           id: credentials.email,

@@ -24,7 +24,7 @@ export default function CreateCampaignPage() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/auth/login?callbackUrl=/campaigns/create");
+      router.replace("/auth/login?callbackUrl=/campaigns/create");
     }
   }, [user, isLoading, router]);
 
@@ -32,7 +32,7 @@ export default function CreateCampaignPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -40,7 +40,14 @@ export default function CreateCampaignPage() {
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Redirecting to sign in...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {

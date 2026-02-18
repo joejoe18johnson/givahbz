@@ -17,13 +17,21 @@ function LoginForm() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/my-campaigns";
+
+  // Show error when NextAuth redirects back with error=CredentialsSignin
+  useEffect(() => {
+    const err = searchParams.get("error");
+    if (err === "CredentialsSignin") {
+      setError("Invalid email or password. Please try again.");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
-      router.push(callbackUrl);
+      router.replace(callbackUrl);
     }
-  }, [user, router, callbackUrl]);
+  }, [user, callbackUrl, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,12 +45,16 @@ function LoginForm() {
     });
 
     if (result?.ok) {
-      router.push(callbackUrl);
-      router.refresh();
-    } else {
+      const fullUrl = callbackUrl.startsWith("http")
+        ? callbackUrl
+        : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
+      // Small delay so the session cookie is committed before we leave the page
+      setTimeout(() => window.location.replace(fullUrl), 100);
+      return;
+    }
+    if (result?.error) {
       setError("Invalid email or password. Please try again.");
     }
-
     setIsLoading(false);
   };
 

@@ -37,6 +37,18 @@ npm run dev
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
+### Test accounts (email / password)
+
+Use these to sign in on the login page (no signup required):
+
+| Role   | Email               | Password  |
+|--------|---------------------|-----------|
+| User   | `user@test.com`     | `Test123!` |
+| User   | `maria@test.com`    | `Test123!` |
+| Admin  | `admin@givahbz.com` | `Admin123!` |
+
+Add `admin@givahbz.com` to `ADMIN_EMAILS` in your `.env` so the admin account can access the admin dashboard. You can also sign in with any other email/password for ad-hoc testing.
+
 ## Project Structure
 
 ```
