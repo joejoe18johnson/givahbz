@@ -1,5 +1,6 @@
 "use client";
 
+import { Permanent_Marker } from "next/font/google";
 import CampaignCard from "@/components/CampaignCard";
 import { campaigns } from "@/lib/data";
 import { getTrendingCampaigns } from "@/lib/campaignUtils";
@@ -8,6 +9,8 @@ import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calenda
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
+
+const permanentMarker = Permanent_Marker({ weight: "400", subsets: ["latin"] });
 
 const HOME_FAQS = [
   {
@@ -70,7 +73,7 @@ export default function Home() {
           <div className="order-2 lg:order-1">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-900 mb-4">
               Supporting{" "}
-              <span className="text-success-600">Belizean</span>{" "}
+              <span className={`text-success-600 ${permanentMarker.className}`}>Belizean</span>{" "}
               Communities
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-xl">
@@ -131,7 +134,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-center break-words max-w-full px-2">
               <span className="text-primary-600">Community Wins.</span>{" "}
-              <span className="text-success-600">Always.</span>
+              <span className={`text-success-600 ${permanentMarker.className}`}>Always.</span>
             </h2>
           </div>
         </section>

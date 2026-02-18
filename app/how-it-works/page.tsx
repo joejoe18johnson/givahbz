@@ -150,7 +150,7 @@ export default function HowItWorksPage() {
                 className="bg-white rounded-lg border border-gray-200 p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start"
               >
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
+                  <div className="w-20 h-20 bg-success-500 rounded-full flex items-center justify-center text-white">
                     {step.icon}
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function HowItWorksPage() {
                 className="bg-white rounded-lg p-6 border border-gray-200 transition-shadow"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
+                  <div className="flex-shrink-0 w-12 h-12 bg-success-500 rounded-full flex items-center justify-center text-white">
                     {benefit.icon}
                   </div>
                   <div>
