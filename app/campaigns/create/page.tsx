@@ -5,6 +5,7 @@ import { Upload, FileText, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
+import { addCampaignUnderReviewToFirestore } from "@/lib/firebase/firestore";
 import Link from "next/link";
 
 export default function CreateCampaignPage() {
@@ -54,7 +55,7 @@ export default function CreateCampaignPage() {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (proofFiles.length === 0) {
@@ -63,15 +64,34 @@ export default function CreateCampaignPage() {
     }
 
     const goalNum = parseFloat(formData.goal) || 0;
+    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const creatorName = user?.name ?? "User";
+    const creatorId = user?.id ?? "";
+
     addCampaignUnderReview({
-      id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      id: pendingId,
       title: formData.title,
       description: formData.description,
       goal: goalNum,
       category: formData.category,
-      creatorName: user?.name ?? "User",
+      creatorName,
       submittedAt: new Date().toISOString(),
     });
+
+    try {
+      await addCampaignUnderReviewToFirestore({
+        title: formData.title,
+        description: formData.description,
+        fullDescription: formData.fullDescription || "",
+        goal: goalNum,
+        category: formData.category,
+        creatorName,
+        creatorId,
+      });
+    } catch (err) {
+      console.error("Failed to submit campaign for review:", err);
+      alert("Your campaign was saved locally but could not be sent for review. Please try again.");
+    }
     router.push("/my-campaigns");
   };
 
@@ -166,7 +186,7 @@ export default function CreateCampaignPage() {
             value={formData.creatorType}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
           >
             <option value="">Select type</option>
             <option value="individual">Individual in Need</option>
@@ -186,7 +206,7 @@ export default function CreateCampaignPage() {
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             placeholder="Brief title describing your need"
           />
         </div>
@@ -201,7 +221,7 @@ export default function CreateCampaignPage() {
             value={formData.category}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
           >
             <option value="">Select a category</option>
             <option value="Medical">Medical</option>
@@ -224,7 +244,7 @@ export default function CreateCampaignPage() {
             onChange={handleChange}
             required
             rows={3}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             placeholder="A brief summary of your campaign (2-3 sentences)"
           />
         </div>
@@ -240,7 +260,7 @@ export default function CreateCampaignPage() {
             onChange={handleChange}
             required
             rows={8}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             placeholder="Tell your story. What inspired you? What will you do with the funds?"
           />
         </div>
@@ -257,7 +277,7 @@ export default function CreateCampaignPage() {
             onChange={handleChange}
             required
             min="1"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             placeholder="5000"
             step="0.01"
           />
@@ -274,7 +294,7 @@ export default function CreateCampaignPage() {
             value={formData.location}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
             placeholder="e.g., Belize City, Belize or Orange Walk Town, Belize"
           />
         </div>
@@ -289,7 +309,7 @@ export default function CreateCampaignPage() {
             value={formData.daysLeft}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
           >
             <option value="">Select duration</option>
             <option value="30">30 days</option>

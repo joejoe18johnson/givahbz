@@ -26,16 +26,22 @@ body {
   overflow-x: hidden;
 }
 
-/* Auth forms: force dark, visible text on inputs (mobile + dark mode) */
-[data-auth-form] input[type="email"],
-[data-auth-form] input[type="password"],
-[data-auth-form] input[type="text"] {
+/* All form inputs: always dark text + light background (mobile, desktop, dark mode) */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
   color: #111827 !important;
   -webkit-text-fill-color: #111827 !important;
+  background-color: #ffffff !important;
 }
-[data-auth-form] input::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: #6b7280 !important;
   -webkit-text-fill-color: #6b7280 !important;
+}
+select option {
+  color: #111827;
+  background-color: #ffffff;
 }
 
 @layer utilities {

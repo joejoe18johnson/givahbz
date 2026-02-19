@@ -2,32 +2,53 @@
 
 import { useState, useEffect } from "react";
 import {
-  getCampaignsUnderReview,
-  setCampaignsUnderReview,
-  type CampaignUnderReview,
-} from "@/lib/campaignsUnderReview";
+  getCampaignsUnderReviewFromFirestore,
+  updateCampaignUnderReviewStatus,
+  type CampaignUnderReviewDoc,
+} from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminUnderReviewPage() {
-  const [list, setList] = useState<CampaignUnderReview[]>([]);
+  const [list, setList] = useState<CampaignUnderReviewDoc[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setList(getCampaignsUnderReview());
-  }, []);
-
-  const handleApprove = (id: string) => {
-    if (!confirm("Approve this campaign? It will be removed from under review. (In production, this would publish the campaign.)")) return;
-    const next = list.filter((c) => c.id !== id);
-    setCampaignsUnderReview(next);
-    setList(next);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await getCampaignsUnderReviewFromFirestore();
+      setList(data);
+    } catch (error) {
+      console.error("Error loading campaigns under review:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (id: string) => {
-    if (!confirm("Reject and remove this campaign from review? The creator would need to resubmit. (In production, you might notify them.)")) return;
-    const next = list.filter((c) => c.id !== id);
-    setCampaignsUnderReview(next);
-    setList(next);
+  useEffect(() => {
+    load();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    if (!confirm("Approve this campaign? It will be removed from under review. (You can later publish it to the live campaigns list.)")) return;
+    try {
+      await updateCampaignUnderReviewStatus(id, "approved");
+      setList((prev) => prev.filter((c) => c.id !== id));
+    } catch (error) {
+      console.error("Error approving:", error);
+      alert("Failed to approve. Please try again.");
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    if (!confirm("Reject and remove this campaign from review? The creator would need to resubmit.")) return;
+    try {
+      await updateCampaignUnderReviewStatus(id, "rejected");
+      setList((prev) => prev.filter((c) => c.id !== id));
+    } catch (error) {
+      console.error("Error rejecting:", error);
+      alert("Failed to reject. Please try again.");
+    }
   };
 
   const formatDate = (iso: string) =>
@@ -39,12 +60,23 @@ export default function AdminUnderReviewPage() {
       minute: "2-digit",
     });
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading campaigns under review...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Campaigns under review</h1>
         <p className="text-gray-600 mt-1">
-          Review and approve or reject campaigns submitted by creators. Data is stored in this browser until you connect a backend.
+          New campaigns submitted by creators appear here. Approve or reject each submission.
         </p>
       </div>
 

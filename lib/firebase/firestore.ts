@@ -21,6 +21,7 @@ import { AdminDonation } from "@/lib/adminData";
 export const campaignsCollection = "campaigns";
 export const usersCollection = "users";
 export const donationsCollection = "donations";
+export const campaignsUnderReviewCollection = "campaignsUnderReview";
 
 // Campaign operations
 export async function getCampaign(campaignId: string): Promise<Campaign | null> {
@@ -154,6 +155,74 @@ export async function createDonation(donation: Omit<AdminDonation, "id">): Promi
     createdAt: serverTimestamp(),
   });
   return docRef.id;
+}
+
+// Campaigns under review (admin workflow)
+export interface CampaignUnderReviewDoc {
+  id: string;
+  title: string;
+  description: string;
+  fullDescription?: string;
+  goal: number;
+  category: string;
+  creatorName: string;
+  creatorId: string;
+  submittedAt: string;
+  status: "pending" | "approved" | "rejected";
+}
+
+export async function addCampaignUnderReviewToFirestore(data: Omit<CampaignUnderReviewDoc, "id" | "submittedAt" | "status">): Promise<string> {
+  const docRef = doc(collection(db, campaignsUnderReviewCollection));
+  await setDoc(docRef, {
+    ...data,
+    submittedAt: new Date().toISOString(),
+    status: "pending",
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getCampaignsUnderReviewFromFirestore(): Promise<CampaignUnderReviewDoc[]> {
+  const q = query(
+    collection(db, campaignsUnderReviewCollection),
+    where("status", "==", "pending")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      title: data.title,
+      description: data.description,
+      fullDescription: data.fullDescription,
+      goal: data.goal,
+      category: data.category,
+      creatorName: data.creatorName,
+      creatorId: data.creatorId,
+      submittedAt: data.submittedAt || (data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString()),
+      status: data.status || "pending",
+    } as CampaignUnderReviewDoc;
+  });
+}
+
+export async function getCampaignsUnderReviewCount(): Promise<number> {
+  const q = query(
+    collection(db, campaignsUnderReviewCollection),
+    where("status", "==", "pending")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.size;
+}
+
+export async function updateCampaignUnderReviewStatus(id: string, status: "approved" | "rejected"): Promise<void> {
+  await updateDoc(doc(db, campaignsUnderReviewCollection, id), {
+    status,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteCampaignUnderReview(id: string): Promise<void> {
+  await deleteDoc(doc(db, campaignsUnderReviewCollection, id));
 }
 
 // Hearted campaigns (user-specific)

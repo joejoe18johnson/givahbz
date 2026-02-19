@@ -3,8 +3,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useEffect } from "react";
-import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock, Bell } from "lucide-react";
+import { getCampaignsUnderReviewCount, getCampaignsUnderReviewFromFirestore, type CampaignUnderReviewDoc } from "@/lib/firebase/firestore";
 
 export default function AdminLayout({
   children,
@@ -14,6 +15,40 @@ export default function AdminLayout({
   const { user, isAdmin, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState<CampaignUnderReviewDoc[]>([]);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    async function load() {
+      try {
+        const [count, list] = await Promise.all([
+          getCampaignsUnderReviewCount(),
+          getCampaignsUnderReviewFromFirestore(),
+        ]);
+        setNotificationCount(count);
+        setNotifications(list.slice(0, 10));
+      } catch {
+        setNotificationCount(0);
+        setNotifications([]);
+      }
+    }
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowNotificationDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -111,7 +146,63 @@ export default function AdminLayout({
           </div>
         </nav>
       </aside>
-      <main className="pl-56 pt-16 min-h-screen">
+
+      {/* Admin top bar with notification bell */}
+      <header className="fixed left-56 right-0 top-16 h-14 z-30 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+        <span className="text-sm font-medium text-gray-700">Admin</span>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setShowNotificationDropdown((v) => !v)}
+            className="relative p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full bg-primary-600 text-white text-xs font-medium">
+                {notificationCount > 99 ? "99+" : notificationCount}
+              </span>
+            )}
+          </button>
+          {showNotificationDropdown && (
+            <div className="absolute right-0 top-full mt-1 w-80 max-h-[24rem] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-lg py-2">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <h3 className="font-medium text-gray-900">Notifications</h3>
+                <p className="text-xs text-gray-500">Campaigns awaiting review</p>
+              </div>
+              {notifications.length === 0 ? (
+                <p className="px-4 py-6 text-sm text-gray-500 text-center">No new notifications</p>
+              ) : (
+                <ul className="py-2">
+                  {notifications.map((n) => (
+                    <li key={n.id}>
+                      <Link
+                        href="/admin/under-review"
+                        onClick={() => setShowNotificationDropdown(false)}
+                        className="block px-4 py-3 hover:bg-gray-50 text-left"
+                      >
+                        <p className="text-sm font-medium text-gray-900 truncate">{n.title}</p>
+                        <p className="text-xs text-gray-500">by {n.creatorName} · {n.category}</p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {notificationCount > 0 && (
+                <Link
+                  href="/admin/under-review"
+                  onClick={() => setShowNotificationDropdown(false)}
+                  className="block px-4 py-2 text-center text-sm text-primary-600 font-medium hover:bg-gray-50"
+                >
+                  View all ({notificationCount})
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+      </header>
+
+      <main className="pl-56 pt-[7.5rem] min-h-screen">
         <div className="p-6 md:p-8">{children}</div>
       </main>
     </div>
