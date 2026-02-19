@@ -584,8 +584,8 @@ export default function Home() {
       </section>
 
         {/* Frequently Asked Questions */}
-        <section className="mb-12 bg-success-50 rounded-2xl p-6 md:p-8">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-gray-900 mb-8 text-center">
+        <section className="mb-12 bg-success-50 rounded-2xl p-6 md:p-8" aria-label="Frequently asked questions">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium mb-8 text-center" style={{ color: "#111827" }}>
             Frequently Asked Questions
           </h2>
           <div className="max-w-3xl mx-auto space-y-3">
@@ -597,7 +597,11 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setFaqOpenIndex(faqOpenIndex === index ? null : index)}
-                  className="w-full flex items-center justify-between gap-4 text-left px-5 py-4 font-medium text-gray-900 hover:bg-gray-50 transition-colors"
+                  aria-expanded={faqOpenIndex === index}
+                  aria-controls={`faq-answer-${index}`}
+                  id={`faq-question-${index}`}
+                  className="w-full flex items-center justify-between gap-4 text-left px-5 py-4 font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+                  style={{ color: "#111827" }}
                 >
                   <span className="pr-2">{faq.q}</span>
                   {faqOpenIndex === index ? (
@@ -607,8 +611,8 @@ export default function Home() {
                   )}
                 </button>
                 {faqOpenIndex === index && (
-                  <div className="px-5 pb-5 pt-0">
-                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                  <div id={`faq-answer-${index}`} className="px-5 pb-5 pt-0" role="region" aria-labelledby={`faq-question-${index}`}>
+                    <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "#4b5563" }}>
                       {faq.a}
                     </p>
                   </div>
