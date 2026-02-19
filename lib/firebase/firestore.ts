@@ -327,6 +327,20 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
   if (!underReview) throw new Error("Campaign under review not found");
   if (underReview.status !== "pending") throw new Error("Campaign is no longer pending");
 
+  // Check that creator has phone and ID verified
+  if (underReview.creatorId) {
+    const creatorDoc = await getDoc(doc(db, usersCollection, underReview.creatorId));
+    if (creatorDoc.exists()) {
+      const creatorData = creatorDoc.data();
+      if (!creatorData.phoneVerified) {
+        throw new Error("Creator's phone number must be approved before campaign can go live");
+      }
+      if (!creatorData.idVerified) {
+        throw new Error("Creator's ID must be verified before campaign can go live");
+      }
+    }
+  }
+
   const defaultImage = "https://picsum.photos/seed/campaign/800/600";
   const campaignPayload: Omit<Campaign, "id"> = {
     title: underReview.title,
@@ -488,6 +502,13 @@ export async function getUsersFromFirestore(): Promise<AdminUserDoc[]> {
 export async function setUserPhoneVerified(userId: string, verified: boolean): Promise<void> {
   await updateDoc(doc(db, usersCollection, userId), {
     phoneVerified: verified,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function setIdVerified(userId: string, verified: boolean): Promise<void> {
+  await updateDoc(doc(db, usersCollection, userId), {
+    idVerified: verified,
     updatedAt: serverTimestamp(),
   });
 }

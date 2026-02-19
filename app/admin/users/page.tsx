@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getUsersFromFirestore, setUserPhoneVerified, setUserStatus, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { getUsersFromFirestore, setUserPhoneVerified, setIdVerified, setUserStatus, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
-import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
+import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield } from "lucide-react";
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
@@ -40,6 +40,19 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error("Error approving phone:", error);
       alert("Failed to approve phone.", { variant: "error" });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleApproveId = async (userId: string) => {
+    setUpdatingId(userId);
+    try {
+      await setIdVerified(userId, true);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, idVerified: true } : u)));
+    } catch (error) {
+      console.error("Error approving ID:", error);
+      alert("Failed to approve ID.", { variant: "error" });
     } finally {
       setUpdatingId(null);
     }
@@ -84,8 +97,8 @@ export default function AdminUsersPage() {
       return;
     }
     const ok = await confirm(
-      `Disable account for "${name}" (${email})? They will no longer be able to create or edit campaigns. You can put them on hold instead if you want to allow access later.`,
-      { title: "Disable user", confirmLabel: "Disable", variant: "danger" }
+      `Delete account for "${name}" (${email})? This action cannot be undone.`,
+      { title: "Delete user", confirmLabel: "Delete", variant: "danger" }
     );
     if (ok) await handleSetStatus(userId, "deleted");
   };
@@ -106,7 +119,7 @@ export default function AdminUsersPage() {
       <div>
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Users</h1>
         <p className="text-gray-600 mt-1">
-          Review and approve phone numbers. Once a number is approved, that user can post and edit campaigns. Users cannot create or edit campaigns until their phone is approved.
+          Review and approve phone numbers and ID verification. Users cannot create or edit campaigns until both their phone number and ID are approved by an admin.
         </p>
       </div>
 
@@ -207,7 +220,7 @@ export default function AdminUsersPage() {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium disabled:opacity-50"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            Disable
+                            Delete
                           </button>
                         )}
                       </div>

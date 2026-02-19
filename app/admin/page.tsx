@@ -86,14 +86,14 @@ export default function AdminDashboardPage() {
     await handleSetStatus(userId, "active");
   };
 
-  const handleDisableUser = async (userId: string, name: string, email: string) => {
+  const handleDeleteUser = async (userId: string, name: string, email: string) => {
     if (userId === currentUser?.id) {
-      alert("You cannot disable your own account.", { variant: "error" });
+      alert("You cannot delete your own account.", { variant: "error" });
       return;
     }
     const ok = await confirm(
-      `Disable account for "${name}" (${email})? They will no longer be able to create or edit campaigns.`,
-      { title: "Disable user", confirmLabel: "Disable", variant: "danger" }
+      `Delete account for "${name}" (${email})? This action cannot be undone.`,
+      { title: "Delete user", confirmLabel: "Delete", variant: "danger" }
     );
     if (ok) await handleSetStatus(userId, "deleted");
   };
@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
                           u.status === "active" ? "text-verified-600" :
                           u.status === "on_hold" ? "text-amber-600" : "text-red-600"
                         }>
-                          {u.status === "active" ? "Active" : u.status === "on_hold" ? "On hold" : "Disabled"}
+                          {u.status === "active" ? "Active" : u.status === "on_hold" ? "On hold" : "Deleted"}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-gray-600">{u.phoneNumber || "—"}</td>
@@ -310,12 +310,12 @@ export default function AdminDashboardPage() {
                           {u.status !== "deleted" && !isSelf && (
                             <button
                               type="button"
-                              onClick={() => handleDisableUser(u.id, u.name, u.email)}
+                              onClick={() => handleDeleteUser(u.id, u.name, u.email)}
                               disabled={updatingUserId === u.id}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium disabled:opacity-50"
                             >
                               <Trash2 className="w-3 h-3" />
-                              Disable
+                              Delete
                             </button>
                           )}
                         </div>

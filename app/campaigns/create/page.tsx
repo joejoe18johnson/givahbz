@@ -104,19 +104,24 @@ export default function CreateCampaignPage() {
     );
   }
 
-  if (!user.phoneVerified) {
+  if (!user.phoneVerified || !user.idVerified) {
+    const missingVerifications = [];
+    if (!user.phoneVerified) missingVerifications.push("phone number");
+    if (!user.idVerified) missingVerifications.push("ID");
+    const missingText = missingVerifications.join(" and ");
+
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
           <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-amber-600" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">Phone number required</h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Verification required</h1>
           <p className="text-gray-600 mb-6">
-            Your phone number must be on file and approved by an admin before you can create or edit campaigns.{" "}
+            Your {missingText} must be approved by an admin before you can create or edit campaigns.{" "}
             {!user.phoneNumber
               ? "Add your phone number in your profile, then our team will verify it."
-              : "Our team is reviewing your phone number. You will be notified once it is approved."}
+              : "Our team is reviewing your verification. You will be notified once approved."}
           </p>
           <Link
             href="/profile"
