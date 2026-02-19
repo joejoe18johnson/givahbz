@@ -332,15 +332,37 @@ export default function Header() {
             )}
           </nav>
 
-          {/* Mobile menu button */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden w-11 h-11 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0"
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile menu button and profile picture */}
+          <div className="lg:hidden flex items-center gap-2 shrink-0">
+            {user && (
+              <Link
+                href="/profile"
+                className="w-10 h-10 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-700 font-medium flex-shrink-0"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {user.profilePhoto ? (
+                  <Image 
+                    src={user.profilePhoto} 
+                    alt={user.name}
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="text-sm">{user.name.charAt(0).toUpperCase()}</span>
+                )}
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-11 h-11 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 

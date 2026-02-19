@@ -38,10 +38,11 @@ export default function ProfilePage() {
   const [isUploadingId, setIsUploadingId] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profilePhoto || null);
-  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const idFileInputRef = useRef<HTMLInputElement>(null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [deactivatePhrase, setDeactivatePhrase] = useState("");
+  const [deactivateInput, setDeactivateInput] = useState("");
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showSavedPopup, setShowSavedPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -146,33 +147,54 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        alert("Please select an image file", { variant: "error" });
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Image size must be less than 5MB", { variant: "error" });
-        return;
-      }
-      setProfilePhotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file", { variant: "error" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB", { variant: "error" });
+      return;
+    }
+    // Show preview instantly
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePhoto(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    // Upload and save immediately
+    setIsUploadingPhoto(true);
+    try {
+      const photoUrl = await uploadProfilePhoto(user.id, file);
+      await updateUser({ profilePhoto: photoUrl });
+      setProfilePhoto(photoUrl);
+      setLastSavedState((prev) => ({ ...prev, profilePhoto: photoUrl }));
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Failed to upload photo. Please try again.", { variant: "error" });
+      setProfilePhoto(user.profilePhoto || null);
+    } finally {
+      setIsUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleRemovePhoto = () => {
+  const handleRemovePhoto = async () => {
+    if (!user) return;
     setProfilePhoto(null);
-    setProfilePhotoFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    setIsUploadingPhoto(true);
+    try {
+      await updateUser({ profilePhoto: undefined });
+      setLastSavedState((prev) => ({ ...prev, profilePhoto: null }));
+    } catch (error) {
+      console.error("Error removing photo:", error);
+      alert("Failed to remove photo. Please try again.", { variant: "error" });
+    } finally {
+      setIsUploadingPhoto(false);
     }
-    // Don't save immediately - wait for "Save Settings" button
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSavePhone = async () => {
@@ -337,6 +359,7 @@ export default function ProfilePage() {
                 className="sr-only"
                 id="photo-upload"
                 aria-label="Upload profile photo"
+                disabled={isUploadingPhoto}
               />
               <label
                 htmlFor="photo-upload"
@@ -793,35 +816,16 @@ export default function ProfilePage() {
         <button
           onClick={async () => {
             try {
-              let photoUrl: string | undefined;
-              if (profilePhotoFile && user) {
-                setIsUploadingPhoto(true);
-                try {
-                  photoUrl = await uploadProfilePhoto(user.id, profilePhotoFile);
-                } finally {
-                  setIsUploadingPhoto(false);
-                }
-                setProfilePhotoFile(null);
-                setProfilePhoto(photoUrl);
-              } else if (profilePhoto && !profilePhoto.startsWith("data:")) {
-                photoUrl = profilePhoto;
-              } else if (profilePhoto === null) {
-                photoUrl = undefined;
-              } else {
-                photoUrl = lastSavedState.profilePhoto ?? undefined;
-              }
-
               await updateUser({
                 name,
                 birthday: birthday || undefined,
-                profilePhoto: photoUrl,
               });
 
               setLastSavedState({
                 name,
                 birthday: birthday || "",
                 phoneNumber: phoneNumber || "",
-                profilePhoto: photoUrl ?? null,
+                profilePhoto: profilePhoto ?? lastSavedState.profilePhoto,
               });
 
               setEditingName(false);
@@ -838,10 +842,9 @@ export default function ProfilePage() {
               setTimeout(() => setShowErrorPopup(false), 4000);
             }
           }}
-          disabled={isUploadingPhoto}
-          className="flex-1 px-6 py-3 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors font-medium disabled:opacity-70 disabled:cursor-wait"
+          className="flex-1 px-6 py-3 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors font-medium"
         >
-          {isUploadingPhoto ? "Uploading photo…" : "Save Settings"}
+          Save Settings
         </button>
         <button
           onClick={() => {
@@ -888,17 +891,33 @@ export default function ProfilePage() {
                   <p className="text-sm font-medium text-red-600">
                     Are you sure you want to deactivate your account? This action cannot be undone.
                   </p>
+                  <p className="text-sm text-gray-700">
+                    Type <strong className="font-mono text-red-600">{deactivatePhrase}</strong> below to confirm:
+                  </p>
+                  <input
+                    type="text"
+                    value={deactivateInput}
+                    onChange={(e) => setDeactivateInput(e.target.value)}
+                    placeholder="Type the phrase above"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono"
+                    autoComplete="off"
+                    disabled={isDeactivating}
+                  />
                   <div className="flex gap-3">
                     <button
                       onClick={handleDeactivateAccount}
-                      disabled={isDeactivating}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-70 disabled:cursor-wait"
+                      disabled={isDeactivating || deactivateInput !== deactivatePhrase}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
                     >
                       {isDeactivating ? "Deactivating…" : "Yes, deactivate my account"}
                     </button>
                     <button
-                      onClick={() => setShowDeactivateConfirm(false)}
+                      onClick={() => {
+                        setShowDeactivateConfirm(false);
+                        setDeactivateInput("");
+                      }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                      disabled={isDeactivating}
                     >
                       Cancel
                     </button>
@@ -906,7 +925,16 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <button
-                  onClick={() => setShowDeactivateConfirm(true)}
+                  onClick={() => {
+                    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+                    let phrase = "deactivate-";
+                    for (let i = 0; i < 6; i++) {
+                      phrase += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    setDeactivatePhrase(phrase);
+                    setDeactivateInput("");
+                    setShowDeactivateConfirm(true);
+                  }}
                   className="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
                 >
                   Deactivate account
