@@ -8,12 +8,13 @@ import { Campaign } from "./data";
  * - Total raised amount
  */
 export function calculateTrendingScore(campaign: Campaign): number {
-  const progressPercentage = (campaign.raised / campaign.goal) * 100;
-  const urgencyFactor = campaign.daysLeft <= 7 ? 1.5 : campaign.daysLeft <= 14 ? 1.2 : 1.0;
-  const backerScore = campaign.backers * 10;
+  const goal = Number(campaign.goal) || 1;
+  const progressPercentage = (Number(campaign.raised) || 0) / goal * 100;
+  const urgencyFactor = (campaign.daysLeft ?? 30) <= 7 ? 1.5 : (campaign.daysLeft ?? 30) <= 14 ? 1.2 : 1.0;
+  const backerScore = (campaign.backers ?? 0) * 10;
   const progressScore = progressPercentage * 5;
-  const raisedScore = campaign.raised / 100;
-  
+  const raisedScore = (Number(campaign.raised) || 0) / 100;
+
   return (backerScore + progressScore + raisedScore) * urgencyFactor;
 }
 
