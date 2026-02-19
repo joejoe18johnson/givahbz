@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -15,37 +14,15 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { user } = useAuth();
+  const { user, login, loginWithGoogle } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/my-campaigns";
 
-  // Show error when NextAuth redirects back with an error
-  useEffect(() => {
-    const err = searchParams.get("error");
-    if (!err) return;
-    if (err === "CredentialsSignin") {
-      setError("Invalid email or password. Please try again.");
-    } else if (err === "OAuthAccountNotLinked") {
-      setError("This email is already used with email/password. Please sign in with your password, or use the same method you used to sign up.");
-    } else if (err === "AccessDenied") {
-      setError("Access was denied. Please try again.");
-    } else if (err === "Configuration") {
-      setError("Google sign-in is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env and restart the server.");
-    } else if (err === "OAuthCallback" || err === "Callback") {
-      setError("Google sign-in failed at the callback step. Check that NEXTAUTH_URL and NEXTAUTH_SECRET are set in .env, and that your Google OAuth redirect URI is exactly: " + (typeof window !== "undefined" ? `${window.location.origin}/api/auth/callback/google` : "NEXTAUTH_URL + /api/auth/callback/google"));
-    } else if (err === "OAuthSignin") {
-      setError("Google sign-in could not start. Check GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.");
-    } else if (err === "Default" || err === "OAuthCreateAccount") {
-      setError("Something went wrong with Google sign-in. Please try again or use email and password.");
-    } else {
-      setError(`Sign-in error (${err}). Check .env has NEXTAUTH_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and that the Google redirect URI matches your site. Or use email and password.`);
-    }
-  }, [searchParams]);
-
   useEffect(() => {
     if (user) {
-      router.replace(callbackUrl);
+      const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
+      router.replace(url);
     }
   }, [user, callbackUrl, router]);
 
@@ -53,25 +30,33 @@ function LoginForm() {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (result?.ok) {
-      const fullUrl = callbackUrl.startsWith("http")
-        ? callbackUrl
-        : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
-      // Small delay so the session cookie is committed before we leave the page
-      setTimeout(() => window.location.replace(fullUrl), 100);
+    const success = await login(email, password);
+    if (success) {
+      const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
+      router.replace(url);
       return;
     }
-    if (result?.error) {
-      setError("Invalid email or password. Please try again.");
-    }
+    setError("Invalid email or password. Please try again.");
     setIsLoading(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+      const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
+      router.replace(url);
+    } catch (err: unknown) {
+      const message = err && typeof err === "object" && "code" in err
+        ? (err as { code: string }).code === "auth/popup-closed-by-user"
+          ? "Sign-in was cancelled."
+          : (err as { message?: string }).message ?? "Google sign-in failed. Please try again."
+        : "Google sign-in failed. Please try again.";
+      setError(message);
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -148,11 +133,7 @@ function LoginForm() {
           <button
             type="button"
             disabled={googleLoading}
-            onClick={() => {
-              setGoogleLoading(true);
-              setError("");
-              signIn("google", { callbackUrl });
-            }}
+            onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-300 rounded-full font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors disabled:opacity-70 disabled:cursor-wait"
           >
             <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">

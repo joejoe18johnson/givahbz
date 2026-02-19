@@ -97,14 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithGoogle = async () => {
-    try {
-      const profile = await signInWithGoogle();
-      setUser(profileToUser(profile));
-      router.push("/");
-    } catch (error: any) {
-      console.error("Google login error:", error);
-      throw error;
-    }
+    const profile = await signInWithGoogle();
+    setUser(profileToUser(profile));
+    // Redirect is handled by the login/signup page (callbackUrl) or by the component that called this
   };
 
   const signup = async (email: string, password: string, name: string): Promise<boolean> => {

@@ -99,6 +99,16 @@ export async function signInWithGoogle(): Promise<UserProfile> {
   // Check if user document exists, create if not
   const userDoc = await getDoc(doc(db, "users", user.uid));
   
+  const adminEmails = (typeof process.env.NEXT_PUBLIC_ADMIN_EMAILS !== "undefined"
+    ? process.env.NEXT_PUBLIC_ADMIN_EMAILS
+    : process.env.ADMIN_EMAILS ?? ""
+  )
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const emailLower = (user.email || "").toLowerCase();
+  const isAdmin = adminEmails.length > 0 && adminEmails.includes(emailLower);
+
   if (!userDoc.exists()) {
     const userProfile: Partial<UserProfile> = {
       id: user.uid,
@@ -107,7 +117,7 @@ export async function signInWithGoogle(): Promise<UserProfile> {
       verified: true, // Google accounts are pre-verified
       idVerified: true,
       addressVerified: false,
-      role: "user",
+      role: isAdmin ? "admin" : "user",
       profilePhoto: user.photoURL ?? undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -116,6 +126,12 @@ export async function signInWithGoogle(): Promise<UserProfile> {
     await setDoc(doc(db, "users", user.uid), {
       ...userProfile,
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } else if (isAdmin) {
+    // Existing user: ensure admin role if email is in admin list
+    await updateDoc(doc(db, "users", user.uid), {
+      role: "admin",
       updatedAt: serverTimestamp(),
     });
   }

@@ -77,7 +77,7 @@ The app supports multiple authentication methods:
 - **Email/Password** - Traditional email and password signup/login
 - **Google Sign-in** - OAuth authentication with Google
 
-For Google sign-in, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to your `.env` (see [.env.example](.env.example)). Step-by-step setup: **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)**.
+For **Sign in with Google**, the app uses Firebase Authentication. Enable Google in [Firebase Console](https://console.firebase.google.com/) → Authentication → Sign-in method, and optionally set `NEXT_PUBLIC_ADMIN_EMAILS` for admin access. See **[FIREBASE_GOOGLE_SIGNIN.md](FIREBASE_GOOGLE_SIGNIN.md)**.
 
 **Note:** Firebase Authentication is now the primary authentication system. See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for complete Firebase configuration instructions.
 
