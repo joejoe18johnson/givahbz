@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { getDonations, getCampaignsUnderReviewCount, getUsersFromFirestore, setUserStatus, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { getDonations, getCampaignsUnderReviewCount, getUsersFromFirestore, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
+import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone, PauseCircle, PlayCircle, Trash2, UserX, UserCheck } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const { user: currentUser } = useAuth();
@@ -86,16 +86,52 @@ export default function AdminDashboardPage() {
     await handleSetStatus(userId, "active");
   };
 
-  const handleDeleteUser = async (userId: string, name: string, email: string) => {
+  const handleDisableUser = async (userId: string, name: string, email: string) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot disable your own account.", { variant: "error" });
+      return;
+    }
+    const ok = await confirm(
+      `Disable user "${name}" (${email})? They will not be able to create or edit campaigns. You can reinstate them later.`,
+      { title: "Disable User", confirmLabel: "Disable", variant: "warning" }
+    );
+    if (ok) {
+      await handleSetStatus(userId, "deleted");
+    }
+  };
+
+  const handleReinstateUser = async (userId: string, name: string) => {
+    const ok = await confirm(
+      `Reinstate user "${name}"? They will be able to create and edit campaigns again.`,
+      { title: "Reinstate User", confirmLabel: "Reinstate", variant: "success" }
+    );
+    if (ok) {
+      await handleSetStatus(userId, "active");
+    }
+  };
+
+  const handleDeleteUserPermanently = async (userId: string, name: string, email: string) => {
     if (userId === currentUser?.id) {
       alert("You cannot delete your own account.", { variant: "error" });
       return;
     }
     const ok = await confirm(
-      `Delete account for "${name}" (${email})? This action cannot be undone.`,
-      { title: "Delete user", confirmLabel: "Delete", variant: "danger" }
+      `Permanently delete user "${name}" (${email})? This will completely remove them from the system and cannot be undone. This action is irreversible.`,
+      { title: "Permanently Delete User", confirmLabel: "Delete Permanently", variant: "danger" }
     );
-    if (ok) await handleSetStatus(userId, "deleted");
+    if (ok) {
+      setUpdatingUserId(userId);
+      try {
+        await deleteUserFromFirestore(userId);
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+        alert(`User "${name}" has been permanently deleted from the system.`, { variant: "success" });
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Failed to delete user. Please try again.", { variant: "error" });
+      } finally {
+        setUpdatingUserId(null);
+      }
+    }
   };
 
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
@@ -307,12 +343,34 @@ export default function AdminDashboardPage() {
                               Remove hold
                             </button>
                           )}
+                          {u.status === "deleted" && !isSelf && (
+                            <button
+                              type="button"
+                              onClick={() => handleReinstateUser(u.id, u.name)}
+                              disabled={updatingUserId === u.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium disabled:opacity-50"
+                            >
+                              <UserCheck className="w-3 h-3" />
+                              Reinstate
+                            </button>
+                          )}
                           {u.status !== "deleted" && !isSelf && (
                             <button
                               type="button"
-                              onClick={() => handleDeleteUser(u.id, u.name, u.email)}
+                              onClick={() => handleDisableUser(u.id, u.name, u.email)}
                               disabled={updatingUserId === u.id}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium disabled:opacity-50"
+                            >
+                              <UserX className="w-3 h-3" />
+                              Disable
+                            </button>
+                          )}
+                          {u.status !== "deleted" && !isSelf && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUserPermanently(u.id, u.name, u.email)}
+                              disabled={updatingUserId === u.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-red-600 text-white hover:bg-red-700 text-xs font-medium disabled:opacity-50"
                             >
                               <Trash2 className="w-3 h-3" />
                               Delete

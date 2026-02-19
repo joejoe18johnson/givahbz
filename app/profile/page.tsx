@@ -168,6 +168,10 @@ export default function ProfilePage() {
   };
 
   const handleIdDocumentUpload = async () => {
+    if (user?.idPending) {
+      alert("You already have an ID document pending verification. Please wait for the verification process to complete before uploading a new document.", { variant: "error" });
+      return;
+    }
     if (!idDocumentType) {
       alert("Please select the type of ID document (Social Security or Passport).", { variant: "error" });
       return;
@@ -443,7 +447,7 @@ export default function ProfilePage() {
         </div>
         <div className="px-6 py-4">
           {user?.idDocument ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-gray-600" />
                 <p className="text-gray-900 font-medium">
@@ -451,21 +455,36 @@ export default function ProfilePage() {
                 </p>
               </div>
               {user?.idVerified ? (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium w-fit">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Verified
-                </span>
+                <>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium w-fit">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Verified
+                  </span>
+                  <p className="text-sm text-gray-600">
+                    Your ID document cannot be changed or removed.
+                  </p>
+                </>
               ) : user?.idPending ? (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium w-fit">
-                  <AlertTriangle className="w-3 h-3" />
-                  Pending approval
-                </span>
+                <>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium w-fit">
+                    <AlertTriangle className="w-3 h-3" />
+                    Pending approval
+                  </span>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-900 mb-1">
+                          ID document submitted and pending verification
+                        </p>
+                        <p className="text-sm text-amber-800">
+                          Your ID document has already been submitted and is currently being reviewed by our team. You cannot upload a new document until the verification process is complete. You will be notified once your ID has been approved or if any additional information is needed.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
               ) : null}
-              {user?.idVerified && (
-                <p className="text-sm text-gray-600">
-                  Your ID document cannot be changed or removed.
-                </p>
-              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -478,7 +497,8 @@ export default function ProfilePage() {
                   <select
                     value={idDocumentType}
                     onChange={(e) => setIdDocumentType(e.target.value as "social_security" | "passport" | "")}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    disabled={user?.idPending === true}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
                   >
                     <option value="">Select ID type</option>
                     <option value="social_security">Social Security Card</option>
@@ -492,17 +512,22 @@ export default function ProfilePage() {
                     type="file"
                     accept="image/*,.pdf"
                     onChange={handleIdFileChange}
+                    disabled={user?.idPending === true}
                     className="hidden"
                     id="id-document-upload"
                   />
                   <label
                     htmlFor="id-document-upload"
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium transition-colors ${
+                      user?.idPending
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    }`}
                   >
                     <Upload className="w-4 h-4" />
                     {idDocumentFile ? idDocumentFile.name : "Choose file"}
                   </label>
-                  {idDocumentFile && (
+                  {idDocumentFile && !user?.idPending && (
                     <button
                       onClick={() => {
                         setIdDocumentFile(null);
@@ -519,11 +544,16 @@ export default function ProfilePage() {
                 </div>
                 <button
                   onClick={handleIdDocumentUpload}
-                  disabled={!idDocumentType || !idDocumentFile || isUploadingId || user?.idVerified}
+                  disabled={!idDocumentType || !idDocumentFile || isUploadingId || user?.idVerified || user?.idPending === true}
                   className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUploadingId ? "Uploading..." : "Upload ID Document"}
                 </button>
+                {user?.idPending && (
+                  <p className="text-sm text-amber-600 mt-2">
+                    You cannot upload a new ID document while your current submission is pending verification.
+                  </p>
+                )}
               </div>
             </div>
           )}

@@ -526,6 +526,10 @@ export async function setUserStatus(userId: string, status: UserStatus): Promise
   });
 }
 
+export async function deleteUserFromFirestore(userId: string): Promise<void> {
+  await deleteDoc(doc(db, usersCollection, userId));
+}
+
 // Hearted campaigns (user-specific)
 export async function getHeartedCampaignIds(userId: string): Promise<string[]> {
   const userDoc = await getDoc(doc(db, usersCollection, userId));
