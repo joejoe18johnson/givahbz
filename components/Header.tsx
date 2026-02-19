@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Search, Heart, LogOut, Menu, X, Bell } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { getHeartedCampaignIds } from "./HeartedCampaigns";
@@ -25,7 +26,7 @@ export default function Header() {
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     if (!user?.id) return;
     try {
       const [list, count] = await Promise.all([
@@ -38,13 +39,13 @@ export default function Header() {
       setNotifications([]);
       setUnreadCount(0);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     if (user?.id) loadNotifications();
     const interval = setInterval(() => user?.id && loadNotifications(), 60000);
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [user?.id, loadNotifications]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -119,12 +120,13 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link href="/" className="shrink-0 flex items-center">
-            <img
+            <Image
               src="/givah-logo.png"
               alt="GivahBz"
-              className="h-8 w-auto sm:h-10"
               width={140}
               height={40}
+              className="h-8 w-auto sm:h-10"
+              priority
             />
           </Link>
 
@@ -245,10 +247,13 @@ export default function Header() {
                   >
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-700 font-medium">
                       {user.profilePhoto ? (
-                        <img 
+                        <Image 
                           src={user.profilePhoto} 
                           alt={user.name}
+                          width={32}
+                          height={32}
                           className="w-full h-full object-cover"
+                          unoptimized
                         />
                       ) : (
                         <span>{user.name.charAt(0).toUpperCase()}</span>
@@ -261,10 +266,13 @@ export default function Header() {
                       <div className="px-4 py-2 border-b border-gray-200 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-700 font-medium flex-shrink-0">
                           {user.profilePhoto ? (
-                            <img 
+                            <Image 
                               src={user.profilePhoto} 
                               alt={user.name}
+                              width={40}
+                              height={40}
                               className="w-full h-full object-cover"
+                              unoptimized
                             />
                           ) : (
                             <span className="text-sm">{user.name.charAt(0).toUpperCase()}</span>

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadProfilePhoto } from "@/lib/firebase/storage";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   User, 
   Phone, 
@@ -202,10 +203,12 @@ export default function ProfilePage() {
               style={{ aspectRatio: "1" }}
             >
               {(profilePhoto || user?.profilePhoto) ? (
-                <img
+                <Image
                   src={profilePhoto || user?.profilePhoto || ""}
                   alt="Profile"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               ) : (
                 <span>{name.charAt(0).toUpperCase()}</span>
