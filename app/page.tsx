@@ -242,12 +242,9 @@ export default function Home() {
             </div>
             <div className="hidden md:block flex-1 min-w-[60px] h-px bg-gray-200" />
           </div>
-          <a
-            href="/campaigns?filter=trending"
-            className="text-primary-600 hover:text-primary-700 font-medium text-sm whitespace-nowrap underline self-start sm:self-auto"
-          >
-            View All →
-          </a>
+          <span className="text-gray-600 font-medium text-sm whitespace-nowrap self-start sm:self-auto">
+            {allTrendingCampaigns.length} {allTrendingCampaigns.length === 1 ? "campaign" : "campaigns"}
+          </span>
         </div>
         <p className="text-gray-600 mb-6">
           Campaigns gaining momentum and support from the community
