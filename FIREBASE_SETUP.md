@@ -124,20 +124,21 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Campaigns: anyone can read, only authenticated users can create
+    // Campaigns: anyone can read; create by authenticated; update/delete by creator (creatorId) or admin
     match /campaigns/{campaignId} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null && 
-        (resource.data.creator == request.auth.uid || 
+        (resource.data.creatorId == request.auth.uid || 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
     
-    // Campaigns under review: any signed-in user can submit; any signed-in user can read (admin dashboard)
+    // Campaigns under review: any signed-in user can submit; any can read (admin); only creator can delete (withdraw)
     match /campaignsUnderReview/{docId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.creatorId == request.auth.uid;
     }
     
     // Notifications: users can only read/update their own; any authenticated user can create (e.g. admin when approving campaign)

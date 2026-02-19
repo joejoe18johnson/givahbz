@@ -269,7 +269,14 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
     createdAt: new Date().toISOString().split("T")[0],
     verified: true,
   };
-  const campaignId = await createCampaign(campaignPayload);
+  const docRef = doc(collection(db, campaignsCollection));
+  await setDoc(docRef, {
+    ...campaignPayload,
+    creatorId: underReview.creatorId || null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  const campaignId = docRef.id;
 
   if (underReview.creatorId) {
     await addNotification(underReview.creatorId, {

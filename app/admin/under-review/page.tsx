@@ -30,6 +30,8 @@ export default function AdminUnderReviewPage() {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleApprove = async (id: string) => {
@@ -88,11 +90,20 @@ export default function AdminUnderReviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Campaigns under review</h1>
-        <p className="text-gray-600 mt-1">
-          New campaigns submitted by creators appear here. Approve or reject each submission.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Campaigns under review</h1>
+          <p className="text-gray-600 mt-1">
+            New campaigns submitted by creators appear here. Withdrawn campaigns are removed automatically.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => load()}
+          className="shrink-0 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium"
+        >
+          Refresh list
+        </button>
       </div>
 
       {list.length === 0 ? (

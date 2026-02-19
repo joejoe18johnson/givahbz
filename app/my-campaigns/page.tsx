@@ -13,6 +13,7 @@ import {
 import {
   getCampaignsUnderReviewForUser,
   deleteCampaignUnderReview,
+  deleteCampaign,
   type CampaignUnderReviewDoc,
 } from "@/lib/firebase/firestore";
 import { useThemedModal } from "@/components/ThemedModal";
@@ -38,7 +39,7 @@ import { useRouter } from "next/navigation";
 export default function MyCampaignsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const { confirm } = useThemedModal();
+  const { confirm, alert } = useThemedModal();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [stoppedIds, setStoppedIds] = useState<Set<string>>(new Set());
@@ -100,10 +101,14 @@ export default function MyCampaignsPage() {
       variant: "danger",
     });
     if (!ok) return;
-    const next = new Set(deletedIds).add(campaignId);
-    setDeletedIds(next);
-    setDeletedCampaignIds(Array.from(next));
-  }, [deletedIds, confirm]);
+    try {
+      await deleteCampaign(campaignId);
+      setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+    } catch (err) {
+      console.error("Error deleting campaign:", err);
+      alert("Could not delete the campaign. You may not have permission, or it may already be removed.", { variant: "error" });
+    }
+  }, [confirm, alert]);
 
   const handleWithdrawReview = useCallback(async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
