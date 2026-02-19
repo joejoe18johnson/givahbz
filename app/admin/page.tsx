@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { getDonations } from "@/lib/firebase/firestore";
+import { getDonations, getCampaignsUnderReviewCount } from "@/lib/firebase/firestore";
 import { adminUsers } from "@/lib/adminData";
-import { getCampaignsUnderReview } from "@/lib/campaignsUnderReview";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock } from "lucide-react";
@@ -20,12 +19,14 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [fetchedCampaigns, fetchedDonations] = await Promise.all([
+        const [fetchedCampaigns, fetchedDonations, count] = await Promise.all([
           fetchCampaignsFromAPI(),
           getDonations(),
+          getCampaignsUnderReviewCount(),
         ]);
         setCampaigns(fetchedCampaigns);
         setDonations(fetchedDonations);
+        setUnderReviewCount(count);
       } catch (error) {
         console.error("Error loading admin data:", error);
       } finally {
@@ -33,7 +34,6 @@ export default function AdminDashboardPage() {
       }
     }
     loadData();
-    setUnderReviewCount(getCampaignsUnderReview().length);
   }, []);
 
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);

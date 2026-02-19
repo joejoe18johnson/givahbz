@@ -188,21 +188,35 @@ export async function getCampaignsUnderReviewFromFirestore(): Promise<CampaignUn
     where("status", "==", "pending")
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      title: data.title,
-      description: data.description,
-      fullDescription: data.fullDescription,
-      goal: data.goal,
-      category: data.category,
-      creatorName: data.creatorName,
-      creatorId: data.creatorId,
-      submittedAt: data.submittedAt || (data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString()),
-      status: data.status || "pending",
-    } as CampaignUnderReviewDoc;
-  });
+  return snapshot.docs.map((d) => mapDocToCampaignUnderReview(d));
+}
+
+/** Pending campaigns under review for a specific creator (for My Campaigns page). */
+export async function getCampaignsUnderReviewForUser(creatorId: string): Promise<CampaignUnderReviewDoc[]> {
+  if (!creatorId) return [];
+  const q = query(
+    collection(db, campaignsUnderReviewCollection),
+    where("creatorId", "==", creatorId),
+    where("status", "==", "pending")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => mapDocToCampaignUnderReview(d));
+}
+
+function mapDocToCampaignUnderReview(d: { id: string; data: () => Record<string, unknown> }): CampaignUnderReviewDoc {
+  const data = d.data();
+  return {
+    id: d.id,
+    title: data.title as string,
+    description: data.description as string,
+    fullDescription: data.fullDescription as string | undefined,
+    goal: data.goal as number,
+    category: data.category as string,
+    creatorName: data.creatorName as string,
+    creatorId: data.creatorId as string,
+    submittedAt: (data.submittedAt as string) || (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
+    status: (data.status as CampaignUnderReviewDoc["status"]) || "pending",
+  };
 }
 
 export async function getCampaignsUnderReviewCount(): Promise<number> {

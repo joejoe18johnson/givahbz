@@ -11,10 +11,10 @@ import {
   setDeletedCampaignIds,
 } from "@/lib/campaignState";
 import {
-  getCampaignsUnderReview,
-  removeCampaignUnderReview,
-  type CampaignUnderReview,
-} from "@/lib/campaignsUnderReview";
+  getCampaignsUnderReviewForUser,
+  deleteCampaignUnderReview,
+  type CampaignUnderReviewDoc,
+} from "@/lib/firebase/firestore";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 import SafeImage from "@/components/SafeImage";
@@ -43,13 +43,24 @@ export default function MyCampaignsPage() {
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [stoppedIds, setStoppedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-  const [underReview, setUnderReview] = useState<CampaignUnderReview[]>([]);
+  const [underReview, setUnderReview] = useState<CampaignUnderReviewDoc[]>([]);
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace("/auth/login?callbackUrl=/my-campaigns");
     }
   }, [user, isLoading, router]);
+
+  const loadUnderReview = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const list = await getCampaignsUnderReviewForUser(user.id);
+      setUnderReview(list);
+    } catch (error) {
+      console.error("Error loading campaigns under review:", error);
+      setUnderReview([]);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     async function loadCampaigns() {
@@ -63,11 +74,13 @@ export default function MyCampaignsPage() {
       }
     }
     loadCampaigns();
-    
     setStoppedIds(new Set(getStoppedCampaignIds()));
     setDeletedIds(new Set(getDeletedCampaignIds()));
-    setUnderReview(getCampaignsUnderReview());
   }, []);
+
+  useEffect(() => {
+    loadUnderReview();
+  }, [loadUnderReview]);
 
   const handleStop = useCallback((e: React.MouseEvent, campaignId: string) => {
     e.preventDefault();
@@ -102,8 +115,12 @@ export default function MyCampaignsPage() {
       variant: "danger",
     });
     if (!ok) return;
-    removeCampaignUnderReview(id);
-    setUnderReview((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await deleteCampaignUnderReview(id);
+      setUnderReview((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      console.error("Error withdrawing campaign:", err);
+    }
   }, [confirm]);
 
   if (isLoading || campaignsLoading) {
@@ -127,9 +144,7 @@ export default function MyCampaignsPage() {
       !deletedIds.has(c.id)
   );
 
-  const myUnderReview = underReview.filter(
-    (c) => c.creatorName.trim().toLowerCase() === user.name.trim().toLowerCase()
-  );
+  const myUnderReview = underReview;
 
   const formatReviewDate = (iso: string) => {
     const d = new Date(iso);

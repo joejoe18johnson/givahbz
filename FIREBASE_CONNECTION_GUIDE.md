@@ -141,6 +141,8 @@ If the app logs a Firestore index error for the **notifications** collection, ad
 
 Use the link in the console error if one is shown; it will open the correct index form.
 
+If the **My Campaigns** page fails to load "Campaigns under review", add an index for **campaignsUnderReview**: fields **creatorId** (Ascending), **status** (Ascending).
+
 ### "Firebase: Error (auth/invalid-api-key)"
 
 - Check that `.env` file has correct `NEXT_PUBLIC_FIREBASE_API_KEY`
