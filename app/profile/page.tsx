@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [idDocumentType, setIdDocumentType] = useState<"social_security" | "passport" | "">(user?.idDocumentType || "");
   const [idDocumentFile, setIdDocumentFile] = useState<File | null>(null);
   const [isUploadingId, setIsUploadingId] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profilePhoto || null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const idFileInputRef = useRef<HTMLInputElement>(null);
@@ -214,9 +215,15 @@ export default function ProfilePage() {
     if (!user) return;
 
     setIsUploadingId(true);
+    setUploadProgress(0);
     try {
       console.log("Starting ID document upload...", { userId: user.id, documentType: idDocumentType, fileName: idDocumentFile.name, fileSize: idDocumentFile.size });
-      const documentUrl = await uploadVerificationDocument(user.id, idDocumentFile, idDocumentType);
+      const documentUrl = await uploadVerificationDocument(
+        user.id, 
+        idDocumentFile, 
+        idDocumentType,
+        (progress) => setUploadProgress(progress)
+      );
       console.log("Document uploaded successfully, URL:", documentUrl);
       console.log("Updating user profile with document URL...");
       await updateUser({ 
@@ -237,6 +244,7 @@ export default function ProfilePage() {
       alert(`Failed to upload ID document: ${errorMessage}`, { variant: "error" });
     } finally {
       setIsUploadingId(false);
+      setUploadProgress(0);
     }
   };
 
@@ -600,14 +608,24 @@ export default function ProfilePage() {
                     </button>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleIdDocumentUpload}
-                  disabled={!idDocumentType || !idDocumentFile || isUploadingId || user?.idVerified || user?.idPending === true}
-                  className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isUploadingId ? "Uploading..." : "Upload ID Document"}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleIdDocumentUpload}
+                    disabled={!idDocumentType || !idDocumentFile || isUploadingId || user?.idVerified || user?.idPending === true}
+                    className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full"
+                  >
+                    {isUploadingId ? `Uploading... ${uploadProgress > 0 ? `${Math.round(uploadProgress)}%` : ''}` : "Upload ID Document"}
+                  </button>
+                  {isUploadingId && (
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-success-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
                 {user?.idPending && (
                   <p className="text-sm text-amber-600 mt-2">
                     You cannot upload a new ID document while your current submission is pending verification.

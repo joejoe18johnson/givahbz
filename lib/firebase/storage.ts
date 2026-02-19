@@ -1,5 +1,15 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } from "firebase/storage";
 import { storage } from "./config";
+
+// Helper function to add timeout to promises
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    ),
+  ]);
+}
 
 // Upload profile photo
 export async function uploadProfilePhoto(userId: string, file: File): Promise<string> {
@@ -49,11 +59,12 @@ export async function uploadUnderReviewCampaignImage(
   }
 }
 
-// Upload verification document
+// Upload verification document with timeout and progress tracking
 export async function uploadVerificationDocument(
   userId: string,
   file: File,
-  documentType: string
+  documentType: string,
+  onProgress?: (progress: number) => void
 ): Promise<string> {
   try {
     if (!file) {
@@ -73,16 +84,58 @@ export async function uploadVerificationDocument(
     }
     
     const fileRef = ref(storage, `verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`);
-    console.log(`Uploading verification document to: verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`);
-    await uploadBytes(fileRef, file);
-    console.log("Verification document uploaded, getting download URL...");
-    const url = await getDownloadURL(fileRef);
-    console.log("Verification document URL obtained:", url);
+    console.log(`Uploading verification document to: verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`, `Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    
+    const startTime = Date.now();
+    
+    // Use uploadBytesResumable for better control and progress tracking
+    const uploadTask = uploadBytesResumable(fileRef, file);
+    
+    // Create a promise that resolves when upload completes
+    const uploadPromise = new Promise<void>((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload progress: ${progress.toFixed(1)}%`);
+          if (onProgress) {
+            onProgress(progress);
+          }
+        },
+        (error) => {
+          console.error("Upload error:", error);
+          reject(error);
+        },
+        () => {
+          console.log("Upload completed");
+          if (onProgress) {
+            onProgress(100);
+          }
+          resolve();
+        }
+      );
+    });
+    
+    // Add timeout: 60 seconds for upload + 10 seconds for URL retrieval = 70 seconds total
+    const timeoutMs = 70000;
+    await withTimeout(uploadPromise, timeoutMs, "Upload timed out after 60 seconds. Please check your internet connection and try again.");
+    
+    const uploadTime = Date.now() - startTime;
+    console.log(`Verification document uploaded in ${uploadTime}ms, getting download URL...`);
+    
+    // Get download URL with timeout
+    const urlPromise = getDownloadURL(fileRef);
+    const url = await withTimeout(urlPromise, 10000, "Failed to get download URL. The file may have uploaded but URL retrieval timed out.");
+    
+    const totalTime = Date.now() - startTime;
+    console.log(`Verification document URL obtained in ${totalTime}ms:`, url);
     return url;
   } catch (error: any) {
     console.error("Error uploading verification document:", error);
     const errorMessage = error?.message || String(error);
-    if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
+    if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
+      throw new Error("Upload timed out. Please check your internet connection and try again with a smaller file.");
+    } else if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
       throw new Error("Permission denied: Unable to upload document. Please check your Firebase Storage rules.");
     } else if (errorMessage.includes("quota") || errorMessage.includes("Quota")) {
       throw new Error("Storage quota exceeded: Unable to upload document.");
