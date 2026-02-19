@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Campaign } from "@/lib/data";
 import { fetchCampaign } from "@/lib/services/campaignService";
 import { notFound } from "next/navigation";
@@ -28,6 +28,7 @@ export default function CampaignPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isHearted, setIsHearted] = useState(false);
   const [coverIndex, setCoverIndex] = useState(0);
+  const coverCarouselRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { alert } = useThemedModal();
 
@@ -111,13 +112,26 @@ export default function CampaignPage({ params }: PageProps) {
               <>
                 <div className="sm:hidden w-full min-w-0 h-[220px] rounded-xl overflow-hidden relative">
                   <div
-                    className="flex h-full transition-transform duration-300 ease-out"
-                    style={{ transform: `translateX(-${coverIndex * 100}%)` }}
+                    ref={coverCarouselRef}
+                    className="flex h-full overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory touch-pan-x [&::-webkit-scrollbar]:hidden"
+                    style={{
+                      WebkitOverflowScrolling: "touch",
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none",
+                    }}
+                    onScroll={() => {
+                      const el = coverCarouselRef.current;
+                      if (!el || slides.length === 0) return;
+                      const width = el.offsetWidth;
+                      const index = Math.round(el.scrollLeft / width);
+                      const clamped = Math.max(0, Math.min(index, slides.length - 1));
+                      setCoverIndex(clamped);
+                    }}
                   >
                     {slides.map((src, i) => (
                       <div
                         key={i}
-                        className="relative flex-shrink-0 w-full h-full bg-gray-200"
+                        className="relative flex-shrink-0 w-full h-full bg-gray-200 snap-start snap-always"
                         style={{ minWidth: "100%" }}
                       >
                         {src ? (
@@ -163,7 +177,13 @@ export default function CampaignPage({ params }: PageProps) {
                       <button
                         key={i}
                         type="button"
-                        onClick={() => setCoverIndex(i)}
+                        onClick={() => {
+                          setCoverIndex(i);
+                          const el = coverCarouselRef.current;
+                          if (el) {
+                            el.scrollTo({ left: i * el.offsetWidth, behavior: "smooth" });
+                          }
+                        }}
                         className="pointer-events-auto w-2.5 h-2.5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
                         style={{
                           backgroundColor: coverIndex === i ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",

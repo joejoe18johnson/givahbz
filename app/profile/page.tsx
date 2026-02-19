@@ -147,30 +147,20 @@ export default function ProfilePage() {
   };
 
   const handleSavePhone = () => {
-    if (phoneInput.trim()) {
-      const newPhone = phoneInput.trim();
-      setPhoneNumber(newPhone);
-      // When saving a new phone number, it's not verified yet
-      updateUser({ phoneNumber: newPhone, phoneVerified: false });
-      setEditingPhone(false);
-      setPhoneInput("");
+    const raw = phoneInput.trim();
+    if (!raw) return;
+    if (raw.length < 8 || !/^[\d\s\-+()]+$/.test(raw)) {
+      alert("Please enter a valid phone number (e.g. +501 123-4567 or 123-4567).", { variant: "error" });
+      return;
     }
+    setPhoneNumber(raw);
+    updateUser({ phoneNumber: raw, phoneVerified: false });
+    setEditingPhone(false);
+    setPhoneInput("");
   };
 
   const handleAddPhone = () => {
     setEditingPhone(true);
-    setPhoneInput("");
-  };
-
-  const handleEditPhone = () => {
-    setEditingPhone(true);
-    setPhoneInput(phoneNumber);
-  };
-
-  const handleRemovePhone = () => {
-    setPhoneNumber("");
-    updateUser({ phoneNumber: undefined, phoneVerified: false });
-    setEditingPhone(false);
     setPhoneInput("");
   };
 
@@ -207,12 +197,15 @@ export default function ProfilePage() {
         </div>
         <div className="px-6 py-6">
           <div className="flex items-center gap-6">
-            <div className="relative w-24 h-24 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-600 text-3xl font-medium">
+            <div
+              className="relative flex-shrink-0 w-24 h-24 min-w-[6rem] min-h-[6rem] rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-600 text-3xl font-medium"
+              style={{ aspectRatio: "1" }}
+            >
               {(profilePhoto || user?.profilePhoto) ? (
-                <img 
-                  src={profilePhoto || user?.profilePhoto || ""} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
+                <img
+                  src={profilePhoto || user?.profilePhoto || ""}
+                  alt="Profile"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : (
                 <span>{name.charAt(0).toUpperCase()}</span>
@@ -302,34 +295,74 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Verified Phone Number Section */}
+      {/* Phone Number Section — enter once, then read-only */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Phone className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-medium text-gray-900">Verified Phone Number</h2>
+            <h2 className="text-lg font-medium text-gray-900">Phone number</h2>
           </div>
         </div>
         <div className="px-6 py-4">
           {phoneNumber ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <p className="text-gray-900 font-medium">{phoneNumber}</p>
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium">
+              <p className="text-gray-900 font-medium">{phoneNumber}</p>
+              {user?.phoneVerified && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium w-fit">
                   <CheckCircle2 className="w-3 h-3" />
                   Verified
                 </span>
-              </div>
+              )}
               <p className="text-sm text-gray-600">
-                This is the phone number used during account registration. It cannot be changed.
+                This number cannot be changed or removed.
               </p>
+            </div>
+          ) : editingPhone ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                You can add your phone number once. After saving, it cannot be edited or removed.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  type="tel"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="e.g. +501 123-4567"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[200px]"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSavePhone}
+                  disabled={!phoneInput.trim()}
+                  className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingPhone(false);
+                    setPhoneInput("");
+                  }}
+                  className="p-2 text-gray-600 hover:text-gray-700"
+                  aria-label="Cancel"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ) : (
             <div>
               <p className="text-gray-600 mb-2">No phone number on file</p>
-              <p className="text-sm text-gray-500">
-                Phone number is set during account registration and cannot be changed later.
+              <p className="text-sm text-gray-500 mb-3">
+                Add your phone number here. Once saved, it cannot be edited or removed.
               </p>
+              <button
+                onClick={handleAddPhone}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-primary-500 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors text-sm font-medium"
+              >
+                <Phone className="w-4 h-4" />
+                Add phone number
+              </button>
             </div>
           )}
         </div>
