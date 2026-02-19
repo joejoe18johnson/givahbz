@@ -91,9 +91,14 @@ export default function AdminDashboardPage() {
 
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
   const totalDonations = donations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
-  const recentCampaigns = campaigns.slice(0, 5);
-  const recentUsers = users.slice(0, 5);
-  const recentDonations = donations.slice(0, 8);
+
+  const byNewest = <T,>(arr: T[], getDate: (x: T) => string | undefined) =>
+    [...arr].sort((a, b) => new Date(getDate(b) ?? 0).getTime() - new Date(getDate(a) ?? 0).getTime());
+
+  const recentCampaigns = byNewest(campaigns, (c) => c.createdAt).slice(0, 5);
+  const recentUsers = byNewest(users, (u) => u.createdAt).slice(0, 5);
+  const recentDonations = byNewest(donations, (d) => d.createdAt).slice(0, 8);
+
   const phonePendingCount = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
 
   if (isLoading) {
