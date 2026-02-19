@@ -25,8 +25,8 @@ export default function CreateCampaignPage() {
 
   const [proofFiles, setProofFiles] = useState<File[]>([]);
   const [proofDragOver, setProofDragOver] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageDragOver, setImageDragOver] = useState(false);
+  const [imageFiles, setImageFiles] = useState<[File | null, File | null]>([null, null]);
+  const [imageDragOver, setImageDragOver] = useState<number | null>(null);
   const { alert } = useThemedModal();
 
   useEffect(() => {
@@ -87,6 +87,10 @@ export default function CreateCampaignPage() {
 
     if (proofFiles.length === 0) {
       alert("Please upload at least one proof document to verify your need.", { title: "Proof required", variant: "error" });
+      return;
+    }
+    if (!imageFiles[0] || !imageFiles[1]) {
+      alert("Please upload 2 campaign images (one for each cover panel).", { title: "2 images required", variant: "error" });
       return;
     }
 
@@ -162,29 +166,41 @@ export default function CreateCampaignPage() {
     setProofFiles(proofFiles.filter((_, i) => i !== index));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (index: 0 | 1) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) setImageFile(file);
+    if (file && file.type.startsWith("image/")) {
+      setImageFiles((prev) => {
+        const next: [File | null, File | null] = [...prev];
+        next[index] = file;
+        return next;
+      });
+    }
     e.target.value = "";
   };
 
-  const handleImageDrop = (e: React.DragEvent) => {
+  const handleImageDrop = (index: 0 | 1) => (e: React.DragEvent) => {
     e.preventDefault();
-    setImageDragOver(false);
+    setImageDragOver(null);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) setImageFile(file);
+    if (file && file.type.startsWith("image/")) {
+      setImageFiles((prev) => {
+        const next: [File | null, File | null] = [...prev];
+        next[index] = file;
+        return next;
+      });
+    }
   };
 
-  const handleImageDragOver = (e: React.DragEvent) => {
+  const handleImageDragOver = (index: number) => (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setImageDragOver(true);
+    setImageDragOver(index);
   };
 
   const handleImageDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setImageDragOver(false);
+    setImageDragOver(null);
   };
 
   const handleChange = (
@@ -350,48 +366,62 @@ export default function CreateCampaignPage() {
           </select>
         </div>
 
-        {/* Image Upload */}
+        {/* Campaign images — upload 2 */}
         <div>
           <label className="block text-sm font-medium mb-2">
-            Campaign Image
+            Campaign images *
           </label>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-            onChange={handleImageChange}
-            className="hidden"
-            id="campaign-image-upload"
-          />
-          <label
-            htmlFor="campaign-image-upload"
-            onDragOver={handleImageDragOver}
-            onDragLeave={handleImageDragLeave}
-            onDrop={handleImageDrop}
-            className={`block border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-              imageDragOver
-                ? "border-primary-500 bg-primary-50"
-                : "border-gray-300 hover:border-primary-500"
-            }`}
-          >
-            {imageFile ? (
-              <div className="space-y-2">
-                <p className="text-primary-600 font-medium">{imageFile.name}</p>
-                <p className="text-sm text-gray-500">
-                  ({(imageFile.size / 1024).toFixed(1)} KB) — click or drop to replace
-                </p>
+          <p className="text-sm text-gray-600 mb-3">
+            Upload 2 images for your campaign cover (left and right panels).
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {([0, 1] as const).map((index) => (
+              <div key={index}>
+                <span className="block text-xs font-medium text-gray-500 mb-1">
+                  Image {index + 1}
+                </span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                  onChange={handleImageChange(index)}
+                  className="hidden"
+                  id={`campaign-image-upload-${index}`}
+                />
+                <label
+                  htmlFor={`campaign-image-upload-${index}`}
+                  onDragOver={handleImageDragOver(index)}
+                  onDragLeave={handleImageDragLeave}
+                  onDrop={handleImageDrop(index)}
+                  className={`block border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                    imageDragOver === index
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-300 hover:border-primary-500"
+                  }`}
+                >
+                  {imageFiles[index] ? (
+                    <div className="space-y-1">
+                      <p className="text-primary-600 font-medium text-sm truncate" title={imageFiles[index]!.name}>
+                        {imageFiles[index]!.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        ({(imageFiles[index]!.size / 1024).toFixed(1)} KB) — click or drop to replace
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 text-sm">
+                        {index === 0 ? "First image" : "Second image"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        PNG, JPG, GIF up to 10MB
+                      </p>
+                    </>
+                  )}
+                </label>
               </div>
-            ) : (
-              <>
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600 mb-2">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-sm text-gray-500">
-                  PNG, JPG, GIF up to 10MB
-                </p>
-              </>
-            )}
-          </label>
+            ))}
+          </div>
         </div>
 
         {/* Note about Identity Verification */}

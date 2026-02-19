@@ -12,6 +12,7 @@ export interface Campaign {
   daysLeft: number;
   category: string;
   image: string;
+  image2?: string;
   location?: string;
   createdAt: string;
   verified: boolean;

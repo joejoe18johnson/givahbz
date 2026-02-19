@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Campaign } from "@/lib/data";
 import { fetchCampaign } from "@/lib/services/campaignService";
 import { notFound } from "next/navigation";
 import SafeImage from "@/components/SafeImage";
-import { Calendar, MapPin, Users, Heart, CheckCircle2 } from "lucide-react";
+import { Calendar, Users, Heart, CheckCircle2 } from "lucide-react";
 import CampaignDonateSection from "@/components/CampaignDonateSection";
 import CampaignUpdates from "@/components/CampaignUpdates";
 import RewardsSection from "@/components/RewardsSection";
@@ -16,6 +15,7 @@ import DonorsList from "@/components/DonorsList";
 import { formatCurrency } from "@/lib/utils";
 import { toggleHeartCampaign, isCampaignHearted } from "@/components/HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
+import { useThemedModal } from "@/components/ThemedModal";
 
 interface PageProps {
   params: {
@@ -27,8 +27,9 @@ export default function CampaignPage({ params }: PageProps) {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isHearted, setIsHearted] = useState(false);
+  const [coverIndex, setCoverIndex] = useState(0);
   const { user } = useAuth();
-  const router = useRouter();
+  const { alert } = useThemedModal();
 
   useEffect(() => {
     async function loadCampaign() {
@@ -72,7 +73,10 @@ export default function CampaignPage({ params }: PageProps) {
 
   const handleToggleHeart = async () => {
     if (!user) {
-      router.push("/auth/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+      alert("You need to be logged in to save campaigns.", {
+        title: "Log in to save campaigns",
+        variant: "info",
+      });
       return;
     }
     if (campaign) {
@@ -85,54 +89,180 @@ export default function CampaignPage({ params }: PageProps) {
     <div className="container mx-auto px-4 py-8">
       {/* Single grid: on mobile = image, then content, then sidebar. On desktop = image+content left, sidebar right */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-4 lg:gap-6">
-        {/* Hero Image */}
-        <div className="relative h-72 lg:h-96 w-full min-w-0 bg-gray-200 rounded-2xl overflow-hidden">
-          {campaign.image ? (
-            <div className="absolute inset-0">
-              <SafeImage
-                src={campaign.image}
-                alt={campaign.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, (min-width: 1025px) 60vw, 576px"
-                priority
-                fallback={
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
-                    <div className="text-primary-600 text-8xl font-medium opacity-20">
-                      {campaign.title.charAt(0)}
+        {/* Cover section: title, media, creator — image height matches sidebar (~same as right card) */}
+        <div className="min-w-0 flex flex-col gap-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+            {campaign.title}
+          </h1>
+
+          {/* Mobile: carousel with dots */}
+          {(() => {
+            const image1 = campaign.image;
+            const image2 = campaign.image2 ?? campaign.image;
+            const slides = [image1, image2];
+            const fallbackContent = (variant: "left" | "right") => (
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+                <span className="text-primary-600 text-5xl font-medium opacity-20">
+                  {campaign.title.charAt(0)}
+                </span>
+              </div>
+            );
+            return (
+              <>
+                <div className="sm:hidden w-full min-w-0 h-[220px] rounded-xl overflow-hidden relative">
+                  <div
+                    className="flex h-full transition-transform duration-300 ease-out"
+                    style={{ transform: `translateX(-${coverIndex * 100}%)` }}
+                  >
+                    {slides.map((src, i) => (
+                      <div
+                        key={i}
+                        className="relative flex-shrink-0 w-full h-full bg-gray-200"
+                        style={{ minWidth: "100%" }}
+                      >
+                        {src ? (
+                          <SafeImage
+                            src={src}
+                            alt={`${campaign.title} (${i + 1})`}
+                            fill
+                            className="object-cover"
+                            sizes="100vw"
+                            priority={i === 0}
+                            fallback={fallbackContent("left")}
+                          />
+                        ) : (
+                          fallbackContent("left")
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute top-2 right-2 flex gap-2 pointer-events-auto">
+                          <ShareCampaign
+                            campaignId={campaign.id}
+                            campaignTitle={campaign.title}
+                            variant="compact"
+                          />
+                          <button
+                            onClick={handleToggleHeart}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-colors flex-shrink-0 ${
+                              !user
+                                ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
+                                : isHearted
+                                ? "bg-white/90 text-red-500"
+                                : "bg-white/90 text-gray-700 hover:bg-white"
+                            }`}
+                            aria-label={!user ? "Log in to like campaigns" : isHearted ? "Remove from hearted" : "Add to hearted"}
+                          >
+                            <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : !user ? "opacity-50" : ""}`} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Dots */}
+                  <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 pointer-events-none">
+                    {slides.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setCoverIndex(i)}
+                        className="pointer-events-auto w-2.5 h-2.5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
+                        style={{
+                          backgroundColor: coverIndex === i ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
+                        }}
+                        aria-label={`Go to image ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Desktop: two-column grid */}
+                <div className="hidden sm:grid grid-cols-2 gap-4 sm:gap-6 w-full min-w-0 h-[260px] lg:h-[400px]">
+                  <div className="relative w-full h-full min-w-0 bg-gray-200 rounded-xl overflow-hidden">
+                    {campaign.image ? (
+                      <SafeImage
+                        src={campaign.image}
+                        alt={campaign.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 50vw, 30vw"
+                        priority
+                        fallback={
+                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+                            <span className="text-primary-600 text-5xl font-medium opacity-20">
+                              {campaign.title.charAt(0)}
+                            </span>
+                          </div>
+                        }
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+                        <span className="text-primary-600 text-5xl font-medium opacity-20">
+                          {campaign.title.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative w-full h-full min-w-0 bg-gray-200 rounded-xl overflow-hidden">
+                    {(campaign.image2 ?? campaign.image) ? (
+                      <SafeImage
+                        src={campaign.image2 ?? campaign.image}
+                        alt={`${campaign.title} (2)`}
+                        fill
+                        className="object-cover object-center"
+                        sizes="(max-width: 1024px) 50vw, 30vw"
+                        fallback={
+                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-300 to-primary-500">
+                            <span className="text-primary-700 text-5xl font-medium opacity-20">
+                              {campaign.title.charAt(0)}
+                            </span>
+                          </div>
+                        }
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-300 to-primary-500">
+                        <span className="text-primary-700 text-5xl font-medium opacity-20">
+                          {campaign.title.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex gap-2 pointer-events-auto">
+                      <ShareCampaign
+                        campaignId={campaign.id}
+                        campaignTitle={campaign.title}
+                        variant="compact"
+                      />
+                      <button
+                        onClick={handleToggleHeart}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-colors flex-shrink-0 ${
+                          !user
+                            ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
+                            : isHearted
+                            ? "bg-white/90 text-red-500"
+                            : "bg-white/90 text-gray-700 hover:bg-white"
+                        }`}
+                        aria-label={!user ? "Log in to like campaigns" : isHearted ? "Remove from hearted" : "Add to hearted"}
+                        title={!user ? "Log in to like campaigns" : undefined}
+                      >
+                        <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : !user ? "opacity-50" : ""}`} />
+                      </button>
                     </div>
                   </div>
-                }
-              />
+                </div>
+              </>
+            );
+          })()}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex-shrink-0 rounded-full bg-primary-200 flex items-center justify-center text-primary-700 font-semibold text-sm">
+              {campaign.creator.charAt(0)}
             </div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
-              <div className="text-primary-600 text-8xl font-medium opacity-20">
-                {campaign.title.charAt(0)}
-              </div>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-          <div className="absolute top-4 right-4 flex gap-2">
-            <ShareCampaign
-              campaignId={campaign.id}
-              campaignTitle={campaign.title}
-              variant="compact"
-            />
-            <button
-              onClick={handleToggleHeart}
-              className={`bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg ${
-                !user
-                  ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
-                  : isHearted
-                  ? "text-red-500"
-                  : "text-gray-700"
-              }`}
-              aria-label={!user ? "Log in to like campaigns" : isHearted ? "Remove from hearted" : "Add to hearted"}
-              title={!user ? "Log in to like campaigns" : undefined}
-            >
-              <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : !user ? "opacity-50" : ""}`} />
-            </button>
+            <p className="text-gray-700 font-medium">
+              {campaign.creator}
+              {campaign.location && (
+                <span className="text-gray-500 font-normal text-sm ml-1.5">
+                  · {campaign.location}
+                </span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -187,10 +317,10 @@ export default function CampaignPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Main content: directly under image (order-2 on mobile so it appears before sidebar) */}
+        {/* Main content: category, description, etc. (order-2 on mobile so it appears before sidebar) */}
         <div className="order-2 lg:order-3 min-w-0">
           {/* Category Badge and Verification */}
-          <div className="mb-3 flex items-center gap-3 flex-wrap">
+          <div className="mb-4 flex items-center gap-3 flex-wrap">
             <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium">
               {campaign.category}
             </span>
@@ -207,25 +337,6 @@ export default function CampaignPage({ params }: PageProps) {
                  "Charity"}
               </span>
             )}
-          </div>
-
-          {/* Title */}
-          <h1 className="text-4xl font-medium text-gray-900 mb-3">{campaign.title}</h1>
-
-          {/* Creator Info */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-primary-200 rounded-full flex items-center justify-center text-primary-700 font-medium">
-              {campaign.creator.charAt(0)}
-            </div>
-            <div>
-              <p className="font-medium">{campaign.creator}</p>
-              {campaign.location && (
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {campaign.location}
-                </p>
-              )}
-            </div>
           </div>
 
           {/* Description */}

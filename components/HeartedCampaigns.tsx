@@ -136,7 +136,7 @@ export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsPr
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0"
               aria-label="Close"
             >
               <X className="w-5 h-5 text-gray-600" />
@@ -212,7 +212,7 @@ export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsPr
                           </div>
                           <button
                             onClick={(e) => handleRemoveHeart(campaign.id, e)}
-                            className="absolute top-2 left-2 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+                            className="absolute top-2 left-2 w-9 h-9 rounded-full flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white transition-colors flex-shrink-0"
                             aria-label="Remove from hearted"
                           >
                             <Heart className="w-4 h-4 text-red-500 fill-red-500" />

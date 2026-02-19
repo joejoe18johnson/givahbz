@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import SafeImage from "./SafeImage";
 import ShareCampaign from "./ShareCampaign";
 import { Calendar, Users, CheckCircle2, Heart } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toggleHeartCampaign, isCampaignHearted } from "./HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
+import { useThemedModal } from "./ThemedModal";
 
 interface Campaign {
   id: string;
@@ -33,7 +33,7 @@ interface CampaignCardProps {
 export default function CampaignCard({ campaign }: CampaignCardProps) {
   const [isHearted, setIsHearted] = useState(false);
   const { user } = useAuth();
-  const router = useRouter();
+  const { alert } = useThemedModal();
   const progress = (campaign.raised / campaign.goal) * 100;
   const progressPercentage = Math.min(progress, 100);
 
@@ -47,7 +47,10 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (!user) {
-      router.push("/auth/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+      alert("You need to be logged in to save campaigns.", {
+        title: "Log in to save campaigns",
+        variant: "info",
+      });
       return;
     }
     const newState = await toggleHeartCampaign(campaign.id);
@@ -89,11 +92,11 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
               campaignId={campaign.id}
               campaignTitle={campaign.title}
               variant="compact"
-              className="[&_button]:!p-2 [&_button]:!bg-white/90"
+              className="[&_button]:!bg-white/90"
             />
             <button
               onClick={handleToggleHeart}
-              className={`p-2 rounded-full backdrop-blur-sm shadow-lg transition-colors ${
+              className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg transition-colors flex-shrink-0 ${
                 !user
                   ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
                   : isHearted

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Share2, Link2, MessageCircle, Facebook, Send, X } from "lucide-react";
 
 interface ShareCampaignProps {
@@ -8,9 +9,89 @@ interface ShareCampaignProps {
   /** Either full URL or campaign id (URL is built from origin + /campaigns/id). */
   campaignUrl?: string;
   campaignId?: string;
-  /** Compact: dropdown from a single share icon. Default: full button group. */
+  /** Compact: single share icon button. Full: "Share this campaign" button. Both open the same modal. */
   variant?: "compact" | "full";
   className?: string;
+}
+
+/** Shared modal content: Copy link, WhatsApp, Facebook, Messenger. Rendered in a fixed overlay. */
+function ShareModalContent({
+  onClose,
+  copyLink,
+  copied,
+  shareWhatsApp,
+  shareFacebook,
+  shareMessenger,
+}: {
+  onClose: () => void;
+  copyLink: () => void;
+  copied: boolean;
+  shareWhatsApp: () => void;
+  shareFacebook: () => void;
+  shareMessenger: () => void;
+}) {
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-[100] bg-black/50"
+        aria-hidden
+        onClick={onClose}
+      />
+      <div
+        className="fixed left-1/2 top-1/2 z-[101] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Share campaign"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">Share this campaign</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex-shrink-0"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={copyLink}
+            className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <Link2 className="w-5 h-5 flex-shrink-0 text-gray-500" />
+            <span className="font-medium">{copied ? "Copied!" : "Copy link"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={shareWhatsApp}
+            className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <MessageCircle className="w-5 h-5 flex-shrink-0 text-gray-500" />
+            <span className="font-medium">WhatsApp</span>
+          </button>
+          <button
+            type="button"
+            onClick={shareFacebook}
+            className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <Facebook className="w-5 h-5 flex-shrink-0 text-gray-500" />
+            <span className="font-medium">Facebook</span>
+          </button>
+          <button
+            type="button"
+            onClick={shareMessenger}
+            className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <Send className="w-5 h-5 flex-shrink-0 text-gray-500" />
+            <span className="font-medium">Messenger</span>
+          </button>
+        </div>
+      </div>
+    </>
+  );
 }
 
 export default function ShareCampaign({
@@ -56,16 +137,16 @@ export default function ShareCampaign({
     }
   }, [absoluteUrl, campaignUrl]);
 
-  const shareWhatsApp = () => {
+  const shareWhatsApp = useCallback(() => {
     window.open(
       `https://wa.me/?text=${encodeURIComponent(shareText)}`,
       "_blank",
       "noopener,noreferrer"
     );
     setOpen(false);
-  };
+  }, [shareText]);
 
-  const shareFacebook = () => {
+  const shareFacebook = useCallback(() => {
     const u = absoluteUrl || campaignUrl;
     if (!u) return;
     window.open(
@@ -74,9 +155,9 @@ export default function ShareCampaign({
       "noopener,noreferrer,width=600,height=400"
     );
     setOpen(false);
-  };
+  }, [absoluteUrl, campaignUrl]);
 
-  const shareMessenger = () => {
+  const shareMessenger = useCallback(() => {
     const u = absoluteUrl || campaignUrl;
     if (!u) return;
     window.open(
@@ -85,153 +166,59 @@ export default function ShareCampaign({
       "noopener,noreferrer,width=600,height=400"
     );
     setOpen(false);
-  };
+  }, [absoluteUrl, campaignUrl]);
 
-  const nativeShare = useCallback(async () => {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      const u = absoluteUrl || campaignUrl;
-      if (!u) return;
-      try {
-        await navigator.share({
-          title: campaignTitle,
-          text: "Support this campaign on GivahBz",
-          url: u,
-        });
-        setOpen(false);
-      } catch {
-        // User cancelled or error
-      }
-    }
-  }, [campaignTitle, absoluteUrl, campaignUrl]);
+  const openModal = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen(true);
+  }, []);
 
-  const hasNativeShare = typeof navigator !== "undefined" && !!navigator.share;
+  const closeModal = useCallback(() => setOpen(false), []);
 
-  const buttons = (
-    <>
-      <button
-        type="button"
-        onClick={copyLink}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm transition-colors w-full text-left"
-      >
-        <Link2 className="w-4 h-4 flex-shrink-0" />
-        {copied ? "Copied!" : "Copy link"}
-      </button>
-      <button
-        type="button"
-        onClick={shareWhatsApp}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm transition-colors w-full text-left"
-      >
-        <MessageCircle className="w-4 h-4 flex-shrink-0" />
-        WhatsApp
-      </button>
-      <button
-        type="button"
-        onClick={shareFacebook}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm transition-colors w-full text-left"
-      >
-        <Facebook className="w-4 h-4 flex-shrink-0" />
-        Facebook
-      </button>
-      <button
-        type="button"
-        onClick={shareMessenger}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm transition-colors w-full text-left"
-      >
-        <Send className="w-4 h-4 flex-shrink-0" />
-        Messenger
-      </button>
-    </>
-  );
+  const modal =
+    open && typeof document !== "undefined"
+      ? createPortal(
+          <ShareModalContent
+            onClose={closeModal}
+            copyLink={copyLink}
+            copied={copied}
+            shareWhatsApp={shareWhatsApp}
+            shareFacebook={shareFacebook}
+            shareMessenger={shareMessenger}
+          />,
+          document.body
+        )
+      : null;
 
   if (variant === "compact") {
     return (
-      <div className={`relative ${className}`}>
+      <div className={className}>
         <button
           type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg"
+          onClick={openModal}
+          className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-white/90 backdrop-blur-sm shadow-lg transition-colors hover:bg-white flex-shrink-0"
           aria-label="Share campaign"
         >
           <Share2 className="w-5 h-5 text-gray-700" />
         </button>
-        {open && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black/60"
-              aria-hidden
-              onClick={() => setOpen(false)}
-            />
-            {/* Full-screen centered modal on mobile; dropdown on desktop */}
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 md:contents"
-              onClick={() => setOpen(false)}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Share campaign"
-            >
-              <div
-                className="relative w-full max-w-md max-h-[100vh] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-xl py-4 md:absolute md:right-0 md:top-full md:mt-2 md:w-56 md:max-w-none md:max-h-none md:py-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between gap-2 px-3 pb-2 md:relative md:pr-10 md:pb-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Share campaign
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    className="flex-shrink-0 p-1.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 md:absolute md:right-2 md:top-2 md:p-1"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                {buttons}
-              </div>
-            </div>
-          </>
-        )}
+        {modal}
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
-      <p className="text-xs font-medium text-gray-700">Share this campaign</p>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={copyLink}
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
-        >
-          <Link2 className="w-3.5 h-3.5" />
-          {copied ? "Copied!" : "Copy link"}
-        </button>
-        <button
-          type="button"
-          onClick={shareWhatsApp}
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
-        >
-          <MessageCircle className="w-3.5 h-3.5" />
-          WhatsApp
-        </button>
-        <button
-          type="button"
-          onClick={shareFacebook}
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
-        >
-          <Facebook className="w-3.5 h-3.5" />
-          Facebook
-        </button>
-        <button
-          type="button"
-          onClick={shareMessenger}
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs transition-colors"
-        >
-          <Send className="w-3.5 h-3.5" />
-          Messenger
-        </button>
-      </div>
+    <div className={className}>
+      <button
+        type="button"
+        onClick={openModal}
+        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+        aria-label="Share campaign"
+      >
+        <Share2 className="w-4 h-4" />
+        Share this campaign
+      </button>
+      {modal}
     </div>
   );
 }

@@ -183,7 +183,7 @@ export default function Header() {
                   <button
                     type="button"
                     onClick={() => setShowNotificationDropdown((v) => !v)}
-                    className="relative p-1.5 rounded-full text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors"
+                    className="relative w-10 h-10 rounded-full flex items-center justify-center text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors flex-shrink-0"
                     aria-label="Notifications"
                   >
                     <Bell className="w-5 h-5" />
@@ -228,7 +228,7 @@ export default function Header() {
                 </div>
                 <Link
                   href="/liked-campaigns"
-                  className="relative text-gray-700 hover:text-primary-600 transition-colors"
+                  className="relative w-10 h-10 rounded-full flex items-center justify-center text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors flex-shrink-0"
                   aria-label="View liked campaigns"
                 >
                   <Heart className="w-5 h-5" />
@@ -322,7 +322,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-full text-gray-700 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="lg:hidden w-11 h-11 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
