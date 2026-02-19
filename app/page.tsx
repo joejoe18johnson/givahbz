@@ -264,7 +264,27 @@ export default function Home() {
           </div>
         )}
 
+        {isLoading && (
+          <div className="flex gap-4 md:gap-6 py-2 justify-center md:justify-start min-h-[340px] items-center">
+            <div className="animate-pulse flex-shrink-0 w-[85vw] max-w-[340px] md:w-[280px] h-[420px] rounded-lg bg-gray-100" />
+            <div className="animate-pulse flex-shrink-0 w-[85vw] max-w-[340px] md:w-[280px] h-[420px] rounded-lg bg-gray-100 hidden sm:block" />
+            <div className="animate-pulse flex-shrink-0 w-[280px] h-[420px] rounded-lg bg-gray-100 hidden md:block" />
+            <div className="animate-pulse flex-shrink-0 w-[280px] h-[420px] rounded-lg bg-gray-100 hidden lg:block" />
+          </div>
+        )}
+
+        {!isLoading && allTrendingCampaigns.length === 0 && !campaignsError && (
+          <div className="py-12 text-center text-gray-500">
+            <p className="font-medium text-gray-700">No trending campaigns yet</p>
+            <p className="text-sm mt-1">Check back soon or browse all campaigns.</p>
+            <Link href="/campaigns" className="inline-block mt-4 text-primary-600 hover:text-primary-700 font-medium underline">
+              Browse all campaigns →
+            </Link>
+          </div>
+        )}
+
         {/* Mobile: horizontal carousel, equal-height cards */}
+        {!isLoading && allTrendingCampaigns.length > 0 && (
         <div className="md:hidden -mx-4 px-4 mb-6">
           <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide">
             <div className="flex gap-4 pb-2">
@@ -281,8 +301,10 @@ export default function Home() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Desktop: swipeable carousel with side arrows, equal-height cards */}
+        {!isLoading && allTrendingCampaigns.length > 0 && (
         <div className="hidden md:block relative">
           {/* Left arrow */}
           <button
@@ -344,6 +366,7 @@ export default function Home() {
             </div>
           )}
         </div>
+        )}
 
         <div className="text-center mt-6">
           <Link

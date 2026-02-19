@@ -79,7 +79,8 @@ export async function getCampaigns(filters?: {
     .map((docSnap) => {
       const data = docSnap.data() as Record<string, unknown>;
       const createdAt = normalizeCreatedAt(data);
-      return { ...data, id: docSnap.id, createdAt } as Campaign;
+      const creator = (data.creator as string) ?? (data.creatorName as string) ?? "";
+      return { ...data, id: docSnap.id, createdAt, creator } as Campaign;
     });
   // ^ Exclude pending (under-review) and on_hold so only live campaigns appear on the public list
 
