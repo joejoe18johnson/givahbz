@@ -126,6 +126,7 @@ export async function updateCampaign(campaignId: string, updates: Partial<Campai
   });
 }
 
+/** Permanently delete a campaign. Removes it from the campaigns collection so it no longer appears on the main site (home, campaigns list, or campaign detail page). */
 export async function deleteCampaign(campaignId: string): Promise<void> {
   await deleteDoc(doc(db, campaignsCollection, campaignId));
 }

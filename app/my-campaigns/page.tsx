@@ -94,12 +94,15 @@ export default function MyCampaignsPage() {
   const handleDelete = useCallback(async (e: React.MouseEvent, campaignId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    const ok = await confirm("Are you sure you want to delete this campaign? This cannot be undone.", {
-      title: "Delete campaign",
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      variant: "danger",
-    });
+    const ok = await confirm(
+      "Are you sure you want to delete this campaign? It will be removed from the main site and this cannot be undone.",
+      {
+        title: "Delete campaign",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+        variant: "danger",
+      }
+    );
     if (!ok) return;
     try {
       await deleteCampaign(campaignId);
