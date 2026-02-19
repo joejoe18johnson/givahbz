@@ -13,6 +13,11 @@ import { useState, useEffect, useRef } from "react";
 
 const permanentMarker = Permanent_Marker({ weight: "400", subsets: ["latin"] });
 
+const HERO_SLIDES = [
+  { src: "/hero-right.png", alt: "Community connections" },
+  { src: "/hero-right-2.png", alt: "Community connections" },
+];
+
 const HOME_FAQS = [
   {
     q: "Why was this crowdfunding platform created?",
@@ -53,6 +58,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [campaignsError, setCampaignsError] = useState<string | null>(null);
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(null);
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const trendingScrollRef = useRef<HTMLDivElement>(null);
   const [trendingCanScrollLeft, setTrendingCanScrollLeft] = useState(false);
   const [trendingCanScrollRight, setTrendingCanScrollRight] = useState(false);
@@ -65,6 +71,13 @@ export default function Home() {
     const page = Math.min(totalPages, Math.round(el.scrollLeft / TRENDING_PAGE_WIDTH) + 1);
     setCurrentPage((p) => (page >= 1 && page <= totalPages ? page : p));
   };
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setHeroSlideIndex((i) => (i + 1) % HERO_SLIDES.length);
+    }, 2000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     async function loadCampaigns() {
@@ -184,13 +197,22 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: Image at natural size, top-aligned and centered */}
-          <div className="order-1 lg:order-2 flex justify-center items-start">
-            <SafeImage
-              src="/hero-right.png"
-              alt="Community connections"
-              className="max-w-md w-full h-auto block"
-            />
+          {/* Right: Hero image slider (2s delay, loop) */}
+          <div className="order-1 lg:order-2 flex justify-center items-start relative max-w-md w-full aspect-[4/3] min-h-[240px]">
+            {HERO_SLIDES.map((slide, i) => (
+              <div
+                key={slide.src}
+                className="absolute inset-0 transition-opacity duration-500 ease-in-out"
+                style={{ opacity: heroSlideIndex === i ? 1 : 0 }}
+                aria-hidden={heroSlideIndex !== i}
+              >
+                <SafeImage
+                  src={slide.src}
+                  alt={slide.alt}
+                  className="w-full h-full object-contain block"
+                />
+              </div>
+            ))}
           </div>
         </section>
         </div>
