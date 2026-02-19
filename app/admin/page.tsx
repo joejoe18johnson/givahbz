@@ -4,39 +4,90 @@ import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { getDonations, getCampaignsUnderReviewCount, getUsersFromFirestore, type AdminUserDoc } from "@/lib/firebase/firestore";
+import { getDonations, getCampaignsUnderReviewCount, getUsersFromFirestore, setUserStatus, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { useAuth } from "@/contexts/AuthContext";
+import { useThemedModal } from "@/components/ThemedModal";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone } from "lucide-react";
+import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
 
 export default function AdminDashboardPage() {
+  const { user: currentUser } = useAuth();
+  const { confirm, alert } = useThemedModal();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [donations, setDonations] = useState<AdminDonation[]>([]);
   const [users, setUsers] = useState<AdminUserDoc[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [underReviewCount, setUnderReviewCount] = useState(0);
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+
+  const loadData = async () => {
+    try {
+      const [fetchedCampaigns, fetchedDonations, count, userList] = await Promise.all([
+        fetchCampaignsFromAPI(),
+        getDonations(),
+        getCampaignsUnderReviewCount(),
+        getUsersFromFirestore(),
+      ]);
+      setCampaigns(fetchedCampaigns);
+      setDonations(fetchedDonations);
+      setUnderReviewCount(count);
+      setUsers(userList);
+    } catch (error) {
+      console.error("Error loading admin data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [fetchedCampaigns, fetchedDonations, count, userList] = await Promise.all([
-          fetchCampaignsFromAPI(),
-          getDonations(),
-          getCampaignsUnderReviewCount(),
-          getUsersFromFirestore(),
-        ]);
-        setCampaigns(fetchedCampaigns);
-        setDonations(fetchedDonations);
-        setUnderReviewCount(count);
-        setUsers(userList);
-      } catch (error) {
-        console.error("Error loading admin data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
     loadData();
   }, []);
+
+  const handleSetStatus = async (userId: string, status: UserStatus) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot change your own status.", { variant: "error" });
+      return;
+    }
+    setUpdatingUserId(userId);
+    try {
+      await setUserStatus(userId, status);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status } : u)));
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      alert("Failed to update user status.", { variant: "error" });
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
+  const handlePutOnHold = async (userId: string, name: string) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot put yourself on hold.", { variant: "error" });
+      return;
+    }
+    const ok = await confirm(
+      `Put "${name}" on hold? They will not be able to create or edit campaigns until you remove hold.`,
+      { title: "Put user on hold", confirmLabel: "Put on hold", variant: "warning" }
+    );
+    if (ok) await handleSetStatus(userId, "on_hold");
+  };
+
+  const handleRemoveHold = async (userId: string) => {
+    await handleSetStatus(userId, "active");
+  };
+
+  const handleDisableUser = async (userId: string, name: string, email: string) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot disable your own account.", { variant: "error" });
+      return;
+    }
+    const ok = await confirm(
+      `Disable account for "${name}" (${email})? They will no longer be able to create or edit campaigns.`,
+      { title: "Disable user", confirmLabel: "Disable", variant: "danger" }
+    );
+    if (ok) await handleSetStatus(userId, "deleted");
+  };
 
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
   const totalDonations = donations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
@@ -182,7 +233,7 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="bg-gray-50 text-left text-gray-500">
                   <th className="px-5 py-3 font-medium">Name</th>
@@ -190,33 +241,74 @@ export default function AdminDashboardPage() {
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Phone</th>
                   <th className="px-5 py-3 font-medium">Phone approved</th>
+                  <th className="px-5 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {recentUsers.map((u) => (
-                  <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
-                    <td className="px-5 py-3 text-gray-900">{u.name}</td>
-                    <td className="px-5 py-3 text-gray-600 truncate max-w-[160px]">{u.email}</td>
-                    <td className="px-5 py-3">
-                      <span className={
-                        u.status === "active" ? "text-verified-600" :
-                        u.status === "on_hold" ? "text-amber-600" : "text-red-600"
-                      }>
-                        {u.status === "active" ? "Active" : u.status === "on_hold" ? "On hold" : "Disabled"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-gray-600">{u.phoneNumber || "—"}</td>
-                    <td className="px-5 py-3">
-                      {u.phoneVerified ? (
-                        <span className="text-verified-600">Yes</span>
-                      ) : u.phoneNumber ? (
-                        <span className="text-amber-600">Review</span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {recentUsers.map((u) => {
+                  const isSelf = u.id === currentUser?.id;
+                  return (
+                    <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
+                      <td className="px-5 py-3 text-gray-900">{u.name}</td>
+                      <td className="px-5 py-3 text-gray-600 truncate max-w-[160px]">{u.email}</td>
+                      <td className="px-5 py-3">
+                        <span className={
+                          u.status === "active" ? "text-verified-600" :
+                          u.status === "on_hold" ? "text-amber-600" : "text-red-600"
+                        }>
+                          {u.status === "active" ? "Active" : u.status === "on_hold" ? "On hold" : "Disabled"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-gray-600">{u.phoneNumber || "—"}</td>
+                      <td className="px-5 py-3">
+                        {u.phoneVerified ? (
+                          <span className="text-verified-600">Yes</span>
+                        ) : u.phoneNumber ? (
+                          <span className="text-amber-600">Review</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {u.status === "active" && !isSelf && (
+                            <button
+                              type="button"
+                              onClick={() => handlePutOnHold(u.id, u.name)}
+                              disabled={updatingUserId === u.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs font-medium disabled:opacity-50"
+                            >
+                              <PauseCircle className="w-3 h-3" />
+                              Hold
+                            </button>
+                          )}
+                          {u.status === "on_hold" && !isSelf && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveHold(u.id)}
+                              disabled={updatingUserId === u.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium disabled:opacity-50"
+                            >
+                              <PlayCircle className="w-3 h-3" />
+                              Remove hold
+                            </button>
+                          )}
+                          {u.status !== "deleted" && !isSelf && (
+                            <button
+                              type="button"
+                              onClick={() => handleDisableUser(u.id, u.name, u.email)}
+                              disabled={updatingUserId === u.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium disabled:opacity-50"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Disable
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
