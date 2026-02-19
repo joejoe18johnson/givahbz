@@ -100,7 +100,7 @@ export default function CampaignPage({ params }: PageProps) {
             const image1 = campaign.image;
             const image2 = campaign.image2 ?? campaign.image;
             const slides = [image1, image2];
-            const fallbackContent = (variant: "left" | "right") => (
+            const fallbackContent = () => (
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
                 <span className="text-primary-600 text-5xl font-medium opacity-20">
                   {campaign.title.charAt(0)}
@@ -128,10 +128,10 @@ export default function CampaignPage({ params }: PageProps) {
                             className="object-cover"
                             sizes="100vw"
                             priority={i === 0}
-                            fallback={fallbackContent("left")}
+                            fallback={fallbackContent()}
                           />
                         ) : (
-                          fallbackContent("left")
+                          fallbackContent()
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                         <div className="absolute top-2 right-2 flex gap-2 pointer-events-auto">
