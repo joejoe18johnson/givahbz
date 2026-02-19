@@ -25,6 +25,8 @@ export interface AdminDonation {
   method: "credit-card" | "bank" | "digiwallet" | "paypal";
   status: "completed" | "pending" | "failed";
   createdAt: string;
+  /** Optional message from the donor, max 100 characters. */
+  note?: string;
 }
 
 export const adminUsers: AdminUser[] = [

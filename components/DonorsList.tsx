@@ -111,6 +111,9 @@ export default function DonorsList({ campaignId }: DonorsListProps) {
                     <p className="text-sm text-gray-500 mt-0.5">
                       {formatRelativeTime(donation.createdAt)}
                     </p>
+                    {donation.note && (
+                      <p className="text-sm text-gray-600 mt-2 italic">&ldquo;{donation.note}&rdquo;</p>
+                    )}
                   </div>
                   <div className="ml-4 text-right">
                     <p className="font-semibold text-gray-900">

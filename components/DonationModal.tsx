@@ -28,6 +28,8 @@ export default function DonationModal({
     phone: "",
     anonymous: false,
   });
+  const [note, setNote] = useState("");
+  const NOTE_MAX_LENGTH = 100;
   const [cardDetails, setCardDetails] = useState({
     cardNumber: "",
     expiryDate: "",
@@ -62,6 +64,7 @@ export default function DonationModal({
         setIsSuccess(false);
         setSelectedMethod(null);
         setDonorInfo({ name: "", email: "", phone: "", anonymous: false });
+        setNote("");
         setCardDetails({ cardNumber: "", expiryDate: "", cvv: "", cardholderName: "" });
       }, 3000);
     }, 2000);
@@ -169,6 +172,22 @@ export default function DonationModal({
                     <label htmlFor="anonymous" className="text-sm text-gray-700">
                       Donate anonymously
                     </label>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Add a note (optional)
+                    </label>
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX_LENGTH))}
+                      maxLength={NOTE_MAX_LENGTH}
+                      rows={2}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                      placeholder="Say something nice with your donation..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1 text-right">
+                      {note.length}/{NOTE_MAX_LENGTH}
+                    </p>
                   </div>
                 </div>
               </div>
