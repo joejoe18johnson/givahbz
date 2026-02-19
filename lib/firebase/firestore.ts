@@ -35,15 +35,14 @@ export async function getCampaign(campaignId: string): Promise<Campaign | null> 
   const docSnap = await getDoc(docRef);
   
   if (!docSnap.exists()) return null;
-  
-  const data = docSnap.data();
+  const data = docSnap.data() as Record<string, unknown>;
+  if (data.status === "on_hold") return null;
   // Convert Firestore Timestamp to string date if needed
-  const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString().split('T')[0] : data.createdAt;
-  
+  const createdAt = data.createdAt?.toDate ? (data.createdAt as { toDate: () => Date }).toDate().toISOString().split("T")[0] : (data.createdAt as string);
   return {
     ...data,
     id: docSnap.id,
-    createdAt: createdAt || new Date().toISOString().split('T')[0],
+    createdAt: createdAt || new Date().toISOString().split("T")[0],
   } as Campaign;
 }
 
@@ -73,13 +72,16 @@ export async function getCampaigns(filters?: {
   const querySnapshot = await getDocsFromServer(q);
 
   let campaigns = querySnapshot.docs
-    .filter((docSnap) => (docSnap.data() as Record<string, unknown>).status !== "pending")
+    .filter((docSnap) => {
+      const status = (docSnap.data() as Record<string, unknown>).status as string | undefined;
+      return status !== "pending" && status !== "on_hold";
+    })
     .map((docSnap) => {
       const data = docSnap.data() as Record<string, unknown>;
       const createdAt = normalizeCreatedAt(data);
       return { ...data, id: docSnap.id, createdAt } as Campaign;
     });
-  // ^ Exclude any doc with status "pending" so under-review items never appear on the public list
+  // ^ Exclude pending (under-review) and on_hold so only live campaigns appear on the public list
 
   // Filter by category in memory (avoids composite index)
   if (filters?.category && filters.category !== "All") {
@@ -138,6 +140,27 @@ export async function updateCampaign(campaignId: string, updates: Partial<Campai
  */
 export async function deleteCampaign(campaignId: string): Promise<void> {
   await deleteDoc(doc(db, campaignsCollection, campaignId));
+}
+
+/** Put a campaign on hold (hidden from public) or release it. On-hold campaigns are excluded from getCampaigns and getCampaign. */
+export async function setCampaignOnHold(campaignId: string, onHold: boolean): Promise<void> {
+  await updateDoc(doc(db, campaignsCollection, campaignId), {
+    status: onHold ? "on_hold" : "live",
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/** All campaigns for admin (includes on-hold; excludes only pending from wrong collection). Not for public use. */
+export async function getCampaignsForAdmin(): Promise<(Campaign & { status?: string })[]> {
+  const q = query(collection(db, campaignsCollection));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs
+    .filter((docSnap) => (docSnap.data() as Record<string, unknown>).status !== "pending")
+    .map((docSnap) => {
+      const data = docSnap.data() as Record<string, unknown>;
+      const createdAt = normalizeCreatedAt(data);
+      return { ...data, id: docSnap.id, createdAt } as Campaign & { status?: string };
+    });
 }
 
 // Donations operations
@@ -292,6 +315,7 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
   await setDoc(docRef, {
     ...campaignPayload,
     creatorId: underReview.creatorId || null,
+    status: "live",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

@@ -2,30 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
-import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { deleteCampaign } from "@/lib/firebase/firestore";
+import { getCampaignsForAdmin, deleteCampaign, setCampaignOnHold } from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle } from "lucide-react";
+
+type CampaignWithStatus = Campaign & { status?: string };
 
 export default function AdminCampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [onHoldId, setOnHoldId] = useState<string | null>(null);
   const { confirm, alert } = useThemedModal();
 
-  useEffect(() => {
-    async function loadCampaigns() {
-      try {
-        const fetchedCampaigns = await fetchCampaignsFromAPI();
-        setCampaigns(fetchedCampaigns);
-      } catch (error) {
-        console.error("Error loading campaigns:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  async function loadCampaigns() {
+    try {
+      const fetchedCampaigns = await getCampaignsForAdmin();
+      setCampaigns(fetchedCampaigns);
+    } catch (error) {
+      console.error("Error loading campaigns:", error);
+    } finally {
+      setIsLoading(false);
     }
+  }
+
+  useEffect(() => {
     loadCampaigns();
   }, []);
 
@@ -44,6 +47,21 @@ export default function AdminCampaignsPage() {
       alert("Could not delete the campaign. Please try again.", { variant: "error" });
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleSetOnHold = async (campaignId: string, onHold: boolean) => {
+    setOnHoldId(campaignId);
+    try {
+      await setCampaignOnHold(campaignId, onHold);
+      setCampaigns((prev) =>
+        prev.map((c) => (c.id === campaignId ? { ...c, status: onHold ? "on_hold" : "live" } : c))
+      );
+    } catch (err) {
+      console.error("Error updating campaign status:", err);
+      alert("Could not update campaign status. Please try again.", { variant: "error" });
+    } finally {
+      setOnHoldId(null);
     }
   };
 
@@ -80,6 +98,7 @@ export default function AdminCampaignsPage() {
                 <th className="px-5 py-3 font-medium">Backers</th>
                 <th className="px-5 py-3 font-medium">Days left</th>
                 <th className="px-5 py-3 font-medium">Created</th>
+                <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Verified</th>
                 <th className="px-5 py-3 font-medium">Actions</th>
               </tr>
@@ -102,13 +121,41 @@ export default function AdminCampaignsPage() {
                   <td className="px-5 py-3">{c.daysLeft}</td>
                   <td className="px-5 py-3 text-gray-600">{c.createdAt}</td>
                   <td className="px-5 py-3">
+                    {c.status === "on_hold" ? (
+                      <span className="inline-flex items-center gap-1 text-amber-600">On hold</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-verified-600">Live</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3">
                     {c.verified ? (
                       <span className="inline-flex items-center gap-1 text-verified-600"><CheckCircle2 className="w-4 h-4" /> Yes</span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-amber-600"><XCircle className="w-4 h-4" /> No</span>
                     )}
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-5 py-3 flex flex-wrap items-center gap-2">
+                    {c.status === "on_hold" ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSetOnHold(c.id, false)}
+                        disabled={onHoldId === c.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-medium disabled:opacity-50"
+                      >
+                        <PlayCircle className="w-3.5 h-3.5" />
+                        {onHoldId === c.id ? "Updating…" : "Release"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSetOnHold(c.id, true)}
+                        disabled={onHoldId === c.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs font-medium disabled:opacity-50"
+                      >
+                        <PauseCircle className="w-3.5 h-3.5" />
+                        {onHoldId === c.id ? "Updating…" : "Put on hold"}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => handleDelete(c.id, c.title)}
