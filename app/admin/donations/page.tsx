@@ -1,9 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
 import { adminDonations } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 
 export default function AdminDonationsPage() {
+  const donationsNewestFirst = useMemo(
+    () => [...adminDonations].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    []
+  );
   const totalCompleted = adminDonations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
   const totalPending = adminDonations.filter((d) => d.status === "pending").reduce((sum, d) => sum + d.amount, 0);
 

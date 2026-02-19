@@ -83,7 +83,10 @@ export default function AdminLayout({
           getUsersFromFirestore(),
           getDonations(),
         ]);
-        setNotifications(list.slice(0, 10));
+        const underReviewNewestFirst = [...list].sort(
+          (a, b) => new Date(b.submittedAt ?? 0).getTime() - new Date(a.submittedAt ?? 0).getTime()
+        );
+        setNotifications(underReviewNewestFirst.slice(0, 10));
         const since = sevenDaysAgo();
         const phonePending = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
         setSectionCounts({
