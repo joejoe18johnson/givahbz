@@ -12,6 +12,7 @@ import {
 } from "@/lib/campaignState";
 import {
   getCampaignsUnderReviewForUser,
+  getCampaignsOnHoldForUser,
   deleteCampaignUnderReview,
   deleteCampaign,
   type CampaignUnderReviewDoc,
@@ -32,6 +33,7 @@ import {
   Trash2,
   Clock,
   XCircle,
+  PauseCircle,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
