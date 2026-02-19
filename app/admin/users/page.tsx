@@ -17,7 +17,9 @@ export default function AdminUsersPage() {
     setLoading(true);
     try {
       const list = await getUsersFromFirestore();
-      const sorted = [...list].sort((a, b) =>
+      // Filter out disabled users (status === "deleted")
+      const activeUsers = list.filter((u) => u.status !== "deleted");
+      const sorted = [...activeUsers].sort((a, b) =>
         new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
       );
       setUsers(sorted);
