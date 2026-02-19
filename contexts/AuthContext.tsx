@@ -30,6 +30,8 @@ interface User {
   idDocument?: string;
   idDocumentType?: "social_security" | "passport";
   idPending?: boolean;
+  addressDocument?: string;
+  addressPending?: boolean;
   profilePhoto?: string;
 }
 
@@ -63,6 +65,8 @@ function profileToUser(profile: UserProfile): User {
     idDocument: profile.idDocument,
     idDocumentType: profile.idDocumentType,
     idPending: profile.idPending,
+    addressDocument: profile.addressDocument,
+    addressPending: profile.addressPending,
     profilePhoto: profile.profilePhoto,
   };
 }

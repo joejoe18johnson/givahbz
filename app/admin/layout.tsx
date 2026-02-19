@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
-import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock, Bell } from "lucide-react";
+import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock, Bell, LogOut } from "lucide-react";
+import Image from "next/image";
 import {
   getCampaignsUnderReviewCount,
   getCampaignsUnderReviewFromFirestore,
@@ -174,8 +175,8 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <aside className="fixed left-0 top-16 bottom-0 w-56 bg-white border-r border-gray-200 shadow-sm z-40 overflow-y-auto">
-        <nav className="p-4 space-y-1">
+      <aside className="fixed left-0 top-16 bottom-0 w-56 bg-white border-r border-gray-200 shadow-sm z-40 overflow-y-auto flex flex-col">
+        <nav className="p-4 space-y-1 flex-1 pb-24">
           <Link
             href="/"
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
@@ -329,6 +330,44 @@ export default function AdminLayout({
                 </span>
               )}
             </Link>
+          </div>
+          
+          {/* Profile Section at Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+            {user && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 px-2">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-700 font-medium flex-shrink-0">
+                    {user.profilePhoto ? (
+                      <Image 
+                        src={user.profilePhoto} 
+                        alt={user.name}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="text-sm">{user.name.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    await logout();
+                    router.push("/");
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </nav>
       </aside>

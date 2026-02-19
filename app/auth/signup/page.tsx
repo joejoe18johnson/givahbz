@@ -77,7 +77,7 @@ export default function SignupPage() {
       // Show subtle notification about verification
       setTimeout(() => {
         alert(
-          "Account created successfully! To create campaigns, please verify your identity in your profile settings. Your phone number and ID document need to be approved by an admin.",
+          "Account created successfully! To create campaigns, please verify your identity in your profile settings. Your phone number, ID document, and address document need to be approved by an admin.",
           { 
             title: "Account Created", 
             variant: "info" 

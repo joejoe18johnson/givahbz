@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getUsersFromFirestore, setUserPhoneVerified, setIdVerified, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { getUsersFromFirestore, setUserPhoneVerified, setIdVerified, setAddressVerified, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle, UserX, UserCheck } from "lucide-react";
@@ -51,10 +51,23 @@ export default function AdminUsersPage() {
     setUpdatingId(userId);
     try {
       await setIdVerified(userId, true);
-      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, idVerified: true } : u)));
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, idVerified: true, idPending: false } : u)));
     } catch (error) {
       console.error("Error approving ID:", error);
       alert("Failed to approve ID.", { variant: "error" });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleApproveAddress = async (userId: string) => {
+    setUpdatingId(userId);
+    try {
+      await setAddressVerified(userId, true);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, addressVerified: true, addressPending: false } : u)));
+    } catch (error) {
+      console.error("Error approving address:", error);
+      alert("Failed to approve address.", { variant: "error" });
     } finally {
       setUpdatingId(null);
     }
@@ -173,6 +186,7 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3 font-medium">Phone</th>
                 <th className="px-5 py-3 font-medium">Phone approved</th>
                 <th className="px-5 py-3 font-medium">ID verified</th>
+                <th className="px-5 py-3 font-medium">Address verified</th>
                 <th className="px-5 py-3 font-medium bg-gray-50 sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">Actions</th>
               </tr>
             </thead>
@@ -243,6 +257,17 @@ export default function AdminUsersPage() {
                           >
                             <Shield className="w-3.5 h-3.5" />
                             {updatingId === u.id ? "…" : "Approve ID"}
+                          </button>
+                        )}
+                        {u.addressDocument && !u.addressVerified && (
+                          <button
+                            type="button"
+                            onClick={() => handleApproveAddress(u.id)}
+                            disabled={updatingId === u.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium disabled:opacity-50"
+                          >
+                            <Shield className="w-3.5 h-3.5" />
+                            {updatingId === u.id ? "…" : "Approve Address"}
                           </button>
                         )}
                         {status === "active" && !isSelf && (

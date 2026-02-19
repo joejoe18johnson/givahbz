@@ -145,6 +145,7 @@ export default function AdminDashboardPage() {
   const recentDonations = byNewest(donations, (d) => d.createdAt).slice(0, 8);
 
   const phonePendingCount = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
+  const addressPendingCount = users.filter((u) => u.addressDocument && !u.addressVerified).length;
 
   if (isLoading) {
     return (
@@ -235,6 +236,20 @@ export default function AdminDashboardPage() {
             <div>
               <p className="text-sm text-gray-500">Phone numbers to review</p>
               <p className="text-xl font-semibold text-gray-900">{phonePendingCount}</p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href="/admin/users"
+          className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-green-700" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Address documents to review</p>
+              <p className="text-xl font-semibold text-gray-900">{addressPendingCount}</p>
             </div>
           </div>
         </Link>

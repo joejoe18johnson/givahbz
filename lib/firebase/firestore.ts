@@ -327,7 +327,7 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
   if (!underReview) throw new Error("Campaign under review not found");
   if (underReview.status !== "pending") throw new Error("Campaign is no longer pending");
 
-  // Check that creator has phone and ID verified
+  // Check that creator has phone, ID, and address verified
   if (underReview.creatorId) {
     const creatorDoc = await getDoc(doc(db, usersCollection, underReview.creatorId));
     if (creatorDoc.exists()) {
@@ -337,6 +337,9 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
       }
       if (!creatorData.idVerified) {
         throw new Error("Creator's ID must be verified before campaign can go live");
+      }
+      if (!creatorData.addressVerified) {
+        throw new Error("Creator's address must be verified before campaign can go live");
       }
     }
   }
@@ -478,6 +481,8 @@ export interface AdminUserDoc {
   idDocumentType?: "social_security" | "passport";
   idVerified: boolean;
   idPending: boolean;
+  addressDocument?: string;
+  addressPending: boolean;
   verified: boolean;
   addressVerified: boolean;
   createdAt?: string;
@@ -496,7 +501,12 @@ export async function getUsersFromFirestore(): Promise<AdminUserDoc[]> {
       phoneNumber: data.phoneNumber,
       phoneVerified: data.phoneVerified ?? false,
       verified: data.verified ?? false,
+      idDocument: data.idDocument,
+      idDocumentType: data.idDocumentType,
       idVerified: data.idVerified ?? false,
+      idPending: data.idPending ?? false,
+      addressDocument: data.addressDocument,
+      addressPending: data.addressPending ?? false,
       addressVerified: data.addressVerified ?? false,
       createdAt: data.createdAt?.toDate?.()?.toISOString?.(),
     } as AdminUserDoc;
@@ -515,6 +525,14 @@ export async function setIdVerified(userId: string, verified: boolean): Promise<
   await updateDoc(doc(db, usersCollection, userId), {
     idVerified: verified,
     idPending: false,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function setAddressVerified(userId: string, verified: boolean): Promise<void> {
+  await updateDoc(doc(db, usersCollection, userId), {
+    addressVerified: verified,
+    addressPending: false,
     updatedAt: serverTimestamp(),
   });
 }

@@ -31,6 +31,8 @@ export interface UserProfile {
   idDocument?: string;
   idDocumentType?: "social_security" | "passport";
   idPending?: boolean;
+  addressDocument?: string;
+  addressPending?: boolean;
   profilePhoto?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -87,6 +89,8 @@ export async function firebaseUserToProfile(firebaseUser: FirebaseUser): Promise
     idDocument: userData?.idDocument,
     idDocumentType: userData?.idDocumentType,
     idPending: userData?.idPending || false,
+    addressDocument: userData?.addressDocument,
+    addressPending: userData?.addressPending || false,
     profilePhoto: userData?.profilePhoto || firebaseUser.photoURL,
     createdAt: userData?.createdAt?.toDate(),
     updatedAt: userData?.updatedAt?.toDate(),

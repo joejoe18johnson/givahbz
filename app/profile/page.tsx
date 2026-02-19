@@ -37,8 +37,12 @@ export default function ProfilePage() {
   const [idDocumentFile, setIdDocumentFile] = useState<File | null>(null);
   const [isUploadingId, setIsUploadingId] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [addressDocumentFile, setAddressDocumentFile] = useState<File | null>(null);
+  const [isUploadingAddress, setIsUploadingAddress] = useState(false);
+  const [addressUploadProgress, setAddressUploadProgress] = useState(0);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profilePhoto || null);
   const idFileInputRef = useRef<HTMLInputElement>(null);
+  const addressFileInputRef = useRef<HTMLInputElement>(null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [deactivatePhrase, setDeactivatePhrase] = useState("");
@@ -294,6 +298,76 @@ export default function ProfilePage() {
     }
     setIdDocumentFile(file);
     console.log("File set successfully:", file.name);
+  };
+
+  const handleAddressDocumentUpload = async () => {
+    if (user?.addressPending) {
+      alert("You already have an address document pending verification. Please wait for the verification process to complete before uploading a new document.", { variant: "error" });
+      return;
+    }
+    if (!addressDocumentFile) {
+      alert("Please select a file to upload.", { variant: "error" });
+      return;
+    }
+    if (!user) return;
+
+    setIsUploadingAddress(true);
+    setAddressUploadProgress(0);
+    try {
+      console.log("Starting address document upload...", { userId: user.id, fileName: addressDocumentFile.name, fileSize: addressDocumentFile.size });
+      const documentUrl = await uploadVerificationDocument(
+        user.id, 
+        addressDocumentFile, 
+        "address",
+        (progress) => setAddressUploadProgress(progress)
+      );
+      console.log("Address document uploaded successfully, URL:", documentUrl);
+      console.log("Updating user profile with address document URL...");
+      await updateUser({ 
+        addressDocument: documentUrl, 
+        addressVerified: false,
+        addressPending: true 
+      });
+      console.log("User profile updated successfully");
+      setAddressDocumentFile(null);
+      if (addressFileInputRef.current) {
+        addressFileInputRef.current.value = '';
+      }
+      alert("Address document uploaded successfully. It will be reviewed by an admin.", { variant: "success" });
+    } catch (error: any) {
+      console.error("Error uploading address document:", error);
+      const errorMessage = error?.message || String(error);
+      alert(`Failed to upload address document: ${errorMessage}`, { variant: "error" });
+    } finally {
+      setIsUploadingAddress(false);
+      setAddressUploadProgress(0);
+    }
+  };
+
+  const handleAddressFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+    console.log("Address file selected:", file.name, file.type, file.size);
+    
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      alert("Please select an image file (JPG, PNG) or PDF document.", { variant: "error" });
+      if (addressFileInputRef.current) {
+        addressFileInputRef.current.value = '';
+      }
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB", { variant: "error" });
+      if (addressFileInputRef.current) {
+        addressFileInputRef.current.value = '';
+      }
+      return;
+    }
+    setAddressDocumentFile(file);
+    console.log("Address file set successfully:", file.name);
   };
 
   const handleAddPhone = () => {
@@ -652,6 +726,136 @@ export default function ProfilePage() {
                 {user?.idPending && (
                   <p className="text-sm text-amber-600 mt-2">
                     You cannot upload a new ID document while your current submission is pending verification.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Address Verification Section */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-medium text-gray-900">Address Verification</h2>
+          </div>
+        </div>
+        <div className="px-6 py-4">
+          {user?.addressDocument ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-gray-600" />
+                <p className="text-gray-900 font-medium">Proof of Address</p>
+              </div>
+              {user?.addressVerified ? (
+                <>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium w-fit">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Verified
+                  </span>
+                  <p className="text-sm text-gray-600">
+                    Your address document cannot be changed or removed.
+                  </p>
+                </>
+              ) : user?.addressPending ? (
+                <>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium w-fit">
+                    <AlertTriangle className="w-3 h-3" />
+                    Pending approval
+                  </span>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-900 mb-1">
+                          Address document submitted and pending verification
+                        </p>
+                        <p className="text-sm text-amber-800">
+                          Your address document has already been submitted and is currently being reviewed by our team. You cannot upload a new document until the verification process is complete. You will be notified once your address has been approved or if any additional information is needed.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Upload a proof of address document (utility bill, bank statement, or government-issued document with your address). Once uploaded, it will be pending admin approval and cannot be changed.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Document</label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      ref={addressFileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={handleAddressFileChange}
+                      className="sr-only"
+                      id="address-document-upload"
+                      aria-label="Choose address document file"
+                      tabIndex={-1}
+                    />
+                    {user?.addressPending || user?.addressVerified ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
+                      >
+                        <Upload className="w-4 h-4" />
+                        {addressDocumentFile ? addressDocumentFile.name : "Choose file"}
+                      </button>
+                    ) : (
+                      <label
+                        htmlFor="address-document-upload"
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <Upload className="w-4 h-4" />
+                        {addressDocumentFile ? addressDocumentFile.name : "Choose file"}
+                      </label>
+                    )}
+                    {addressDocumentFile && !user?.addressPending && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddressDocumentFile(null);
+                          if (addressFileInputRef.current) {
+                            addressFileInputRef.current.value = '';
+                          }
+                        }}
+                        className="ml-2 inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleAddressDocumentUpload}
+                    disabled={!addressDocumentFile || isUploadingAddress || user?.addressVerified || user?.addressPending === true}
+                    className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full"
+                  >
+                    {isUploadingAddress ? `Uploading... ${addressUploadProgress > 0 ? `${Math.round(addressUploadProgress)}%` : ''}` : "Upload Address Document"}
+                  </button>
+                  {isUploadingAddress && (
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-success-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${addressUploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+                {user?.addressPending && (
+                  <p className="text-sm text-amber-600 mt-2">
+                    You cannot upload a new address document while your current submission is pending verification.
                   </p>
                 )}
               </div>

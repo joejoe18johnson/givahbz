@@ -104,7 +104,7 @@ export default function CreateCampaignPage() {
     );
   }
 
-  if (!user.phoneVerified || !user.idVerified) {
+  if (!user.phoneVerified || !user.idVerified || !user.addressVerified) {
     const missingVerifications = [];
     const pendingVerifications = [];
     
@@ -120,8 +120,14 @@ export default function CreateCampaignPage() {
       pendingVerifications.push("ID document");
     }
     
-    const missingText = missingVerifications.length > 0 ? missingVerifications.join(" and ") : null;
-    const pendingText = pendingVerifications.length > 0 ? pendingVerifications.join(" and ") : null;
+    if (!user.addressDocument) {
+      missingVerifications.push("address document");
+    } else if (!user.addressVerified) {
+      pendingVerifications.push("address document");
+    }
+    
+    const missingText = missingVerifications.length > 0 ? missingVerifications.join(", ") : null;
+    const pendingText = pendingVerifications.length > 0 ? pendingVerifications.join(", ") : null;
 
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -135,10 +141,10 @@ export default function CreateCampaignPage() {
               <>You must upload your {missingText} in your profile before you can create campaigns. </>
             )}
             {pendingText && (
-              <>Your {pendingText} {pendingText.includes("and") ? "are" : "is"} pending admin approval. </>
+              <>Your {pendingText} {pendingText.includes(",") ? "are" : "is"} pending admin approval. </>
             )}
             {!missingText && !pendingText && (
-              <>Your phone number and ID document must be approved by an admin before you can create campaigns. </>
+              <>Your phone number, ID document, and address document must be approved by an admin before you can create campaigns. </>
             )}
             Once approved, you will be able to create campaigns.
           </p>
