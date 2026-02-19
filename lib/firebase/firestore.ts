@@ -52,25 +52,28 @@ function normalizeCreatedAt(data: Record<string, unknown>): string {
   return new Date().toISOString().split("T")[0];
 }
 
+/**
+ * Public campaigns list. Only reads from the "campaigns" collection.
+ * Campaigns under review are stored in campaignsUnderReview and are never included here—
+ * they only appear on the site after admin approval (approveAndPublishCampaign).
+ */
 export async function getCampaigns(filters?: {
   category?: string;
   search?: string;
   trending?: boolean;
   limitCount?: number;
 }): Promise<Campaign[]> {
-  // Fetch all campaigns from server (bypass cache so we always get latest count)
   const q = query(collection(db, campaignsCollection));
   const querySnapshot = await getDocsFromServer(q);
 
-  let campaigns = querySnapshot.docs.map((docSnap) => {
-    const data = docSnap.data() as Record<string, unknown>;
-    const createdAt = normalizeCreatedAt(data);
-    return {
-      ...data,
-      id: docSnap.id,
-      createdAt,
-    } as Campaign;
-  });
+  let campaigns = querySnapshot.docs
+    .filter((docSnap) => (docSnap.data() as Record<string, unknown>).status !== "pending")
+    .map((docSnap) => {
+      const data = docSnap.data() as Record<string, unknown>;
+      const createdAt = normalizeCreatedAt(data);
+      return { ...data, id: docSnap.id, createdAt } as Campaign;
+    });
+  // ^ Exclude any doc with status "pending" so under-review items never appear on the public list
 
   // Filter by category in memory (avoids composite index)
   if (filters?.category && filters.category !== "All") {
@@ -171,6 +174,11 @@ export interface CampaignUnderReviewDoc {
   status: "pending" | "approved" | "rejected";
 }
 
+/**
+ * Submit a campaign for review. Stored only in campaignsUnderReview—not in the public
+ * campaigns collection. The campaign will not appear on the site until an admin
+ * approves it (approveAndPublishCampaign) or it is rejected/withdrawn.
+ */
 export async function addCampaignUnderReviewToFirestore(data: Omit<CampaignUnderReviewDoc, "id" | "submittedAt" | "status">): Promise<string> {
   const docRef = doc(collection(db, campaignsUnderReviewCollection));
   await setDoc(docRef, {
@@ -372,6 +380,46 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 
 export async function markNotificationRead(notificationId: string): Promise<void> {
   await updateDoc(doc(db, notificationsCollection, notificationId), { read: true });
+}
+
+// Admin: list all users (for Admin Users page; requires Firestore rules to allow admin read on users)
+export interface AdminUserDoc {
+  id: string;
+  email: string;
+  name: string;
+  role: "user" | "admin";
+  phoneNumber?: string;
+  phoneVerified: boolean;
+  verified: boolean;
+  idVerified: boolean;
+  addressVerified: boolean;
+  createdAt?: string;
+}
+
+export async function getUsersFromFirestore(): Promise<AdminUserDoc[]> {
+  const snapshot = await getDocs(collection(db, usersCollection));
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      email: data.email ?? "",
+      name: data.name ?? "",
+      role: data.role ?? "user",
+      phoneNumber: data.phoneNumber,
+      phoneVerified: data.phoneVerified ?? false,
+      verified: data.verified ?? false,
+      idVerified: data.idVerified ?? false,
+      addressVerified: data.addressVerified ?? false,
+      createdAt: data.createdAt?.toDate?.()?.toISOString?.(),
+    } as AdminUserDoc;
+  });
+}
+
+export async function setUserPhoneVerified(userId: string, verified: boolean): Promise<void> {
+  await updateDoc(doc(db, usersCollection, userId), {
+    phoneVerified: verified,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 // Hearted campaigns (user-specific)

@@ -33,7 +33,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<boolean>;
+  signup: (email: string, password: string, name: string, phoneNumber?: string) => Promise<boolean>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -102,9 +102,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Redirect is handled by the login/signup page (callbackUrl) or by the component that called this
   };
 
-  const signup = async (email: string, password: string, name: string): Promise<boolean> => {
+  const signup = async (email: string, password: string, name: string, phoneNumber?: string): Promise<boolean> => {
     try {
-      const profile = await signUpWithEmail(email, password, name);
+      const profile = await signUpWithEmail(email, password, name, phoneNumber);
       setUser(profileToUser(profile));
       return true;
     } catch (error: any) {

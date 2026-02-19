@@ -80,15 +80,18 @@ export async function firebaseUserToProfile(firebaseUser: FirebaseUser): Promise
   };
 }
 
-// Sign up with email and password
-export async function signUpWithEmail(email: string, password: string, name: string): Promise<UserProfile> {
+// Sign up with email and password. Phone number is required for onboarding; it must be approved before creating campaigns.
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  name: string,
+  phoneNumber?: string
+): Promise<UserProfile> {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Update display name
   await updateProfile(user, { displayName: name });
 
-  // Create user profile in Firestore
   const userProfile: Partial<UserProfile> = {
     id: user.uid,
     email: user.email || email,
@@ -97,6 +100,8 @@ export async function signUpWithEmail(email: string, password: string, name: str
     idVerified: false,
     addressVerified: false,
     role: "user",
+    phoneNumber: phoneNumber?.trim() || undefined,
+    phoneVerified: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

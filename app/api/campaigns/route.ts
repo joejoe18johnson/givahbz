@@ -6,7 +6,8 @@ export const runtime = "nodejs";
 
 /**
  * GET /api/campaigns
- * Fetches campaigns from Firestore on the server (uses Vercel runtime env vars).
+ * Returns only approved campaigns from the "campaigns" collection.
+ * Campaigns under review are never included; they are held until accepted or rejected.
  * Query params: trending=true | category=Medical | limitCount=6
  */
 const REQUIRED_FIREBASE_VARS = [

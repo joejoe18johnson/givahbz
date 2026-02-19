@@ -13,6 +13,7 @@ export default function SignupPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    phoneNumber: "",
   });
   const [idProofFile, setIdProofFile] = useState<File | null>(null);
   const [addressProofFile, setAddressProofFile] = useState<File | null>(null);
@@ -52,8 +53,8 @@ export default function SignupPage() {
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.password) {
-      setError("Please fill in all fields.");
+    if (!formData.name || !formData.email || !formData.password || !formData.phoneNumber?.trim()) {
+      setError("Please fill in all fields including phone number.");
       return;
     }
     
@@ -64,6 +65,12 @@ export default function SignupPage() {
     
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
+      return;
+    }
+    
+    const phone = formData.phoneNumber.trim();
+    if (phone.length < 8 || !/^[\d\s\-+()]+$/.test(phone)) {
+      setError("Please enter a valid phone number (e.g. +501 123-4567 or 123-4567).");
       return;
     }
     
@@ -89,8 +96,12 @@ export default function SignupPage() {
       return;
     }
     
-    // In a real app, upload files to server
-    const success = await signup(formData.email, formData.password, formData.name);
+    const success = await signup(
+      formData.email,
+      formData.password,
+      formData.name,
+      formData.phoneNumber.trim()
+    );
     
     if (success) {
       // Store verification status
@@ -255,6 +266,24 @@ export default function SignupPage() {
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 placeholder:text-gray-500"
+                placeholder="e.g. +501 123-4567 or 123-4567"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Your phone must be approved before you can create campaigns. We&apos;ll notify you once it&apos;s verified.
+              </p>
             </div>
 
             <button

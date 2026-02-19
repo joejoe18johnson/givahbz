@@ -57,6 +57,31 @@ export default function CreateCampaignPage() {
     );
   }
 
+  if (!user.phoneVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-amber-600" />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Phone number required</h1>
+          <p className="text-gray-600 mb-6">
+            Your phone number must be on file and approved before you can create campaigns.{" "}
+            {!user.phoneNumber
+              ? "Add your phone number in your profile, then our team will verify it."
+              : "Our team is reviewing your phone number. You will be notified once it is approved."}
+          </p>
+          <Link
+            href="/profile"
+            className="inline-block bg-primary-600 text-white px-6 py-3 rounded-full font-medium hover:bg-primary-700"
+          >
+            {user.phoneNumber ? "View profile" : "Add phone number"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -173,8 +198,11 @@ export default function CreateCampaignPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-4xl font-medium mb-4">Start Your Campaign</h1>
-      <p className="text-gray-600 mb-8">
+      <p className="text-gray-600 mb-2">
         All campaigns require proof of need to ensure transparency and trust. Please provide supporting documents such as medical reports, financial statements, or other relevant documentation.
+      </p>
+      <p className="text-gray-600 mb-8">
+        Your campaign will be held for review and will <strong>not</strong> appear on the public campaigns page until it is accepted by our team. You will be notified when it is approved or if any changes are needed.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
