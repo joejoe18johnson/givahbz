@@ -119,13 +119,14 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3 font-medium">Phone</th>
                 <th className="px-5 py-3 font-medium">Phone approved</th>
                 <th className="px-5 py-3 font-medium">ID verified</th>
-                <th className="px-5 py-3 font-medium">Actions</th>
+                <th className="px-5 py-3 font-medium bg-gray-50 sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => {
                 const isSelf = u.id === currentUser?.id;
-                const statusLabel = u.status === "active" ? "Active" : u.status === "on_hold" ? "On hold" : "Disabled";
+                const status = u.status ?? "active";
+                const statusLabel = status === "active" ? "Active" : status === "on_hold" ? "On hold" : "Disabled";
                 return (
                   <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
                     <td className="px-5 py-3 text-gray-900">{u.name}</td>
@@ -135,8 +136,8 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-5 py-3">
                       <span className={
-                        u.status === "active" ? "text-verified-600" :
-                        u.status === "on_hold" ? "text-amber-600" : "text-red-600"
+                        status === "active" ? "text-verified-600" :
+                        status === "on_hold" ? "text-amber-600" : "text-red-600"
                       }>
                         {statusLabel}
                       </span>
@@ -160,8 +161,8 @@ export default function AdminUsersPage() {
                         <span className="text-amber-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>
                       )}
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="flex flex-wrap items-center gap-2">
+                    <td className="px-5 py-3 align-top bg-white sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">
+                      <div className="flex flex-wrap items-center gap-2 min-w-[200px]">
                         {u.phoneNumber && !u.phoneVerified && (
                           <button
                             type="button"
@@ -173,7 +174,7 @@ export default function AdminUsersPage() {
                             {updatingId === u.id ? "…" : "Approve phone"}
                           </button>
                         )}
-                        {u.status === "active" && !isSelf && (
+                        {status === "active" && !isSelf && (
                           <button
                             type="button"
                             onClick={() => handlePutOnHold(u.id, u.name)}
@@ -184,7 +185,7 @@ export default function AdminUsersPage() {
                             Put on hold
                           </button>
                         )}
-                        {u.status === "on_hold" && !isSelf && (
+                        {status === "on_hold" && !isSelf && (
                           <button
                             type="button"
                             onClick={() => handleRemoveHold(u.id)}
@@ -195,7 +196,7 @@ export default function AdminUsersPage() {
                             Remove hold
                           </button>
                         )}
-                        {u.status !== "deleted" && !isSelf && (
+                        {status !== "deleted" && !isSelf && (
                           <button
                             type="button"
                             onClick={() => handleDeleteUser(u.id, u.name, u.email)}
