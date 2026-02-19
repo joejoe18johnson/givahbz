@@ -170,7 +170,8 @@ export async function getCampaignsForAdmin(): Promise<(Campaign & { status?: str
     });
 }
 
-/** Campaigns on hold for a given creator (My Campaigns page). creatorId must match the signed-in user. */
+/** Campaigns on hold for a given creator (My Campaigns page). creatorId must match the signed-in user.
+ *  Requires Firestore composite index on campaigns: creatorId (Ascending), status (Ascending). */
 export async function getCampaignsOnHoldForUser(creatorId: string): Promise<(Campaign & { status?: string })[]> {
   if (!creatorId) return [];
   const q = query(

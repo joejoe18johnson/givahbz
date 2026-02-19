@@ -47,6 +47,7 @@ export default function MyCampaignsPage() {
   const [stoppedIds, setStoppedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [underReview, setUnderReview] = useState<CampaignUnderReviewDoc[]>([]);
+  const [onHold, setOnHold] = useState<(Campaign & { status?: string })[]>([]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -62,6 +63,17 @@ export default function MyCampaignsPage() {
     } catch (error) {
       console.error("Error loading campaigns under review:", error);
       setUnderReview([]);
+    }
+  }, [user?.id]);
+
+  const loadOnHold = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const list = await getCampaignsOnHoldForUser(user.id);
+      setOnHold(list);
+    } catch (error) {
+      console.error("Error loading campaigns on hold:", error);
+      setOnHold([]);
     }
   }, [user?.id]);
 
@@ -83,17 +95,24 @@ export default function MyCampaignsPage() {
 
   useEffect(() => {
     loadUnderReview();
-    const interval = setInterval(loadUnderReview, 15000);
+    loadOnHold();
+    const interval = setInterval(() => {
+      loadUnderReview();
+      loadOnHold();
+    }, 15000);
     return () => clearInterval(interval);
-  }, [loadUnderReview]);
+  }, [loadUnderReview, loadOnHold]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") loadUnderReview();
+      if (document.visibilityState === "visible") {
+        loadUnderReview();
+        loadOnHold();
+      }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [loadUnderReview]);
+  }, [loadUnderReview, loadOnHold]);
 
   const handleStop = useCallback((e: React.MouseEvent, campaignId: string) => {
     e.preventDefault();
@@ -168,6 +187,7 @@ export default function MyCampaignsPage() {
   );
 
   const myUnderReview = underReview;
+  const myOnHold = onHold;
 
   const formatReviewDate = (iso: string) => {
     const d = new Date(iso);
@@ -180,12 +200,15 @@ export default function MyCampaignsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-medium text-gray-900">My Campaigns</h1>
           <p className="text-gray-600 mt-1">
-            {myCampaigns.length === 0 && myUnderReview.length === 0 && "You haven't started any campaigns yet."}
+            {myCampaigns.length === 0 && myUnderReview.length === 0 && myOnHold.length === 0 && "You haven't started any campaigns yet."}
             {myCampaigns.length > 0 && (
               <>You have {myCampaigns.length} live campaign{myCampaigns.length === 1 ? "" : "s"}.</>
             )}
             {myUnderReview.length > 0 && (
               <>{myCampaigns.length > 0 ? " " : "You have "}{myUnderReview.length} under review.</>
+            )}
+            {myOnHold.length > 0 && (
+              <>{myCampaigns.length > 0 || myUnderReview.length > 0 ? " " : "You have "}{myOnHold.length} on hold.</>
             )}
           </p>
         </div>
@@ -245,6 +268,78 @@ export default function MyCampaignsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Campaigns on hold */}
+      {myOnHold.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xl font-medium text-gray-900 mb-1 flex items-center gap-2">
+            <PauseCircle className="w-5 h-5 text-amber-600" />
+            Campaigns on hold
+          </h2>
+          <p className="text-gray-600 text-sm mb-4">
+            These campaigns have been put on hold by an administrator. They are not visible to the public and cannot be edited until the hold is removed.
+          </p>
+          <div className="space-y-4">
+            {myOnHold.map((campaign) => {
+              const progress = Math.min((campaign.raised / campaign.goal) * 100, 100);
+              return (
+                <div
+                  key={campaign.id}
+                  className="bg-gray-50 border border-gray-200 rounded-xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 cursor-default select-none"
+                  style={{ pointerEvents: "none" }}
+                >
+                  <div className="relative w-full sm:w-48 h-36 sm:h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                    <SafeImage
+                      src={campaign.image}
+                      alt={campaign.title}
+                      fill
+                      className="object-cover"
+                      sizes="192px"
+                      fallback={
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
+                          <span className="text-gray-500 text-2xl font-medium">
+                            {campaign.title.charAt(0)}
+                          </span>
+                        </div>
+                      }
+                    />
+                    <span className="absolute top-2 right-2 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                      <PauseCircle className="w-3.5 h-3.5" />
+                      On hold
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                        <PauseCircle className="w-3.5 h-3.5" />
+                        On hold
+                      </span>
+                      <span className="bg-white border border-gray-200 px-2.5 py-1 rounded-full text-xs font-medium text-gray-700">
+                        {campaign.category}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">{campaign.title}</h3>
+                    <p className="text-gray-600 text-sm line-clamp-2 mb-2">{campaign.description}</p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                      <span className="font-medium text-success-600">
+                        {formatCurrency(campaign.raised)} / {formatCurrency(campaign.goal)}
+                      </span>
+                      <span>{campaign.backers} backers</span>
+                      <span>{campaign.daysLeft} days left</span>
+                    </div>
+                    <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className="bg-amber-500 h-1.5 rounded-full"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

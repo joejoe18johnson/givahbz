@@ -45,19 +45,22 @@ export default function AdminLayout({
           getUsersFromFirestore(),
           getDonations(),
         ]);
-        setNotificationCount(underReviewCount);
         setNotifications(list.slice(0, 10));
         const since = sevenDaysAgo();
+        const phonePending = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
+        const attentionCount = underReviewCount + phonePending;
+        setNotificationCount(attentionCount);
         setSectionCounts({
           underReview: underReviewCount,
           campaigns: campaigns.filter((c) => new Date(c.createdAt).getTime() >= since).length,
           users: users.filter((u) => u.createdAt && new Date(u.createdAt).getTime() >= since).length,
           donations: donations.filter((d) => new Date(d.createdAt).getTime() >= since).length,
+          phonePending,
         });
       } catch {
         setNotificationCount(0);
         setNotifications([]);
-        setSectionCounts({ campaigns: 0, users: 0, donations: 0, underReview: 0 });
+        setSectionCounts({ campaigns: 0, users: 0, donations: 0, underReview: 0, phonePending: 0 });
       }
     }
     load();
