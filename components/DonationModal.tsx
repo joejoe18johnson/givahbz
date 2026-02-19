@@ -158,7 +158,7 @@ export default function DonationModal({
                       value={donorInfo.phone}
                       onChange={(e) => setDonorInfo({ ...donorInfo, phone: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder="+501 XXX-XXXX"
+                      placeholder="e.g. 5011234567"
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ export default function DonationModal({
                         type="tel"
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="+501 XXX-XXXX"
+                        placeholder="e.g. 5011234567"
                       />
                     </div>
                     <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
