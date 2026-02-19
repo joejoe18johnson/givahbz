@@ -83,10 +83,10 @@ export default function CampaignPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Top row: image (reduced width) + stats/share/donate aligned at top with gap */}
-      <div className="flex flex-col lg:flex-row lg:items-start gap-8 mb-8">
-        {/* Hero Image - reduced width on desktop */}
-        <div className="relative h-80 lg:h-96 w-full lg:max-w-xl lg:w-full lg:shrink-0 bg-gray-200 rounded-2xl overflow-hidden">
+      {/* Single grid: on mobile = image, then content, then sidebar. On desktop = image+content left, sidebar right */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-4 lg:gap-6">
+        {/* Hero Image */}
+        <div className="relative h-72 lg:h-96 w-full min-w-0 bg-gray-200 rounded-2xl overflow-hidden">
           {campaign.image ? (
             <div className="absolute inset-0">
               <SafeImage
@@ -94,7 +94,7 @@ export default function CampaignPage({ params }: PageProps) {
                 alt={campaign.title}
                 fill
                 className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 576px"
+                sizes="(max-width: 1024px) 100vw, (min-width: 1025px) 60vw, 576px"
                 priority
                 fallback={
                   <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
@@ -136,10 +136,9 @@ export default function CampaignPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Stats, Share, Donate - aligned top, space between */}
-        <div className="w-full lg:max-w-sm lg:shrink-0 lg:self-start">
+        {/* Stats, Share, Donate - right column on desktop; below content on mobile */}
+        <div className="order-3 lg:order-2 w-full lg:row-span-2 lg:self-start">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 sticky top-24">
-            {/* Progress */}
             <div className="mb-5">
               <div className="flex justify-between text-sm mb-2">
                 <span className="font-medium text-primary-600">
@@ -159,8 +158,6 @@ export default function CampaignPage({ params }: PageProps) {
                 {progressPercentage.toFixed(1)}% funded
               </div>
             </div>
-
-            {/* Stats */}
             <div className="grid grid-cols-2 gap-3 mb-5 pb-5 border-b border-gray-200">
               <div>
                 <div className="text-lg font-medium text-gray-900">{campaign.backers}</div>
@@ -177,31 +174,23 @@ export default function CampaignPage({ params }: PageProps) {
                 </div>
               </div>
             </div>
-
-            {/* Share */}
             <ShareCampaign
               campaignId={campaign.id}
               campaignTitle={campaign.title}
               variant="full"
               className="mb-5 pb-5 border-b border-gray-200"
             />
-
-            {/* Donate */}
             <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
-
-            {/* Rewards */}
             {campaign.rewards && campaign.rewards.length > 0 && (
               <RewardsSection rewards={campaign.rewards} />
             )}
           </div>
         </div>
-      </div>
 
-      <div className="max-w-3xl">
-        {/* Main Content */}
-        <div>
+        {/* Main content: directly under image (order-2 on mobile so it appears before sidebar) */}
+        <div className="order-2 lg:order-3 min-w-0">
           {/* Category Badge and Verification */}
-          <div className="mb-4 flex items-center gap-3 flex-wrap">
+          <div className="mb-3 flex items-center gap-3 flex-wrap">
             <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium">
               {campaign.category}
             </span>
@@ -221,10 +210,10 @@ export default function CampaignPage({ params }: PageProps) {
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl font-medium text-gray-900 mb-4">{campaign.title}</h1>
+          <h1 className="text-4xl font-medium text-gray-900 mb-3">{campaign.title}</h1>
 
           {/* Creator Info */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-primary-200 rounded-full flex items-center justify-center text-primary-700 font-medium">
               {campaign.creator.charAt(0)}
             </div>
@@ -240,7 +229,7 @@ export default function CampaignPage({ params }: PageProps) {
           </div>
 
           {/* Description */}
-          <div className="prose max-w-none mb-8">
+          <div className="prose max-w-none mb-6">
             <p className="text-lg text-gray-700 leading-relaxed">
               {campaign.fullDescription || campaign.description}
             </p>
