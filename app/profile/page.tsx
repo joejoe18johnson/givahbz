@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { uploadProfilePhoto } from "@/lib/firebase/storage";
 import Link from "next/link";
 import { 
   User, 
@@ -31,6 +32,8 @@ export default function ProfilePage() {
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [showSavedPopup, setShowSavedPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Track last saved state
@@ -115,22 +118,18 @@ export default function ProfilePage() {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+      if (!file.type.startsWith("image/")) {
+        alert("Please select an image file");
         return;
       }
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
+        alert("Image size must be less than 5MB");
         return;
       }
-      // Create preview URL - only update state, don't save yet
+      setProfilePhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        const photoUrl = reader.result as string;
-        setProfilePhoto(photoUrl);
-        // Don't save immediately - wait for "Save Settings" button
+        setProfilePhoto(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -175,6 +174,28 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+      {/* Themed success popup */}
+      {showSavedPopup && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4 pointer-events-none">
+          <div className="pointer-events-auto flex items-center gap-3 bg-white rounded-xl shadow-lg border border-success-200 px-5 py-4 transition-all duration-300">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-success-100 flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6 text-success-600" />
+            </div>
+            <p className="text-success-800 font-medium">Settings saved successfully!</p>
+          </div>
+        </div>
+      )}
+      {showErrorPopup && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4 pointer-events-none">
+          <div className="pointer-events-auto flex items-center gap-3 bg-white rounded-xl shadow-lg border border-red-200 px-5 py-4 transition-all duration-300">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <p className="text-red-800 font-medium">Failed to save settings. Please try again.</p>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl md:text-3xl font-medium text-gray-900 mb-8">Account</h1>
 
       {/* Profile Photo Section */}
@@ -466,39 +487,57 @@ export default function ProfilePage() {
       {/* Save/Cancel Buttons */}
       <div className="flex gap-4 mb-6">
         <button
-          onClick={() => {
+          onClick={async () => {
             try {
-              // Save all current settings (phone number is read-only and cannot be changed)
+              let photoUrl: string | undefined;
+              if (profilePhotoFile && user) {
+                setIsUploadingPhoto(true);
+                try {
+                  photoUrl = await uploadProfilePhoto(user.id, profilePhotoFile);
+                } finally {
+                  setIsUploadingPhoto(false);
+                }
+                setProfilePhotoFile(null);
+                setProfilePhoto(photoUrl);
+              } else if (profilePhoto && !profilePhoto.startsWith("data:")) {
+                photoUrl = profilePhoto;
+              } else if (profilePhoto === null) {
+                photoUrl = undefined;
+              } else {
+                photoUrl = lastSavedState.profilePhoto ?? undefined;
+              }
+
               updateUser({
                 name,
                 birthday: birthday || undefined,
-                profilePhoto: profilePhoto || undefined,
+                profilePhoto: photoUrl,
               });
-              
-              // Update last saved state to current values
+
               setLastSavedState({
                 name,
                 birthday: birthday || "",
                 phoneNumber: phoneNumber || "",
-                profilePhoto: profilePhoto || null,
+                profilePhoto: photoUrl ?? null,
               });
-              
-              // Close all editing modes
+
               setEditingName(false);
               setEditingBirthday(false);
               setEditingPassword(false);
               setEditingPhone(false);
               setPhoneInput("");
-              
-              alert("Settings saved successfully!");
+
+              setShowSavedPopup(true);
+              setTimeout(() => setShowSavedPopup(false), 3000);
             } catch (error) {
               console.error("Error saving settings:", error);
-              alert("Failed to save settings. Please try again.");
+              setShowErrorPopup(true);
+              setTimeout(() => setShowErrorPopup(false), 4000);
             }
           }}
-          className="flex-1 px-6 py-3 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors font-medium"
+          disabled={isUploadingPhoto}
+          className="flex-1 px-6 py-3 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors font-medium disabled:opacity-70 disabled:cursor-wait"
         >
-          Save Settings
+          {isUploadingPhoto ? "Uploading photo…" : "Save Settings"}
         </button>
         <button
           onClick={() => {
