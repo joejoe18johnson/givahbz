@@ -55,8 +55,9 @@ export default function SignupPage() {
     }
     
     const phone = formData.phoneNumber.trim();
-    if (phone.length < 8 || !/^[\d\s\-+()]+$/.test(phone)) {
-      setError("Please enter a valid phone number (e.g. +501 123-4567 or 123-4567).");
+    const digitsOnly = phone.replace(/\D/g, "");
+    if (digitsOnly.length < 7) {
+      setError("Please enter a valid phone number with at least 7 digits (e.g. +5011234567 or 5011234567).");
       return;
     }
     
@@ -238,7 +239,7 @@ export default function SignupPage() {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 placeholder:text-gray-500"
-                placeholder="e.g. +501 123-4567 or 123-4567"
+                placeholder="e.g. +5011234567 or 5011234567"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Your phone must be approved before you can create campaigns. We&apos;ll notify you once it&apos;s verified.

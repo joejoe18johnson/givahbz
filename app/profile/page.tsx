@@ -231,17 +231,28 @@ export default function ProfilePage() {
 
   const handleIdFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-        alert("Please select an image file (JPG, PNG) or PDF document.", { variant: "error" });
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        alert("File size must be less than 10MB", { variant: "error" });
-        return;
-      }
-      setIdDocumentFile(file);
+    if (!file) {
+      console.log("No file selected");
+      return;
     }
+    console.log("File selected:", file.name, file.type, file.size);
+    
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      alert("Please select an image file (JPG, PNG) or PDF document.", { variant: "error" });
+      if (idFileInputRef.current) {
+        idFileInputRef.current.value = '';
+      }
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB", { variant: "error" });
+      if (idFileInputRef.current) {
+        idFileInputRef.current.value = '';
+      }
+      return;
+    }
+    setIdDocumentFile(file);
+    console.log("File set successfully:", file.name);
   };
 
   const handleAddPhone = () => {
@@ -422,7 +433,7 @@ export default function ProfilePage() {
                   type="tel"
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="e.g. +501 123-4567"
+                  placeholder="e.g. +5011234567 or 5011234567"
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[200px]"
                   autoFocus
                 />
@@ -533,29 +544,35 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Document</label>
-                  <input
-                    ref={idFileInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handleIdFileChange}
-                    disabled={user?.idPending === true}
-                    className="hidden"
-                    id="id-document-upload"
-                    aria-label="Choose ID document file"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => !user?.idPending && idFileInputRef.current?.click()}
-                    disabled={user?.idPending === true}
-                    className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium transition-colors ${
-                      user?.idPending
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "text-gray-700 hover:bg-gray-50 cursor-pointer border-gray-300"
-                    }`}
-                  >
-                    <Upload className="w-4 h-4" />
-                    {idDocumentFile ? idDocumentFile.name : "Choose file"}
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      ref={idFileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={handleIdFileChange}
+                      className="sr-only"
+                      id="id-document-upload"
+                      aria-label="Choose ID document file"
+                      tabIndex={-1}
+                    />
+                    {user?.idPending || user?.idVerified ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
+                      >
+                        <Upload className="w-4 h-4" />
+                        {idDocumentFile ? idDocumentFile.name : "Choose file"}
+                      </button>
+                    ) : (
+                      <label
+                        htmlFor="id-document-upload"
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <Upload className="w-4 h-4" />
+                        {idDocumentFile ? idDocumentFile.name : "Choose file"}
+                      </label>
+                    )}
                   {idDocumentFile && !user?.idPending && (
                     <button
                       type="button"
