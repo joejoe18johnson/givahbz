@@ -208,11 +208,11 @@ export default function ShareCampaign({
   }
 
   return (
-    <div className={className}>
+    <div className={`flex justify-center ${className}`.trim()}>
       <button
         type="button"
         onClick={openModal}
-        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+        className="inline-flex items-center gap-2 rounded-lg border border-verified-500 bg-verified-50 px-4 py-2.5 text-sm font-medium text-verified-800 transition-colors hover:bg-verified-100"
         aria-label="Share campaign"
       >
         <Share2 className="w-4 h-4" />
