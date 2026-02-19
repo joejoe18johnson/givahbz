@@ -170,6 +170,24 @@ export default function CreateCampaignPage() {
     const creatorName = user?.name ?? "User";
     const creatorId = user?.id ?? "";
 
+    // Validate files before proceeding
+    if (!imageFiles[0] || !imageFiles[1]) {
+      alert("Please upload both campaign images before submitting.", { title: "Images Required", variant: "error" });
+      return;
+    }
+
+    if (!imageFiles[0].type.startsWith("image/") || !imageFiles[1].type.startsWith("image/")) {
+      alert("Both files must be valid image files.", { title: "Invalid File Type", variant: "error" });
+      return;
+    }
+
+    // Check file sizes (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (imageFiles[0].size > maxSize || imageFiles[1].size > maxSize) {
+      alert("Image files must be less than 10MB each. Please compress your images and try again.", { title: "File Too Large", variant: "error" });
+      return;
+    }
+
     addCampaignUnderReview({
       id: pendingId,
       title: formData.title,
@@ -182,12 +200,23 @@ export default function CreateCampaignPage() {
 
     setIsSubmitting(true);
     try {
+      console.log("Starting image uploads...");
       // Upload cover images to Storage (path uses pendingId; doc id is assigned by Firestore later)
-      const [imageUrl1, imageUrl2] = await Promise.all([
-        uploadUnderReviewCampaignImage(pendingId, 0, imageFiles[0]!),
-        uploadUnderReviewCampaignImage(pendingId, 1, imageFiles[1]!),
-      ]);
+      const uploadPromises = [
+        uploadUnderReviewCampaignImage(pendingId, 0, imageFiles[0]!).catch((err) => {
+          console.error("Error uploading image 1:", err);
+          throw new Error(`Failed to upload first image: ${err.message || err}`);
+        }),
+        uploadUnderReviewCampaignImage(pendingId, 1, imageFiles[1]!).catch((err) => {
+          console.error("Error uploading image 2:", err);
+          throw new Error(`Failed to upload second image: ${err.message || err}`);
+        }),
+      ];
+      
+      const [imageUrl1, imageUrl2] = await Promise.all(uploadPromises);
+      console.log("Images uploaded successfully:", { imageUrl1, imageUrl2 });
 
+      console.log("Saving campaign to Firestore...");
       // Only under-review: never written to public "campaigns". Appears in "all campaigns" only after admin approval.
       await addCampaignUnderReviewToFirestore({
         title: formData.title,
@@ -200,10 +229,22 @@ export default function CreateCampaignPage() {
         image: imageUrl1,
         image2: imageUrl2,
       });
+      console.log("Campaign saved successfully");
       router.push("/my-campaigns");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to submit campaign for review:", err);
-      alert("Your campaign could not be sent for review. Check that you're signed in and that Firestore/Storage rules allow writes. Please try again.", { variant: "error" });
+      const errorMessage = err?.message || String(err);
+      let userMessage = "Your campaign could not be sent for review. Please try again.";
+      
+      if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
+        userMessage = "Permission denied. Please check that you're signed in and have permission to create campaigns.";
+      } else if (errorMessage.includes("upload")) {
+        userMessage = `Failed to upload images: ${errorMessage}. Please check your internet connection and try again.`;
+      } else if (errorMessage.includes("Firestore") || errorMessage.includes("firestore")) {
+        userMessage = "Failed to save campaign data. Please check your connection and try again.";
+      }
+      
+      alert(userMessage, { title: "Submission Failed", variant: "error" });
     } finally {
       setIsSubmitting(false);
     }
