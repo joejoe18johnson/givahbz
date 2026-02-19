@@ -115,6 +115,23 @@ The app automatically:
    - Make sure `.env` has all Firebase config values
    - Restart dev server after changing `.env`
 
+### Campaigns under review not showing (admin)
+
+When a non-admin user creates a campaign, it should appear in **Admin → Under review**. If it doesn’t:
+
+1. **Firestore rules**  
+   The `campaignsUnderReview` collection must allow **create** for signed-in users and **read** for signed-in users.  
+   - Go to **Firebase Console → Firestore Database → Rules**.  
+   - Add (or merge) a block for `campaignsUnderReview` as in **FIREBASE_SETUP.md** (Step 6).  
+   - Example: `allow read, create: if request.auth != null;` and `allow update, delete: if request.auth != null;` for `match /campaignsUnderReview/{docId}`.  
+   - Publish the rules.
+
+2. **Confirm the submit didn’t fail**  
+   If the Firestore write is denied, the create-campaign page now shows an error and does **not** redirect. Try creating again and check for an alert.
+
+3. **Check Firestore data**  
+   In Firebase Console → Firestore, look for the **campaignsUnderReview** collection. If it’s missing or empty, the write is being denied (fix rules) or the create flow isn’t running (check console errors on submit).
+
 ### "Firebase: Error (auth/invalid-api-key)"
 
 - Check that `.env` file has correct `NEXT_PUBLIC_FIREBASE_API_KEY`

@@ -88,11 +88,11 @@ export default function CreateCampaignPage() {
         creatorName,
         creatorId,
       });
+      router.push("/my-campaigns");
     } catch (err) {
       console.error("Failed to submit campaign for review:", err);
-      alert("Your campaign was saved locally but could not be sent for review. Please try again.");
+      alert("Your campaign could not be sent for review. Check that you're signed in and that Firestore rules allow writes to campaignsUnderReview. Please try again.");
     }
-    router.push("/my-campaigns");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

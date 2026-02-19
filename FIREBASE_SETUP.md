@@ -133,6 +133,13 @@ service cloud.firestore {
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
     
+    // Campaigns under review: any signed-in user can submit; any signed-in user can read (admin dashboard)
+    match /campaignsUnderReview/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+    
     // Donations: users can read their own donations, admins can read all
     match /donations/{donationId} {
       allow read: if request.auth != null && 
