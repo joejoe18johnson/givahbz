@@ -6,8 +6,8 @@ export const runtime = "nodejs";
 
 /**
  * GET /api/campaigns
- * Returns only approved campaigns from the "campaigns" collection.
- * Campaigns under review are never included; they are held until accepted or rejected.
+ * QUARANTINE: Returns only live campaigns from the "campaigns" collection.
+ * Campaigns under review are quarantined in a separate collection and are never returned here.
  * Query params: trending=true | category=Medical | limitCount=6
  */
 const REQUIRED_FIREBASE_VARS = [

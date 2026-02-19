@@ -5,7 +5,14 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock, Bell } from "lucide-react";
-import { getCampaignsUnderReviewCount, getCampaignsUnderReviewFromFirestore, type CampaignUnderReviewDoc } from "@/lib/firebase/firestore";
+import {
+  getCampaignsUnderReviewCount,
+  getCampaignsUnderReviewFromFirestore,
+  getCampaigns,
+  getUsersFromFirestore,
+  getDonations,
+  type CampaignUnderReviewDoc,
+} from "@/lib/firebase/firestore";
 
 export default function AdminLayout({
   children,
@@ -18,21 +25,39 @@ export default function AdminLayout({
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<CampaignUnderReviewDoc[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [sectionCounts, setSectionCounts] = useState({ campaigns: 0, users: 0, donations: 0, underReview: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const sevenDaysAgo = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.getTime();
+  };
 
   useEffect(() => {
     if (!isAdmin) return;
     async function load() {
       try {
-        const [count, list] = await Promise.all([
+        const [underReviewCount, list, campaigns, users, donations] = await Promise.all([
           getCampaignsUnderReviewCount(),
           getCampaignsUnderReviewFromFirestore(),
+          getCampaigns(),
+          getUsersFromFirestore(),
+          getDonations(),
         ]);
-        setNotificationCount(count);
+        setNotificationCount(underReviewCount);
         setNotifications(list.slice(0, 10));
+        const since = sevenDaysAgo();
+        setSectionCounts({
+          underReview: underReviewCount,
+          campaigns: campaigns.filter((c) => new Date(c.createdAt).getTime() >= since).length,
+          users: users.filter((u) => u.createdAt && new Date(u.createdAt).getTime() >= since).length,
+          donations: donations.filter((d) => new Date(d.createdAt).getTime() >= since).length,
+        });
       } catch {
         setNotificationCount(0);
         setNotifications([]);
+        setSectionCounts({ campaigns: 0, users: 0, donations: 0, underReview: 0 });
       }
     }
     load();
@@ -108,6 +133,74 @@ export default function AdminLayout({
             Back to site
           </Link>
           <div className="pt-4 border-t border-gray-200">
+            {/* Notification bell - next to sidebar sections */}
+            <div className="relative mb-2" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowNotificationDropdown((v) => !v)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left text-gray-600 hover:bg-gray-100"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4 h-4 shrink-0" />
+                <span className="flex-1">Notifications</span>
+                {(sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations) > 0 && (
+                  <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                    {sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations > 99
+                      ? "99+"
+                      : sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations}
+                  </span>
+                )}
+              </button>
+              {showNotificationDropdown && (
+                <div className="absolute left-0 top-full mt-1 w-72 max-h-[20rem] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-lg py-2 z-50">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <h3 className="font-medium text-gray-900">Notifications</h3>
+                    <p className="text-xs text-gray-500">New activity by section</p>
+                  </div>
+                  <div className="py-2 px-2 space-y-1">
+                    <Link href="/admin/campaigns" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
+                      <span className="text-sm text-gray-700">Campaigns</span>
+                      {sectionCounts.campaigns > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.campaigns}</span>
+                      )}
+                    </Link>
+                    <Link href="/admin/users" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
+                      <span className="text-sm text-gray-700">Users</span>
+                      {sectionCounts.users > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.users}</span>
+                      )}
+                    </Link>
+                    <Link href="/admin/donations" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
+                      <span className="text-sm text-gray-700">Donations</span>
+                      {sectionCounts.donations > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.donations}</span>
+                      )}
+                    </Link>
+                    <Link href="/admin/under-review" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
+                      <span className="text-sm text-gray-700">Under review</span>
+                      {sectionCounts.underReview > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.underReview}</span>
+                      )}
+                    </Link>
+                  </div>
+                  {notifications.length > 0 && (
+                    <div className="border-t border-gray-100 pt-2">
+                      <p className="px-4 text-xs text-gray-500 mb-2">Campaigns awaiting review</p>
+                      <ul className="max-h-40 overflow-y-auto">
+                        {notifications.slice(0, 5).map((n) => (
+                          <li key={n.id}>
+                            <Link href="/admin/under-review" onClick={() => setShowNotificationDropdown(false)} className="block px-4 py-2 hover:bg-gray-50 text-left text-sm text-gray-900 truncate">
+                              {n.title}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <Link
               href="/admin"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
@@ -120,86 +213,56 @@ export default function AdminLayout({
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/campaigns" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
             >
               <Megaphone className="w-4 h-4" />
-              Campaigns
+              <span className="flex-1">Campaigns</span>
+              {sectionCounts.campaigns > 0 && (
+                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  {sectionCounts.campaigns > 99 ? "99+" : sectionCounts.campaigns}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/users"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/users" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
             >
               <Users className="w-4 h-4" />
-              Users
+              <span className="flex-1">Users</span>
+              {sectionCounts.users > 0 && (
+                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  {sectionCounts.users > 99 ? "99+" : sectionCounts.users}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/donations"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/donations" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
             >
               <Heart className="w-4 h-4" />
-              Donations
+              <span className="flex-1">Donations</span>
+              {sectionCounts.donations > 0 && (
+                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  {sectionCounts.donations > 99 ? "99+" : sectionCounts.donations}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/under-review"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/under-review" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
             >
               <Clock className="w-4 h-4" />
-              Under review
+              <span className="flex-1">Under review</span>
+              {sectionCounts.underReview > 0 && (
+                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  {sectionCounts.underReview > 99 ? "99+" : sectionCounts.underReview}
+                </span>
+              )}
             </Link>
           </div>
         </nav>
       </aside>
 
-      {/* Admin top bar with notification bell */}
+      {/* Admin top bar */}
       <header className="fixed left-56 right-0 top-16 h-14 z-30 bg-white border-b border-gray-200 flex items-center justify-between px-6">
         <span className="text-sm font-medium text-gray-700">Admin</span>
-        <div className="relative" ref={dropdownRef}>
-          <button
-            type="button"
-            onClick={() => setShowNotificationDropdown((v) => !v)}
-            className="relative p-2 rounded-lg text-gray-600 hover:bg-gray-100"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5" />
-            {notificationCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full bg-primary-600 text-white text-xs font-medium">
-                {notificationCount > 99 ? "99+" : notificationCount}
-              </span>
-            )}
-          </button>
-          {showNotificationDropdown && (
-            <div className="absolute right-0 top-full mt-1 w-80 max-h-[24rem] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-lg py-2">
-              <div className="px-4 py-2 border-b border-gray-100">
-                <h3 className="font-medium text-gray-900">Notifications</h3>
-                <p className="text-xs text-gray-500">Campaigns awaiting review</p>
-              </div>
-              {notifications.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-gray-500 text-center">No new notifications</p>
-              ) : (
-                <ul className="py-2">
-                  {notifications.map((n) => (
-                    <li key={n.id}>
-                      <Link
-                        href="/admin/under-review"
-                        onClick={() => setShowNotificationDropdown(false)}
-                        className="block px-4 py-3 hover:bg-gray-50 text-left"
-                      >
-                        <p className="text-sm font-medium text-gray-900 truncate">{n.title}</p>
-                        <p className="text-xs text-gray-500">by {n.creatorName} · {n.category}</p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {notificationCount > 0 && (
-                <Link
-                  href="/admin/under-review"
-                  onClick={() => setShowNotificationDropdown(false)}
-                  className="block px-4 py-2 text-center text-sm text-primary-600 font-medium hover:bg-gray-50"
-                >
-                  View all ({notificationCount})
-                </Link>
-              )}
-            </div>
-          )}
-        </div>
       </header>
 
       <main className="pl-56 pt-[7.5rem] min-h-screen">

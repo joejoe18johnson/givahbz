@@ -17,13 +17,19 @@ import { db } from "./config";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
 
-// Campaigns collection
+// ---------------------------------------------------------------------------
+// QUARANTINE: Campaigns under review are never posted publicly.
+// - campaignsUnderReview = quarantined submissions (only Admin + creator see them).
+// - campaigns = live, public list (home, /campaigns, API). Only written to on admin approval.
+// - Create flow writes ONLY to campaignsUnderReview. Public reads ONLY from campaigns.
+// ---------------------------------------------------------------------------
 export const campaignsCollection = "campaigns";
 export const usersCollection = "users";
 export const donationsCollection = "donations";
+/** Quarantine collection: submissions stay here until approved. Never used for public lists or getCampaign(s). */
 export const campaignsUnderReviewCollection = "campaignsUnderReview";
 
-// Campaign operations
+// Campaign operations (all use "campaigns" only—under-review is never read here)
 export async function getCampaign(campaignId: string): Promise<Campaign | null> {
   const docRef = doc(db, campaignsCollection, campaignId);
   const docSnap = await getDoc(docRef);
@@ -53,9 +59,9 @@ function normalizeCreatedAt(data: Record<string, unknown>): string {
 }
 
 /**
- * Public campaigns list. Only reads from the "campaigns" collection.
- * Campaigns under review are stored in campaignsUnderReview and are never included here—
- * they only appear on the site after admin approval (approveAndPublishCampaign).
+ * Public campaigns list. QUARANTINE: Reads only from "campaigns" (live).
+ * Under-review campaigns are in campaignsUnderReview and are never included here.
+ * They are quarantined until an admin approves (approveAndPublishCampaign).
  */
 export async function getCampaigns(filters?: {
   category?: string;
@@ -126,7 +132,10 @@ export async function updateCampaign(campaignId: string, updates: Partial<Campai
   });
 }
 
-/** Permanently delete a campaign. Removes it from the campaigns collection so it no longer appears on the main site (home, campaigns list, or campaign detail page). */
+/**
+ * Permanently delete a campaign from the live "campaigns" collection.
+ * Under-review campaigns are in campaignsUnderReview; use deleteCampaignUnderReview for those.
+ */
 export async function deleteCampaign(campaignId: string): Promise<void> {
   await deleteDoc(doc(db, campaignsCollection, campaignId));
 }
@@ -176,9 +185,10 @@ export interface CampaignUnderReviewDoc {
 }
 
 /**
- * Submit a campaign for review. Stored only in campaignsUnderReview—not in the public
- * campaigns collection. The campaign will not appear on the site until an admin
- * approves it (approveAndPublishCampaign) or it is rejected/withdrawn.
+ * Submit a campaign for review. QUARANTINE: Stored only in campaignsUnderReview.
+ * Not written to "campaigns"—so it never appears on home, /campaigns, or API.
+ * Visible only to admins (Under review) and the creator (My Campaigns). Becomes
+ * public only after admin approval (approveAndPublishCampaign).
  */
 export async function addCampaignUnderReviewToFirestore(data: Omit<CampaignUnderReviewDoc, "id" | "submittedAt" | "status">): Promise<string> {
   const docRef = doc(collection(db, campaignsUnderReviewCollection));

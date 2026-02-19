@@ -81,6 +81,16 @@ export default function MyCampaignsPage() {
 
   useEffect(() => {
     loadUnderReview();
+    const interval = setInterval(loadUnderReview, 15000);
+    return () => clearInterval(interval);
+  }, [loadUnderReview]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") loadUnderReview();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [loadUnderReview]);
 
   const handleStop = useCallback((e: React.MouseEvent, campaignId: string) => {
@@ -287,15 +297,16 @@ export default function MyCampaignsPage() {
                       }
                     />
                     <div className="absolute top-3 right-3 flex gap-2 flex-wrap">
+                      {campaign.verified && (
+                        <span className="bg-verified-500 text-white px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1" title="Approved by admin">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Approved
+                        </span>
+                      )}
                       {isStopped && (
                         <span className="bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                           <StopCircle className="w-3.5 h-3.5" />
                           Stopped
-                        </span>
-                      )}
-                      {campaign.verified && (
-                        <span className="bg-verified-500 text-white p-1.5 rounded-full" title="Verified">
-                          <CheckCircle2 className="w-4 h-4" />
                         </span>
                       )}
                       <span className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium text-primary-600">
