@@ -13,16 +13,20 @@ type CampaignWithStatus = Campaign & { status?: string };
 export default function AdminCampaignsPage() {
   const [campaigns, setCampaigns] = useState<CampaignWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [onHoldId, setOnHoldId] = useState<string | null>(null);
   const { confirm, alert } = useThemedModal();
 
   async function loadCampaigns() {
+    setLoadError(null);
+    setIsLoading(true);
     try {
       const fetchedCampaigns = await getCampaignsForAdmin();
       setCampaigns(fetchedCampaigns);
     } catch (error) {
       console.error("Error loading campaigns:", error);
+      setLoadError(error instanceof Error ? error.message : "Failed to load campaigns");
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +69,7 @@ export default function AdminCampaignsPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && campaigns.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -76,11 +80,33 @@ export default function AdminCampaignsPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Campaigns</h1>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <p className="text-red-800 font-medium mb-2">Could not load campaigns</p>
+          <p className="text-red-700 text-sm mb-4">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => loadCampaigns()}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Campaigns</h1>
         <p className="text-gray-600 mt-1">{campaigns.length} campaigns total</p>
+        <p className="text-gray-500 text-sm mt-1">
+          Put a campaign on hold to hide it from the public site, or delete it. Use <strong>Release</strong> to make an on-hold campaign live again.
+        </p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
