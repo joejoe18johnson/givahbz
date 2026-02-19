@@ -256,7 +256,7 @@ function mapDocToCampaignUnderReview(d: { id: string; data: () => Record<string,
     category: data.category as string,
     creatorName: data.creatorName as string,
     creatorId: data.creatorId as string,
-    submittedAt: (data.submittedAt as string) || (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
+    submittedAt: (data.submittedAt as string) || ((data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ?? new Date().toISOString()),
     status: (data.status as CampaignUnderReviewDoc["status"]) || "pending",
   };
 }
