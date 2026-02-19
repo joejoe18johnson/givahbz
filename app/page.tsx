@@ -148,7 +148,7 @@ export default function Home() {
           <div className="absolute top-1/3 right-1/4 w-16 h-16 rounded-full bg-accent-100/40 -z-10" aria-hidden />
 
           {/* Left: Content */}
-          <div className="order-2 lg:order-1">
+          <div className="order-2 lg:order-1 mt-8 lg:mt-0">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-900 mb-4">
               Supporting{" "}
               <span className={`text-success-600 ${permanentMarker.className}`}>Belizean</span>{" "}
