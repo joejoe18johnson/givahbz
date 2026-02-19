@@ -26,6 +26,10 @@ interface User {
   birthday?: string;
   phoneNumber?: string;
   phoneVerified?: boolean;
+  phonePending?: boolean;
+  idDocument?: string;
+  idDocumentType?: "social_security" | "passport";
+  idPending?: boolean;
   profilePhoto?: string;
 }
 
@@ -55,6 +59,10 @@ function profileToUser(profile: UserProfile): User {
     birthday: profile.birthday,
     phoneNumber: profile.phoneNumber,
     phoneVerified: profile.phoneVerified,
+    phonePending: profile.phonePending,
+    idDocument: profile.idDocument,
+    idDocumentType: profile.idDocumentType,
+    idPending: profile.idPending,
     profilePhoto: profile.profilePhoto,
   };
 }

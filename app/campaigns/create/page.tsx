@@ -106,9 +106,22 @@ export default function CreateCampaignPage() {
 
   if (!user.phoneVerified || !user.idVerified) {
     const missingVerifications = [];
-    if (!user.phoneVerified) missingVerifications.push("phone number");
-    if (!user.idVerified) missingVerifications.push("ID");
-    const missingText = missingVerifications.join(" and ");
+    const pendingVerifications = [];
+    
+    if (!user.phoneNumber) {
+      missingVerifications.push("phone number");
+    } else if (!user.phoneVerified) {
+      pendingVerifications.push("phone number");
+    }
+    
+    if (!user.idDocument) {
+      missingVerifications.push("ID document");
+    } else if (!user.idVerified) {
+      pendingVerifications.push("ID document");
+    }
+    
+    const missingText = missingVerifications.length > 0 ? missingVerifications.join(" and ") : null;
+    const pendingText = pendingVerifications.length > 0 ? pendingVerifications.join(" and ") : null;
 
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -118,16 +131,22 @@ export default function CreateCampaignPage() {
           </div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Verification required</h1>
           <p className="text-gray-600 mb-6">
-            Your {missingText} must be approved by an admin before you can create or edit campaigns.{" "}
-            {!user.phoneNumber
-              ? "Add your phone number in your profile, then our team will verify it."
-              : "Our team is reviewing your verification. You will be notified once approved."}
+            {missingText && (
+              <>You must upload your {missingText} in your profile before you can create campaigns. </>
+            )}
+            {pendingText && (
+              <>Your {pendingText} {pendingText.includes("and") ? "are" : "is"} pending admin approval. </>
+            )}
+            {!missingText && !pendingText && (
+              <>Your phone number and ID document must be approved by an admin before you can create campaigns. </>
+            )}
+            Once approved, you will be able to create campaigns.
           </p>
           <Link
             href="/profile"
             className="inline-block bg-primary-600 text-white px-6 py-3 rounded-full font-medium hover:bg-primary-700"
           >
-            {user.phoneNumber ? "View profile" : "Add phone number"}
+            {missingText ? "Go to profile" : "View profile"}
           </Link>
         </div>
       </div>

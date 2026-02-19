@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { getUsersFromFirestore, setUserPhoneVerified, setIdVerified, setUserStatus, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
-import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield } from "lucide-react";
+import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle } from "lucide-react";
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
@@ -162,19 +162,25 @@ export default function AdminUsersPage() {
                     <td className="px-5 py-3">
                       {u.phoneVerified ? (
                         <span className="text-verified-600 inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-4 h-4" /> Yes
+                          <CheckCircle2 className="w-4 h-4" /> Verified
+                        </span>
+                      ) : u.phonePending ? (
+                        <span className="text-amber-600 inline-flex items-center gap-1">
+                          <AlertTriangle className="w-4 h-4" /> Pending
                         </span>
                       ) : (
-                        <span className="text-amber-600 inline-flex items-center gap-1">
-                          <XCircle className="w-4 h-4" /> No
+                        <span className="text-gray-400 inline-flex items-center gap-1">
+                          <XCircle className="w-4 h-4" /> Not submitted
                         </span>
                       )}
                     </td>
                     <td className="px-5 py-3">
                       {u.idVerified ? (
-                        <span className="text-verified-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
+                        <span className="text-verified-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Verified</span>
+                      ) : u.idPending ? (
+                        <span className="text-amber-600 inline-flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Pending</span>
                       ) : (
-                        <span className="text-amber-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>
+                        <span className="text-gray-400 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> Not submitted</span>
                       )}
                     </td>
                     <td className="px-5 py-3 align-top bg-white sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">
@@ -188,6 +194,17 @@ export default function AdminUsersPage() {
                           >
                             <Phone className="w-3.5 h-3.5" />
                             {updatingId === u.id ? "…" : "Approve phone"}
+                          </button>
+                        )}
+                        {u.idDocument && !u.idVerified && (
+                          <button
+                            type="button"
+                            onClick={() => handleApproveId(u.id)}
+                            disabled={updatingId === u.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium disabled:opacity-50"
+                          >
+                            <Shield className="w-3.5 h-3.5" />
+                            {updatingId === u.id ? "…" : "Approve ID"}
                           </button>
                         )}
                         {status === "active" && !isSelf && (

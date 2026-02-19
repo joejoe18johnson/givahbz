@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { uploadProfilePhoto } from "@/lib/firebase/storage";
+import { uploadProfilePhoto, uploadVerificationDocument } from "@/lib/firebase/storage";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -16,7 +16,9 @@ import {
   Upload,
   Trash2,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Shield,
+  FileText
 } from "lucide-react";
 import { useThemedModal } from "@/components/ThemedModal";
 
@@ -31,8 +33,12 @@ export default function ProfilePage() {
   const [birthday, setBirthday] = useState(user?.birthday || "");
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [phoneInput, setPhoneInput] = useState("");
+  const [idDocumentType, setIdDocumentType] = useState<"social_security" | "passport" | "">(user?.idDocumentType || "");
+  const [idDocumentFile, setIdDocumentFile] = useState<File | null>(null);
+  const [isUploadingId, setIsUploadingId] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profilePhoto || null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const idFileInputRef = useRef<HTMLInputElement>(null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showSavedPopup, setShowSavedPopup] = useState(false);
@@ -66,6 +72,7 @@ export default function ProfilePage() {
       if (user.phoneVerified) {
         setEditingPhone(false);
       }
+      setIdDocumentType(user.idDocumentType || "");
     }
   }, [user]);
 
@@ -155,9 +162,57 @@ export default function ProfilePage() {
       return;
     }
     setPhoneNumber(raw);
-    updateUser({ phoneNumber: raw, phoneVerified: false });
+    updateUser({ phoneNumber: raw, phoneVerified: false, phonePending: true });
     setEditingPhone(false);
     setPhoneInput("");
+  };
+
+  const handleIdDocumentUpload = async () => {
+    if (!idDocumentType) {
+      alert("Please select the type of ID document (Social Security or Passport).", { variant: "error" });
+      return;
+    }
+    if (!idDocumentFile) {
+      alert("Please select a file to upload.", { variant: "error" });
+      return;
+    }
+    if (!user) return;
+
+    setIsUploadingId(true);
+    try {
+      const documentUrl = await uploadVerificationDocument(user.id, idDocumentFile, idDocumentType);
+      updateUser({ 
+        idDocument: documentUrl, 
+        idDocumentType: idDocumentType as "social_security" | "passport",
+        idVerified: false,
+        idPending: true 
+      });
+      setIdDocumentFile(null);
+      if (idFileInputRef.current) {
+        idFileInputRef.current.value = '';
+      }
+      alert("ID document uploaded successfully. It will be reviewed by an admin.", { variant: "success" });
+    } catch (error) {
+      console.error("Error uploading ID document:", error);
+      alert("Failed to upload ID document. Please try again.", { variant: "error" });
+    } finally {
+      setIsUploadingId(false);
+    }
+  };
+
+  const handleIdFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+        alert("Please select an image file (JPG, PNG) or PDF document.", { variant: "error" });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size must be less than 10MB", { variant: "error" });
+        return;
+      }
+      setIdDocumentFile(file);
+    }
   };
 
   const handleAddPhone = () => {
@@ -310,20 +365,27 @@ export default function ProfilePage() {
           {phoneNumber ? (
             <div className="space-y-2">
               <p className="text-gray-900 font-medium">{phoneNumber}</p>
-              {user?.phoneVerified && (
+              {user?.phoneVerified ? (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium w-fit">
                   <CheckCircle2 className="w-3 h-3" />
                   Verified
                 </span>
+              ) : user?.phonePending ? (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium w-fit">
+                  <AlertTriangle className="w-3 h-3" />
+                  Pending approval
+                </span>
+              ) : null}
+              {user?.phoneVerified && (
+                <p className="text-sm text-gray-600">
+                  This number cannot be changed or removed.
+                </p>
               )}
-              <p className="text-sm text-gray-600">
-                This number cannot be changed or removed.
-              </p>
             </div>
           ) : editingPhone ? (
             <div className="space-y-3">
               <p className="text-sm text-gray-600">
-                You can add your phone number once. After saving, it cannot be edited or removed.
+                You can add your phone number once. After saving, it will be pending admin approval and cannot be edited or removed.
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <input
@@ -357,7 +419,7 @@ export default function ProfilePage() {
             <div>
               <p className="text-gray-600 mb-2">No phone number on file</p>
               <p className="text-sm text-gray-500 mb-3">
-                Add your phone number here. Once saved, it cannot be edited or removed.
+                Add your phone number here. Once saved, it will be pending admin approval and cannot be edited or removed.
               </p>
               <button
                 onClick={handleAddPhone}
@@ -366,6 +428,103 @@ export default function ProfilePage() {
                 <Phone className="w-4 h-4" />
                 Add phone number
               </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ID Document Section */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-medium text-gray-900">ID Verification</h2>
+          </div>
+        </div>
+        <div className="px-6 py-4">
+          {user?.idDocument ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-gray-600" />
+                <p className="text-gray-900 font-medium">
+                  {user.idDocumentType === "social_security" ? "Social Security Card" : "Passport"}
+                </p>
+              </div>
+              {user?.idVerified ? (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-verified-100 text-verified-700 rounded-full text-xs font-medium w-fit">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Verified
+                </span>
+              ) : user?.idPending ? (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium w-fit">
+                  <AlertTriangle className="w-3 h-3" />
+                  Pending approval
+                </span>
+              ) : null}
+              {user?.idVerified && (
+                <p className="text-sm text-gray-600">
+                  Your ID document cannot be changed or removed.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Upload a photo of your Social Security card or Passport for verification. Once uploaded, it will be pending admin approval and cannot be changed.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ID Type</label>
+                  <select
+                    value={idDocumentType}
+                    onChange={(e) => setIdDocumentType(e.target.value as "social_security" | "passport" | "")}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Select ID type</option>
+                    <option value="social_security">Social Security Card</option>
+                    <option value="passport">Passport</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Document</label>
+                  <input
+                    ref={idFileInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleIdFileChange}
+                    className="hidden"
+                    id="id-document-upload"
+                  />
+                  <label
+                    htmlFor="id-document-upload"
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {idDocumentFile ? idDocumentFile.name : "Choose file"}
+                  </label>
+                  {idDocumentFile && (
+                    <button
+                      onClick={() => {
+                        setIdDocumentFile(null);
+                        if (idFileInputRef.current) {
+                          idFileInputRef.current.value = '';
+                        }
+                      }}
+                      className="ml-2 inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={handleIdDocumentUpload}
+                  disabled={!idDocumentType || !idDocumentFile || isUploadingId || user?.idVerified}
+                  className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUploadingId ? "Uploading..." : "Upload ID Document"}
+                </button>
+              </div>
             </div>
           )}
         </div>

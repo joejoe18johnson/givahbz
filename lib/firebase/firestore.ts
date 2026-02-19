@@ -473,8 +473,12 @@ export interface AdminUserDoc {
   status: UserStatus;
   phoneNumber?: string;
   phoneVerified: boolean;
-  verified: boolean;
+  phonePending: boolean;
+  idDocument?: string;
+  idDocumentType?: "social_security" | "passport";
   idVerified: boolean;
+  idPending: boolean;
+  verified: boolean;
   addressVerified: boolean;
   createdAt?: string;
 }
@@ -502,6 +506,7 @@ export async function getUsersFromFirestore(): Promise<AdminUserDoc[]> {
 export async function setUserPhoneVerified(userId: string, verified: boolean): Promise<void> {
   await updateDoc(doc(db, usersCollection, userId), {
     phoneVerified: verified,
+    phonePending: false,
     updatedAt: serverTimestamp(),
   });
 }
@@ -509,6 +514,7 @@ export async function setUserPhoneVerified(userId: string, verified: boolean): P
 export async function setIdVerified(userId: string, verified: boolean): Promise<void> {
   await updateDoc(doc(db, usersCollection, userId), {
     idVerified: verified,
+    idPending: false,
     updatedAt: serverTimestamp(),
   });
 }

@@ -27,6 +27,10 @@ export interface UserProfile {
   birthday?: string;
   phoneNumber?: string;
   phoneVerified?: boolean;
+  phonePending?: boolean;
+  idDocument?: string;
+  idDocumentType?: "social_security" | "passport";
+  idPending?: boolean;
   profilePhoto?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -79,6 +83,10 @@ export async function firebaseUserToProfile(firebaseUser: FirebaseUser): Promise
     birthday: userData?.birthday,
     phoneNumber: userData?.phoneNumber,
     phoneVerified: userData?.phoneVerified || false,
+    phonePending: userData?.phonePending || false,
+    idDocument: userData?.idDocument,
+    idDocumentType: userData?.idDocumentType,
+    idPending: userData?.idPending || false,
     profilePhoto: userData?.profilePhoto || firebaseUser.photoURL,
     createdAt: userData?.createdAt?.toDate(),
     updatedAt: userData?.updatedAt?.toDate(),
