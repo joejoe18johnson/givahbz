@@ -539,25 +539,26 @@ export default function ProfilePage() {
                     accept="image/*,.pdf"
                     onChange={handleIdFileChange}
                     disabled={user?.idPending === true}
-                    className="sr-only"
+                    className="hidden"
                     id="id-document-upload"
                     aria-label="Choose ID document file"
                   />
-                  <label
-                    htmlFor={user?.idPending ? undefined : "id-document-upload"}
-                    role={user?.idPending ? undefined : "button"}
+                  <button
+                    type="button"
+                    onClick={() => !user?.idPending && idFileInputRef.current?.click()}
+                    disabled={user?.idPending === true}
                     className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium transition-colors ${
                       user?.idPending
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none"
-                        : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-50 cursor-pointer border-gray-300"
                     }`}
-                    onClick={user?.idPending ? (e) => e.preventDefault() : undefined}
                   >
                     <Upload className="w-4 h-4" />
                     {idDocumentFile ? idDocumentFile.name : "Choose file"}
-                  </label>
+                  </button>
                   {idDocumentFile && !user?.idPending && (
                     <button
+                      type="button"
                       onClick={() => {
                         setIdDocumentFile(null);
                         if (idFileInputRef.current) {
@@ -572,6 +573,7 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <button
+                  type="button"
                   onClick={handleIdDocumentUpload}
                   disabled={!idDocumentType || !idDocumentFile || isUploadingId || user?.idVerified || user?.idPending === true}
                   className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
