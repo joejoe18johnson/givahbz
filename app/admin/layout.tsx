@@ -146,11 +146,11 @@ export default function AdminLayout({
               >
                 <Bell className="w-4 h-4 shrink-0" />
                 <span className="flex-1">Notifications</span>
-                {(sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations + sectionCounts.phonePending) > 0 && (
+                {(sectionCounts.underReview + sectionCounts.phonePending) > 0 && (
                   <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                    {sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations + sectionCounts.phonePending > 99
+                    {sectionCounts.underReview + sectionCounts.phonePending > 99
                       ? "99+"
-                      : sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations + sectionCounts.phonePending}
+                      : sectionCounts.underReview + sectionCounts.phonePending}
                   </span>
                 )}
               </button>
@@ -158,19 +158,13 @@ export default function AdminLayout({
                 <div className="absolute left-0 top-full mt-1 w-72 max-h-[20rem] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-lg py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <h3 className="font-medium text-gray-900">Notifications</h3>
-                    <p className="text-xs text-gray-500">New activity by section</p>
+                    <p className="text-xs text-gray-500">Items that need your attention</p>
                   </div>
                   <div className="py-2 px-2 space-y-1">
-                    <Link href="/admin/campaigns" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
-                      <span className="text-sm text-gray-700">Campaigns</span>
-                      {sectionCounts.campaigns > 0 && (
-                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.campaigns}</span>
-                      )}
-                    </Link>
-                    <Link href="/admin/users" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
-                      <span className="text-sm text-gray-700">Users</span>
-                      {sectionCounts.users > 0 && (
-                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.users}</span>
+                    <Link href="/admin/under-review" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
+                      <span className="text-sm text-gray-700">Campaigns under review</span>
+                      {sectionCounts.underReview > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.underReview}</span>
                       )}
                     </Link>
                     <Link href="/admin/users" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
@@ -179,18 +173,18 @@ export default function AdminLayout({
                         <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.phonePending}</span>
                       )}
                     </Link>
-                    <Link href="/admin/donations" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
-                      <span className="text-sm text-gray-700">Donations</span>
-                      {sectionCounts.donations > 0 && (
-                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.donations}</span>
-                      )}
-                    </Link>
-                    <Link href="/admin/under-review" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
-                      <span className="text-sm text-gray-700">Under review</span>
-                      {sectionCounts.underReview > 0 && (
-                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.underReview}</span>
-                      )}
-                    </Link>
+                    <div className="border-t border-gray-100 pt-2 mt-1">
+                      <p className="px-3 py-1 text-xs text-gray-500">Quick links</p>
+                      <Link href="/admin/campaigns" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700">
+                        Campaigns
+                      </Link>
+                      <Link href="/admin/users" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700">
+                        Users
+                      </Link>
+                      <Link href="/admin/donations" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700">
+                        Donations
+                      </Link>
+                    </div>
                   </div>
                   {notifications.length > 0 && (
                     <div className="border-t border-gray-100 pt-2">
@@ -223,11 +217,6 @@ export default function AdminLayout({
             >
               <Megaphone className="w-4 h-4" />
               <span className="flex-1">Campaigns</span>
-              {sectionCounts.campaigns > 0 && (
-                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {sectionCounts.campaigns > 99 ? "99+" : sectionCounts.campaigns}
-                </span>
-              )}
             </Link>
             <Link
               href="/admin/users"
@@ -235,9 +224,9 @@ export default function AdminLayout({
             >
               <Users className="w-4 h-4" />
               <span className="flex-1">Users</span>
-              {(sectionCounts.users > 0 || sectionCounts.phonePending > 0) && (
+              {sectionCounts.phonePending > 0 && (
                 <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {sectionCounts.phonePending > 0 ? (sectionCounts.phonePending > 99 ? "99+" : sectionCounts.phonePending) : sectionCounts.users > 99 ? "99+" : sectionCounts.users}
+                  {sectionCounts.phonePending > 99 ? "99+" : sectionCounts.phonePending}
                 </span>
               )}
             </Link>
@@ -247,11 +236,6 @@ export default function AdminLayout({
             >
               <Heart className="w-4 h-4" />
               <span className="flex-1">Donations</span>
-              {sectionCounts.donations > 0 && (
-                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {sectionCounts.donations > 99 ? "99+" : sectionCounts.donations}
-                </span>
-              )}
             </Link>
             <Link
               href="/admin/under-review"
