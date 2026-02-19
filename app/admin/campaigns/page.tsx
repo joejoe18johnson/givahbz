@@ -3,13 +3,17 @@
 import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
+import { deleteCampaign } from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
+import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2 } from "lucide-react";
 
 export default function AdminCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { confirm, alert } = useThemedModal();
 
   useEffect(() => {
     async function loadCampaigns() {
@@ -24,6 +28,24 @@ export default function AdminCampaignsPage() {
     }
     loadCampaigns();
   }, []);
+
+  const handleDelete = async (campaignId: string, title: string) => {
+    const ok = await confirm(
+      `Delete "${title}"? This will remove the campaign from the main site and cannot be undone.`,
+      { title: "Delete campaign", confirmLabel: "Delete", cancelLabel: "Cancel", variant: "danger" }
+    );
+    if (!ok) return;
+    setDeletingId(campaignId);
+    try {
+      await deleteCampaign(campaignId);
+      setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+    } catch (err) {
+      console.error("Error deleting campaign:", err);
+      alert("Could not delete the campaign. Please try again.", { variant: "error" });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -59,6 +81,7 @@ export default function AdminCampaignsPage() {
                 <th className="px-5 py-3 font-medium">Days left</th>
                 <th className="px-5 py-3 font-medium">Created</th>
                 <th className="px-5 py-3 font-medium">Verified</th>
+                <th className="px-5 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -84,6 +107,17 @@ export default function AdminCampaignsPage() {
                     ) : (
                       <span className="inline-flex items-center gap-1 text-amber-600"><XCircle className="w-4 h-4" /> No</span>
                     )}
+                  </td>
+                  <td className="px-5 py-3">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(c.id, c.title)}
+                      disabled={deletingId === c.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      {deletingId === c.id ? "Deleting…" : "Delete"}
+                    </button>
                   </td>
                 </tr>
               ))}
