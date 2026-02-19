@@ -23,7 +23,7 @@ import {
 import { useThemedModal } from "@/components/ThemedModal";
 
 export default function ProfilePage() {
-  const { user, isLoading, updateUser } = useAuth();
+  const { user, isLoading, updateUser, logout } = useAuth();
   const { alert } = useThemedModal();
   const [editingName, setEditingName] = useState(false);
   const [editingBirthday, setEditingBirthday] = useState(false);
@@ -40,6 +40,7 @@ export default function ProfilePage() {
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const idFileInputRef = useRef<HTMLInputElement>(null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showSavedPopup, setShowSavedPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
@@ -103,14 +104,24 @@ export default function ProfilePage() {
     );
   }
 
-  const handleSaveName = () => {
-    updateUser({ name });
-    setEditingName(false);
+  const handleSaveName = async () => {
+    try {
+      await updateUser({ name });
+      setEditingName(false);
+    } catch (error) {
+      console.error("Error saving name:", error);
+      alert("Failed to save name. Please try again.", { variant: "error" });
+    }
   };
 
-  const handleSaveBirthday = () => {
-    updateUser({ birthday });
-    setEditingBirthday(false);
+  const handleSaveBirthday = async () => {
+    try {
+      await updateUser({ birthday });
+      setEditingBirthday(false);
+    } catch (error) {
+      console.error("Error saving birthday:", error);
+      alert("Failed to save birthday. Please try again.", { variant: "error" });
+    }
   };
 
   const handleSavePassword = () => {
@@ -120,9 +131,18 @@ export default function ProfilePage() {
     alert("Password change functionality will be implemented with backend integration.", { title: "Coming soon", variant: "info" });
   };
 
-  const handleDeactivateAccount = () => {
-    // TODO: Implement account deactivation
-    console.log("Account deactivation requested");
+  const handleDeactivateAccount = async () => {
+    if (!user) return;
+    setIsDeactivating(true);
+    try {
+      await updateUser({ status: "deleted" });
+      await logout();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error deactivating account:", error);
+      alert("Failed to deactivate account. Please try again or contact support.", { variant: "error" });
+      setIsDeactivating(false);
+    }
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,17 +174,22 @@ export default function ProfilePage() {
     // Don't save immediately - wait for "Save Settings" button
   };
 
-  const handleSavePhone = () => {
+  const handleSavePhone = async () => {
     const raw = phoneInput.trim();
     if (!raw) return;
     if (raw.length < 8 || !/^[\d\s\-+()]+$/.test(raw)) {
       alert("Please enter a valid phone number (e.g. +501 123-4567 or 123-4567).", { variant: "error" });
       return;
     }
-    setPhoneNumber(raw);
-    updateUser({ phoneNumber: raw, phoneVerified: false, phonePending: true });
-    setEditingPhone(false);
-    setPhoneInput("");
+    try {
+      await updateUser({ phoneNumber: raw, phoneVerified: false, phonePending: true });
+      setPhoneNumber(raw);
+      setEditingPhone(false);
+      setPhoneInput("");
+    } catch (error) {
+      console.error("Error saving phone:", error);
+      alert("Failed to save phone number. Please try again.", { variant: "error" });
+    }
   };
 
   const handleIdDocumentUpload = async () => {
@@ -185,7 +210,7 @@ export default function ProfilePage() {
     setIsUploadingId(true);
     try {
       const documentUrl = await uploadVerificationDocument(user.id, idDocumentFile, idDocumentType);
-      updateUser({ 
+      await updateUser({ 
         idDocument: documentUrl, 
         idDocumentType: idDocumentType as "social_security" | "passport",
         idVerified: false,
@@ -279,8 +304,9 @@ export default function ProfilePage() {
                 type="file"
                 accept="image/*"
                 onChange={handlePhotoUpload}
-                className="hidden"
+                className="sr-only"
                 id="photo-upload"
+                aria-label="Upload profile photo"
               />
               <label
                 htmlFor="photo-upload"
@@ -513,16 +539,19 @@ export default function ProfilePage() {
                     accept="image/*,.pdf"
                     onChange={handleIdFileChange}
                     disabled={user?.idPending === true}
-                    className="hidden"
+                    className="sr-only"
                     id="id-document-upload"
+                    aria-label="Choose ID document file"
                   />
                   <label
-                    htmlFor="id-document-upload"
+                    htmlFor={user?.idPending ? undefined : "id-document-upload"}
+                    role={user?.idPending ? undefined : "button"}
                     className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium transition-colors ${
                       user?.idPending
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none"
                         : "text-gray-700 hover:bg-gray-50 cursor-pointer"
                     }`}
+                    onClick={user?.idPending ? (e) => e.preventDefault() : undefined}
                   >
                     <Upload className="w-4 h-4" />
                     {idDocumentFile ? idDocumentFile.name : "Choose file"}
@@ -734,7 +763,7 @@ export default function ProfilePage() {
                 photoUrl = lastSavedState.profilePhoto ?? undefined;
               }
 
-              updateUser({
+              await updateUser({
                 name,
                 birthday: birthday || undefined,
                 profilePhoto: photoUrl,
@@ -814,9 +843,10 @@ export default function ProfilePage() {
                   <div className="flex gap-3">
                     <button
                       onClick={handleDeactivateAccount}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                      disabled={isDeactivating}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-70 disabled:cursor-wait"
                     >
-                      Yes, deactivate my account
+                      {isDeactivating ? "Deactivating…" : "Yes, deactivate my account"}
                     </button>
                     <button
                       onClick={() => setShowDeactivateConfirm(false)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
@@ -123,18 +123,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateUser = async (updates: Partial<User>) => {
+  const updateUser = useCallback(async (updates: Partial<User>) => {
     if (!user) return;
     
     try {
       await updateUserProfile(user.id, updates as Partial<UserProfile>);
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
+      setUser((prev) => (prev ? { ...prev, ...updates } : prev));
     } catch (error) {
       console.error("Error updating user:", error);
       throw error;
     }
-  };
+  }, [user]);
 
   const logout = async () => {
     try {
