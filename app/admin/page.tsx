@@ -187,6 +187,7 @@ export default function AdminDashboardPage() {
                 <tr className="bg-gray-50 text-left text-gray-500">
                   <th className="px-5 py-3 font-medium">Name</th>
                   <th className="px-5 py-3 font-medium">Email</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Phone</th>
                   <th className="px-5 py-3 font-medium">Phone approved</th>
                 </tr>
@@ -196,6 +197,14 @@ export default function AdminDashboardPage() {
                   <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
                     <td className="px-5 py-3 text-gray-900">{u.name}</td>
                     <td className="px-5 py-3 text-gray-600 truncate max-w-[160px]">{u.email}</td>
+                    <td className="px-5 py-3">
+                      <span className={
+                        u.status === "active" ? "text-verified-600" :
+                        u.status === "on_hold" ? "text-amber-600" : "text-red-600"
+                      }>
+                        {u.status === "active" ? "Active" : u.status === "on_hold" ? "On hold" : "Disabled"}
+                      </span>
+                    </td>
                     <td className="px-5 py-3 text-gray-600">{u.phoneNumber || "—"}</td>
                     <td className="px-5 py-3">
                       {u.phoneVerified ? (

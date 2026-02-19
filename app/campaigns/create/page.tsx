@@ -57,6 +57,51 @@ export default function CreateCampaignPage() {
     );
   }
 
+  const status = user.status ?? "active";
+  if (status === "deleted") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Account disabled</h1>
+          <p className="text-gray-600 mb-6">
+            Your account has been disabled by an administrator. You cannot create or edit campaigns. Contact support if you believe this is an error.
+          </p>
+          <Link
+            href="/"
+            className="inline-block bg-primary-600 text-white px-6 py-3 rounded-full font-medium hover:bg-primary-700"
+          >
+            Back to home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "on_hold") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-amber-600" />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Account on hold</h1>
+          <p className="text-gray-600 mb-6">
+            Your account is currently on hold. You cannot create or edit campaigns until an administrator removes the hold. Contact support if you have questions.
+          </p>
+          <Link
+            href="/"
+            className="inline-block bg-primary-600 text-white px-6 py-3 rounded-full font-medium hover:bg-primary-700"
+          >
+            Back to home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!user.phoneVerified) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">

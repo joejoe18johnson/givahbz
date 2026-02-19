@@ -170,6 +170,23 @@ export async function getCampaignsForAdmin(): Promise<(Campaign & { status?: str
     });
 }
 
+/** Campaigns on hold for a given creator (My Campaigns page). creatorId must match the signed-in user. */
+export async function getCampaignsOnHoldForUser(creatorId: string): Promise<(Campaign & { status?: string })[]> {
+  if (!creatorId) return [];
+  const q = query(
+    collection(db, campaignsCollection),
+    where("creatorId", "==", creatorId),
+    where("status", "==", "on_hold")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const createdAt = normalizeCreatedAt(data);
+    const creator = (data.creator as string) ?? (data.creatorName as string) ?? "";
+    return { ...data, id: docSnap.id, createdAt, creator } as Campaign & { status?: string };
+  });
+}
+
 // Donations operations
 export async function getDonations(campaignId?: string): Promise<AdminDonation[]> {
   let q = query(collection(db, donationsCollection), orderBy("createdAt", "desc"));
