@@ -29,12 +29,39 @@ export interface UserProfile {
   updatedAt?: Date;
 }
 
+// Admin emails from env (client has NEXT_PUBLIC_*, server could have ADMIN_EMAILS)
+function getAdminEmails(): string[] {
+  const raw =
+    typeof process.env.NEXT_PUBLIC_ADMIN_EMAILS !== "undefined"
+      ? process.env.NEXT_PUBLIC_ADMIN_EMAILS
+      : typeof process.env.ADMIN_EMAILS !== "undefined"
+        ? process.env.ADMIN_EMAILS
+        : "";
+  return raw
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 // Convert Firebase user to app user profile
 export async function firebaseUserToProfile(firebaseUser: FirebaseUser): Promise<UserProfile | null> {
   if (!firebaseUser) return null;
 
   const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
   const userData = userDoc.data();
+  const storedRole = userData?.role || "user";
+  const emailLower = (firebaseUser.email || "").toLowerCase();
+  const adminEmails = getAdminEmails();
+  const isAdminByEmail = adminEmails.length > 0 && adminEmails.includes(emailLower);
+  const role = isAdminByEmail ? "admin" : storedRole;
+
+  // Persist admin role in Firestore when email is in admin list (so email sign-in users get admin too)
+  if (isAdminByEmail && storedRole !== "admin") {
+    updateDoc(doc(db, "users", firebaseUser.uid), {
+      role: "admin",
+      updatedAt: serverTimestamp(),
+    }).catch((err) => console.warn("Could not update admin role:", err));
+  }
 
   return {
     id: firebaseUser.uid,
@@ -43,7 +70,7 @@ export async function firebaseUserToProfile(firebaseUser: FirebaseUser): Promise
     verified: userData?.verified || false,
     idVerified: userData?.idVerified || false,
     addressVerified: userData?.addressVerified || false,
-    role: userData?.role || "user",
+    role: role as "user" | "admin",
     birthday: userData?.birthday,
     phoneNumber: userData?.phoneNumber,
     phoneVerified: userData?.phoneVerified || false,

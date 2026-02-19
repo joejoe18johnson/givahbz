@@ -45,10 +45,10 @@ export default function AdminLayout({
         <div className="max-w-md text-center bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Access denied</h1>
           <p className="text-gray-600 mb-4">
-            Your account does not have admin access. Only emails listed in <code className="text-sm bg-gray-100 px-1 rounded">ADMIN_EMAILS</code> (in your .env) can view the admin dashboard.
+            Your account does not have admin access. Add your email to <code className="text-sm bg-gray-100 px-1 rounded">NEXT_PUBLIC_ADMIN_EMAILS</code> (or <code className="text-sm bg-gray-100 px-1 rounded">ADMIN_EMAILS</code>) in your .env and on Vercel, then sign out and sign in again.
           </p>
           <p className="text-sm text-gray-500 mb-6">
-            Signed in as <strong>{user.email}</strong>. Add this email to ADMIN_EMAILS and restart the server, or sign in with admin@givahbz.com / Admin123!
+            Signed in as <strong>{user.email}</strong>. Use this exact email in the admin list (comma-separated, no spaces).
           </p>
           <Link
             href="/"
