@@ -30,10 +30,11 @@ export default function AdminLayout({
   const [lastSeen, setLastSeen] = useState({ underReview: 0, phonePending: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Load last-seen from localStorage on mount
+  // Load last-seen from localStorage on mount so "new" = only items since last open
   useEffect(() => {
     try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem(NOTIFICATIONS_SEEN_KEY) : null;
+      if (typeof window === "undefined") return;
+      const raw = localStorage.getItem(NOTIFICATIONS_SEEN_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { underReview?: number; phonePending?: number };
         setLastSeen({
@@ -85,8 +86,6 @@ export default function AdminLayout({
         setNotifications(list.slice(0, 10));
         const since = sevenDaysAgo();
         const phonePending = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
-        const attentionCount = underReviewCount + phonePending;
-        setNotificationCount(attentionCount);
         setSectionCounts({
           underReview: underReviewCount,
           campaigns: campaigns.filter((c) => new Date(c.createdAt).getTime() >= since).length,
