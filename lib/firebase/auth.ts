@@ -13,6 +13,8 @@ import { auth } from "./config";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./config";
 
+export type UserStatus = "active" | "on_hold" | "deleted";
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -21,6 +23,7 @@ export interface UserProfile {
   idVerified: boolean;
   addressVerified: boolean;
   role?: "user" | "admin";
+  status?: UserStatus;
   birthday?: string;
   phoneNumber?: string;
   phoneVerified?: boolean;
@@ -63,6 +66,7 @@ export async function firebaseUserToProfile(firebaseUser: FirebaseUser): Promise
     }).catch((err) => console.warn("Could not update admin role:", err));
   }
 
+  const status = (userData?.status as UserProfile["status"]) || "active";
   return {
     id: firebaseUser.uid,
     email: firebaseUser.email || "",
@@ -71,6 +75,7 @@ export async function firebaseUserToProfile(firebaseUser: FirebaseUser): Promise
     idVerified: userData?.idVerified || false,
     addressVerified: userData?.addressVerified || false,
     role: role as "user" | "admin",
+    status,
     birthday: userData?.birthday,
     phoneNumber: userData?.phoneNumber,
     phoneVerified: userData?.phoneVerified || false,

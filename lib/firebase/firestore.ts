@@ -422,11 +422,14 @@ export async function markNotificationRead(notificationId: string): Promise<void
 }
 
 // Admin: list all users (for Admin Users page; requires Firestore rules to allow admin read on users)
+export type UserStatus = "active" | "on_hold" | "deleted";
+
 export interface AdminUserDoc {
   id: string;
   email: string;
   name: string;
   role: "user" | "admin";
+  status: UserStatus;
   phoneNumber?: string;
   phoneVerified: boolean;
   verified: boolean;
@@ -444,6 +447,7 @@ export async function getUsersFromFirestore(): Promise<AdminUserDoc[]> {
       email: data.email ?? "",
       name: data.name ?? "",
       role: data.role ?? "user",
+      status: (data.status as UserStatus) ?? "active",
       phoneNumber: data.phoneNumber,
       phoneVerified: data.phoneVerified ?? false,
       verified: data.verified ?? false,
@@ -457,6 +461,13 @@ export async function getUsersFromFirestore(): Promise<AdminUserDoc[]> {
 export async function setUserPhoneVerified(userId: string, verified: boolean): Promise<void> {
   await updateDoc(doc(db, usersCollection, userId), {
     phoneVerified: verified,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function setUserStatus(userId: string, status: UserStatus): Promise<void> {
+  await updateDoc(doc(db, usersCollection, userId), {
+    status,
     updatedAt: serverTimestamp(),
   });
 }

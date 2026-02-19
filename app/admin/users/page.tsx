@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getUsersFromFirestore, setUserPhoneVerified, type AdminUserDoc } from "@/lib/firebase/firestore";
-import { CheckCircle2, XCircle, Phone } from "lucide-react";
+import { getUsersFromFirestore, setUserPhoneVerified, setUserStatus, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { useAuth } from "@/contexts/AuthContext";
+import { useThemedModal } from "@/components/ThemedModal";
+import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
 
 export default function AdminUsersPage() {
+  const { user: currentUser } = useAuth();
+  const { confirm, alert } = useThemedModal();
   const [users, setUsers] = useState<AdminUserDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -32,9 +36,55 @@ export default function AdminUsersPage() {
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, phoneVerified: true } : u)));
     } catch (error) {
       console.error("Error approving phone:", error);
+      alert("Failed to approve phone.", { variant: "error" });
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const handleSetStatus = async (userId: string, status: UserStatus) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot change your own status.", { variant: "error" });
+      return;
+    }
+    setUpdatingId(userId);
+    try {
+      await setUserStatus(userId, status);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status } : u)));
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      alert("Failed to update user status.", { variant: "error" });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handlePutOnHold = async (userId: string, name: string) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot put yourself on hold.", { variant: "error" });
+      return;
+    }
+    const ok = await confirm(
+      `Put "${name}" on hold? They will not be able to create or edit campaigns until you remove hold.`,
+      { title: "Put user on hold", confirmLabel: "Put on hold", variant: "warning" }
+    );
+    if (ok) await handleSetStatus(userId, "on_hold");
+  };
+
+  const handleRemoveHold = async (userId: string) => {
+    await handleSetStatus(userId, "active");
+  };
+
+  const handleDeleteUser = async (userId: string, name: string, email: string) => {
+    if (userId === currentUser?.id) {
+      alert("You cannot delete your own account.", { variant: "error" });
+      return;
+    }
+    const ok = await confirm(
+      `Disable account for "${name}" (${email})? They will no longer be able to create or edit campaigns. You can put them on hold instead if you want to allow access later.`,
+      { title: "Disable user", confirmLabel: "Disable", variant: "danger" }
+    );
+    if (ok) await handleSetStatus(userId, "deleted");
   };
 
   if (loading) {
@@ -59,12 +109,13 @@ export default function AdminUsersPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
+          <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-gray-50 text-left text-gray-500">
                 <th className="px-5 py-3 font-medium">Name</th>
                 <th className="px-5 py-3 font-medium">Email</th>
                 <th className="px-5 py-3 font-medium">Role</th>
+                <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Phone</th>
                 <th className="px-5 py-3 font-medium">Phone approved</th>
                 <th className="px-5 py-3 font-medium">ID verified</th>
@@ -72,47 +123,94 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="px-5 py-3 text-gray-900">{u.name}</td>
-                  <td className="px-5 py-3 text-gray-600 truncate max-w-[200px]" title={u.email}>{u.email}</td>
-                  <td className="px-5 py-3">
-                    <span className={u.role === "admin" ? "text-primary-600 font-medium" : "text-gray-600"}>{u.role}</span>
-                  </td>
-                  <td className="px-5 py-3 text-gray-600">{u.phoneNumber || "—"}</td>
-                  <td className="px-5 py-3">
-                    {u.phoneVerified ? (
-                      <span className="text-verified-600 inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-4 h-4" /> Yes
+              {users.map((u) => {
+                const isSelf = u.id === currentUser?.id;
+                const statusLabel = u.status === "active" ? "Active" : u.status === "on_hold" ? "On hold" : "Disabled";
+                return (
+                  <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <td className="px-5 py-3 text-gray-900">{u.name}</td>
+                    <td className="px-5 py-3 text-gray-600 truncate max-w-[200px]" title={u.email}>{u.email}</td>
+                    <td className="px-5 py-3">
+                      <span className={u.role === "admin" ? "text-primary-600 font-medium" : "text-gray-600"}>{u.role}</span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={
+                        u.status === "active" ? "text-verified-600" :
+                        u.status === "on_hold" ? "text-amber-600" : "text-red-600"
+                      }>
+                        {statusLabel}
                       </span>
-                    ) : (
-                      <span className="text-amber-600 inline-flex items-center gap-1">
-                        <XCircle className="w-4 h-4" /> No
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
-                    {u.idVerified ? (
-                      <span className="text-verified-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
-                    ) : (
-                      <span className="text-amber-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
-                    {u.phoneNumber && !u.phoneVerified && (
-                      <button
-                        type="button"
-                        onClick={() => handleApprovePhone(u.id)}
-                        disabled={updatingId === u.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium disabled:opacity-50"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        {updatingId === u.id ? "Updating…" : "Approve phone"}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-5 py-3 text-gray-600">{u.phoneNumber || "—"}</td>
+                    <td className="px-5 py-3">
+                      {u.phoneVerified ? (
+                        <span className="text-verified-600 inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-4 h-4" /> Yes
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 inline-flex items-center gap-1">
+                          <XCircle className="w-4 h-4" /> No
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      {u.idVerified ? (
+                        <span className="text-verified-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Yes</span>
+                      ) : (
+                        <span className="text-amber-600 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> No</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {u.phoneNumber && !u.phoneVerified && (
+                          <button
+                            type="button"
+                            onClick={() => handleApprovePhone(u.id)}
+                            disabled={updatingId === u.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium disabled:opacity-50"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            {updatingId === u.id ? "…" : "Approve phone"}
+                          </button>
+                        )}
+                        {u.status === "active" && !isSelf && (
+                          <button
+                            type="button"
+                            onClick={() => handlePutOnHold(u.id, u.name)}
+                            disabled={updatingId === u.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs font-medium disabled:opacity-50"
+                          >
+                            <PauseCircle className="w-3.5 h-3.5" />
+                            Put on hold
+                          </button>
+                        )}
+                        {u.status === "on_hold" && !isSelf && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveHold(u.id)}
+                            disabled={updatingId === u.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium disabled:opacity-50"
+                          >
+                            <PlayCircle className="w-3.5 h-3.5" />
+                            Remove hold
+                          </button>
+                        )}
+                        {u.status !== "deleted" && !isSelf && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUser(u.id, u.name, u.email)}
+                            disabled={updatingId === u.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Disable
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
