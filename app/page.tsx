@@ -113,9 +113,7 @@ export default function Home() {
   useEffect(() => {
     const el = trendingScrollRef.current;
     const onScroll = () => updateTrendingScrollState();
-    const runAfterLayout = () => {
-      updateTrendingScrollState();
-    };
+    const runAfterLayout = () => updateTrendingScrollState();
     runAfterLayout();
     const t = setTimeout(runAfterLayout, 100);
     if (el) {
@@ -127,6 +125,7 @@ export default function Home() {
       if (el) el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when list length changes
   }, [allTrendingCampaigns.length]);
 
   const scrollTrending = (direction: "left" | "right") => {

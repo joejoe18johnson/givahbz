@@ -70,14 +70,13 @@ export default function CampaignPage({ params }: PageProps) {
   const progress = (campaign.raised / campaign.goal) * 100;
   const progressPercentage = Math.min(progress, 100);
 
-  const handleToggleHeart = () => {
+  const handleToggleHeart = async () => {
     if (!user) {
       router.push("/auth/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
       return;
     }
-    
     if (campaign) {
-      const newState = toggleHeartCampaign(campaign.id);
+      const newState = await toggleHeartCampaign(campaign.id);
       setIsHearted(newState);
     }
   };

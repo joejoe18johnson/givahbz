@@ -37,6 +37,8 @@ import { useRouter } from "next/navigation";
 export default function MyCampaignsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [stoppedIds, setStoppedIds] = useState<Set<string>>(new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [underReview, setUnderReview] = useState<CampaignUnderReview[]>([]);

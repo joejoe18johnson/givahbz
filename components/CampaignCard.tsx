@@ -43,16 +43,14 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
     }
   }, [campaign.id, user]);
 
-  const handleToggleHeart = (e: React.MouseEvent) => {
+  const handleToggleHeart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (!user) {
       router.push("/auth/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
       return;
     }
-    
-    const newState = toggleHeartCampaign(campaign.id);
+    const newState = await toggleHeartCampaign(campaign.id);
     setIsHearted(newState);
   };
 

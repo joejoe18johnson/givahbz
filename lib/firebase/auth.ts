@@ -108,7 +108,7 @@ export async function signInWithGoogle(): Promise<UserProfile> {
       idVerified: true,
       addressVerified: false,
       role: "user",
-      profilePhoto: user.photoURL,
+      profilePhoto: user.photoURL ?? undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

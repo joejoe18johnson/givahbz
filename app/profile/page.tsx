@@ -531,7 +531,7 @@ export default function ProfilePage() {
             <div className="flex-1">
               <h2 className="text-lg font-medium text-gray-900 mb-2">Deactivate account</h2>
               <p className="text-sm text-gray-600 mb-4">
-                If you deactivate your account, you won't be able to log in anymore, and your fundraisers will no longer appear on the platform.
+                If you deactivate your account, you won&apos;t be able to log in anymore, and your fundraisers will no longer appear on the platform.
               </p>
               <p className="text-sm text-gray-600 mb-4">
                 To learn more about your account management options,{" "}
