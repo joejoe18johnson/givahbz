@@ -15,6 +15,21 @@ The app uses **Firebase Authentication** for Google sign-in (no NextAuth for Goo
 
 ---
 
+## 1b. Add your domain (fixes auth/unauthorized-domain)
+
+If you see **"Firebase: Error (auth/unauthorized-domain)"**, the domain you're on is not allowed. Add it in Firebase:
+
+1. In [Firebase Console](https://console.firebase.google.com/) → your project → **Authentication**.
+2. Open the **Settings** tab (or **Authorized domains** in the top nav).
+3. Under **Authorized domains**, click **Add domain**.
+4. Add:
+   - **`localhost`** — for local development.
+   - **`givahbz.vercel.app`** — for your Vercel deployment (use your real Vercel domain if different).
+   - Any other domain where the app runs (e.g. a custom domain).
+5. Save. Try sign in with Google again.
+
+---
+
 ## 2. Environment variables
 
 - **Firebase**  
