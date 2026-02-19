@@ -4,29 +4,31 @@ import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { getDonations, getCampaignsUnderReviewCount } from "@/lib/firebase/firestore";
-import { adminUsers } from "@/lib/adminData";
+import { getDonations, getCampaignsUnderReviewCount, getUsersFromFirestore, type AdminUserDoc } from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock } from "lucide-react";
+import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [donations, setDonations] = useState<AdminDonation[]>([]);
+  const [users, setUsers] = useState<AdminUserDoc[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [underReviewCount, setUnderReviewCount] = useState(0);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [fetchedCampaigns, fetchedDonations, count] = await Promise.all([
+        const [fetchedCampaigns, fetchedDonations, count, userList] = await Promise.all([
           fetchCampaignsFromAPI(),
           getDonations(),
           getCampaignsUnderReviewCount(),
+          getUsersFromFirestore(),
         ]);
         setCampaigns(fetchedCampaigns);
         setDonations(fetchedDonations);
         setUnderReviewCount(count);
+        setUsers(userList);
       } catch (error) {
         console.error("Error loading admin data:", error);
       } finally {
@@ -39,8 +41,9 @@ export default function AdminDashboardPage() {
   const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
   const totalDonations = donations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
   const recentCampaigns = campaigns.slice(0, 5);
-  const recentUsers = adminUsers.slice(0, 5);
+  const recentUsers = users.slice(0, 5);
   const recentDonations = donations.slice(0, 8);
+  const phonePendingCount = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
 
   if (isLoading) {
     return (
@@ -91,7 +94,7 @@ export default function AdminDashboardPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Users</p>
-              <p className="text-xl font-semibold text-gray-900">{adminUsers.length}</p>
+              <p className="text-xl font-semibold text-gray-900">{users.length}</p>
             </div>
           </div>
         </div>
@@ -117,6 +120,20 @@ export default function AdminDashboardPage() {
             <div>
               <p className="text-sm text-gray-500">Under review</p>
               <p className="text-xl font-semibold text-gray-900">{underReviewCount}</p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href="/admin/users"
+          className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm block hover:border-primary-200 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Phone className="w-5 h-5 text-blue-700" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Phone numbers to review</p>
+              <p className="text-xl font-semibold text-gray-900">{phonePendingCount}</p>
             </div>
           </div>
         </Link>
@@ -170,7 +187,8 @@ export default function AdminDashboardPage() {
                 <tr className="bg-gray-50 text-left text-gray-500">
                   <th className="px-5 py-3 font-medium">Name</th>
                   <th className="px-5 py-3 font-medium">Email</th>
-                  <th className="px-5 py-3 font-medium">Role</th>
+                  <th className="px-5 py-3 font-medium">Phone</th>
+                  <th className="px-5 py-3 font-medium">Phone approved</th>
                 </tr>
               </thead>
               <tbody>
@@ -178,8 +196,15 @@ export default function AdminDashboardPage() {
                   <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
                     <td className="px-5 py-3 text-gray-900">{u.name}</td>
                     <td className="px-5 py-3 text-gray-600 truncate max-w-[160px]">{u.email}</td>
+                    <td className="px-5 py-3 text-gray-600">{u.phoneNumber || "—"}</td>
                     <td className="px-5 py-3">
-                      <span className={u.role === "admin" ? "text-primary-600 font-medium" : "text-gray-600"}>{u.role}</span>
+                      {u.phoneVerified ? (
+                        <span className="text-verified-600">Yes</span>
+                      ) : u.phoneNumber ? (
+                        <span className="text-amber-600">Review</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -66,7 +66,7 @@ export default function CreateCampaignPage() {
           </div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Phone number required</h1>
           <p className="text-gray-600 mb-6">
-            Your phone number must be on file and approved before you can create campaigns.{" "}
+            Your phone number must be on file and approved by an admin before you can create or edit campaigns.{" "}
             {!user.phoneNumber
               ? "Add your phone number in your profile, then our team will verify it."
               : "Our team is reviewing your phone number. You will be notified once it is approved."}

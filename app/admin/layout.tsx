@@ -25,7 +25,7 @@ export default function AdminLayout({
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState<CampaignUnderReviewDoc[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
-  const [sectionCounts, setSectionCounts] = useState({ campaigns: 0, users: 0, donations: 0, underReview: 0 });
+  const [sectionCounts, setSectionCounts] = useState({ campaigns: 0, users: 0, donations: 0, underReview: 0, phonePending: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const sevenDaysAgo = () => {
@@ -143,11 +143,11 @@ export default function AdminLayout({
               >
                 <Bell className="w-4 h-4 shrink-0" />
                 <span className="flex-1">Notifications</span>
-                {(sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations) > 0 && (
+                {(sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations + sectionCounts.phonePending) > 0 && (
                   <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                    {sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations > 99
+                    {sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations + sectionCounts.phonePending > 99
                       ? "99+"
-                      : sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations}
+                      : sectionCounts.underReview + sectionCounts.campaigns + sectionCounts.users + sectionCounts.donations + sectionCounts.phonePending}
                   </span>
                 )}
               </button>
@@ -168,6 +168,12 @@ export default function AdminLayout({
                       <span className="text-sm text-gray-700">Users</span>
                       {sectionCounts.users > 0 && (
                         <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.users}</span>
+                      )}
+                    </Link>
+                    <Link href="/admin/users" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
+                      <span className="text-sm text-gray-700">Phone numbers to review</span>
+                      {sectionCounts.phonePending > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.phonePending}</span>
                       )}
                     </Link>
                     <Link href="/admin/donations" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
@@ -226,9 +232,9 @@ export default function AdminLayout({
             >
               <Users className="w-4 h-4" />
               <span className="flex-1">Users</span>
-              {sectionCounts.users > 0 && (
+              {(sectionCounts.users > 0 || sectionCounts.phonePending > 0) && (
                 <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {sectionCounts.users > 99 ? "99+" : sectionCounts.users}
+                  {sectionCounts.phonePending > 0 ? (sectionCounts.phonePending > 99 ? "99+" : sectionCounts.phonePending) : sectionCounts.users > 99 ? "99+" : sectionCounts.users}
                 </span>
               )}
             </Link>

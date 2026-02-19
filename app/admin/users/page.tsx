@@ -53,7 +53,7 @@ export default function AdminUsersPage() {
       <div>
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Users</h1>
         <p className="text-gray-600 mt-1">
-          Approve phone numbers so users can create campaigns. Users need an approved phone before they can start a campaign.
+          Review and approve phone numbers. Once a number is approved, that user can post and edit campaigns. Users cannot create or edit campaigns until their phone is approved.
         </p>
       </div>
 
