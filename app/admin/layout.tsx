@@ -22,11 +22,48 @@ export default function AdminLayout({
   const { user, isAdmin, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [notificationCount, setNotificationCount] = useState(0);
+  const NOTIFICATIONS_SEEN_KEY = "crowdfund_admin_notifications_seen";
+
   const [notifications, setNotifications] = useState<CampaignUnderReviewDoc[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [sectionCounts, setSectionCounts] = useState({ campaigns: 0, users: 0, donations: 0, underReview: 0, phonePending: 0 });
+  const [lastSeen, setLastSeen] = useState({ underReview: 0, phonePending: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load last-seen from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem(NOTIFICATIONS_SEEN_KEY) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as { underReview?: number; phonePending?: number };
+        setLastSeen({
+          underReview: typeof parsed.underReview === "number" ? parsed.underReview : 0,
+          phonePending: typeof parsed.phonePending === "number" ? parsed.phonePending : 0,
+        });
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // When dropdown is opened, mark current counts as seen so red bubbles disappear
+  useEffect(() => {
+    if (!showNotificationDropdown) return;
+    const seen = {
+      underReview: sectionCounts.underReview,
+      phonePending: sectionCounts.phonePending,
+    };
+    setLastSeen(seen);
+    try {
+      localStorage.setItem(NOTIFICATIONS_SEEN_KEY, JSON.stringify(seen));
+    } catch {
+      // ignore
+    }
+  }, [showNotificationDropdown, sectionCounts.underReview, sectionCounts.phonePending]);
+
+  const newUnderReview = Math.max(0, sectionCounts.underReview - lastSeen.underReview);
+  const newPhonePending = Math.max(0, sectionCounts.phonePending - lastSeen.phonePending);
+  const newNotificationTotal = newUnderReview + newPhonePending;
 
   const sevenDaysAgo = () => {
     const d = new Date();
@@ -58,7 +95,6 @@ export default function AdminLayout({
           phonePending,
         });
       } catch {
-        setNotificationCount(0);
         setNotifications([]);
         setSectionCounts({ campaigns: 0, users: 0, donations: 0, underReview: 0, phonePending: 0 });
       }
@@ -146,11 +182,9 @@ export default function AdminLayout({
               >
                 <Bell className="w-4 h-4 shrink-0" />
                 <span className="flex-1">Notifications</span>
-                {(sectionCounts.underReview + sectionCounts.phonePending) > 0 && (
+                {newNotificationTotal > 0 && (
                   <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                    {sectionCounts.underReview + sectionCounts.phonePending > 99
-                      ? "99+"
-                      : sectionCounts.underReview + sectionCounts.phonePending}
+                    {newNotificationTotal > 99 ? "99+" : newNotificationTotal}
                   </span>
                 )}
               </button>
@@ -163,14 +197,14 @@ export default function AdminLayout({
                   <div className="py-2 px-2 space-y-1">
                     <Link href="/admin/under-review" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
                       <span className="text-sm text-gray-700">Campaigns under review</span>
-                      {sectionCounts.underReview > 0 && (
-                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.underReview}</span>
+                      {newUnderReview > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newUnderReview}</span>
                       )}
                     </Link>
                     <Link href="/admin/users" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
                       <span className="text-sm text-gray-700">Phone numbers to review</span>
-                      {sectionCounts.phonePending > 0 && (
-                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{sectionCounts.phonePending}</span>
+                      {newPhonePending > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newPhonePending}</span>
                       )}
                     </Link>
                     <div className="border-t border-gray-100 pt-2 mt-1">
@@ -224,9 +258,9 @@ export default function AdminLayout({
             >
               <Users className="w-4 h-4" />
               <span className="flex-1">Users</span>
-              {sectionCounts.phonePending > 0 && (
+              {newPhonePending > 0 && (
                 <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {sectionCounts.phonePending > 99 ? "99+" : sectionCounts.phonePending}
+                  {newPhonePending > 99 ? "99+" : newPhonePending}
                 </span>
               )}
             </Link>
@@ -243,9 +277,9 @@ export default function AdminLayout({
             >
               <Clock className="w-4 h-4" />
               <span className="flex-1">Under review</span>
-              {sectionCounts.underReview > 0 && (
+              {newUnderReview > 0 && (
                 <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {sectionCounts.underReview > 99 ? "99+" : sectionCounts.underReview}
+                  {newUnderReview > 99 ? "99+" : newUnderReview}
                 </span>
               )}
             </Link>
