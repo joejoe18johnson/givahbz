@@ -20,7 +20,7 @@ const HERO_SLIDES = [
 
 const HOME_FAQS = [
   {
-    q: "Why was this crowdfunding platform created?",
+    q: "Whyxxxxxxxxxxxxxxxxx was this crowdfunding platform created?",
     a: "This platform was created because there is a real and growing need for trustworthy financial support within our community. Many individuals and families face urgent situations — medical needs, emergencies, educational expenses, or unexpected hardships — but often struggle to access reliable help.\n\nWe wanted to create a safe, structured, and transparent place where people can give and receive support with confidence.",
   },
   {
