@@ -186,13 +186,17 @@ export default function AdminLayout({
               <button
                 type="button"
                 onClick={() => setShowNotificationDropdown((v) => !v)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left text-gray-600 hover:bg-gray-100"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left transition-colors ${
+                  newNotificationTotal > 0
+                    ? "bg-red-50 border border-red-200 text-red-800 hover:bg-red-100"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
                 aria-label="Notifications"
               >
-                <Bell className="w-4 h-4 shrink-0" />
-                <span className="flex-1">Notifications</span>
+                <Bell className={`w-4 h-4 shrink-0 ${newNotificationTotal > 0 ? "text-red-600" : ""}`} />
+                <span className="flex-1 font-medium">Notifications</span>
                 {newNotificationTotal > 0 && (
-                  <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium animate-pulse">
                     {newNotificationTotal > 99 ? "99+" : newNotificationTotal}
                   </span>
                 )}
@@ -204,14 +208,32 @@ export default function AdminLayout({
                     <p className="text-xs text-gray-500">Items that need your attention</p>
                   </div>
                   <div className="py-2 px-2 space-y-1">
-                    <Link href="/admin/under-review" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
-                      <span className="text-sm text-gray-700">Campaigns under review</span>
+                    <Link
+                      href="/admin/under-review"
+                      onClick={() => setShowNotificationDropdown(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                        newUnderReview > 0 ? "bg-amber-50 border border-amber-200 hover:bg-amber-100" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className={`text-sm ${newUnderReview > 0 ? "text-amber-900 font-medium" : "text-gray-700"}`}>
+                        Campaigns under review
+                        {newUnderReview > 0 && <span className="ml-1.5 text-amber-600 text-xs">(new)</span>}
+                      </span>
                       {newUnderReview > 0 && (
                         <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newUnderReview}</span>
                       )}
                     </Link>
-                    <Link href="/admin/users" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50">
-                      <span className="text-sm text-gray-700">Phone numbers to review</span>
+                    <Link
+                      href="/admin/users"
+                      onClick={() => setShowNotificationDropdown(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                        newPhonePending > 0 ? "bg-amber-50 border border-amber-200 hover:bg-amber-100" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className={`text-sm ${newPhonePending > 0 ? "text-amber-900 font-medium" : "text-gray-700"}`}>
+                        Phone numbers to review
+                        {newPhonePending > 0 && <span className="ml-1.5 text-amber-600 text-xs">(new)</span>}
+                      </span>
                       {newPhonePending > 0 && (
                         <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newPhonePending}</span>
                       )}
@@ -263,7 +285,13 @@ export default function AdminLayout({
             </Link>
             <Link
               href="/admin/users"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/users" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                pathname === "/admin/users"
+                  ? "bg-primary-50 text-primary-700 font-medium"
+                  : newPhonePending > 0
+                    ? "bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100"
+                    : "text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <Users className="w-4 h-4" />
               <span className="flex-1">Users</span>
@@ -282,7 +310,13 @@ export default function AdminLayout({
             </Link>
             <Link
               href="/admin/under-review"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/under-review" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                pathname === "/admin/under-review"
+                  ? "bg-primary-50 text-primary-700 font-medium"
+                  : newUnderReview > 0
+                    ? "bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100"
+                    : "text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <Clock className="w-4 h-4" />
               <span className="flex-1">Under review</span>
