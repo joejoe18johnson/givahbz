@@ -237,6 +237,22 @@ export default function MyCampaignsPage() {
                 key={c.id}
                 className="bg-amber-50/80 border border-amber-200 rounded-xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4"
               >
+                {c.image && (
+                  <div className="relative w-full sm:w-40 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                    <SafeImage
+                      src={c.image}
+                      alt={c.title}
+                      fill
+                      className="object-cover"
+                      sizes="160px"
+                      fallback={
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-200 to-amber-300">
+                          <span className="text-amber-800 text-2xl font-medium">{c.title.charAt(0)}</span>
+                        </div>
+                      }
+                    />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1">

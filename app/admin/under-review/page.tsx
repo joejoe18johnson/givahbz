@@ -20,7 +20,10 @@ export default function AdminUnderReviewPage() {
     setLoading(true);
     try {
       const data = await getCampaignsUnderReviewFromFirestore();
-      setList(data);
+      const sorted = [...data].sort((a, b) =>
+        new Date(b.submittedAt ?? 0).getTime() - new Date(a.submittedAt ?? 0).getTime()
+      );
+      setList(sorted);
     } catch (error) {
       console.error("Error loading campaigns under review:", error);
     } finally {

@@ -17,7 +17,10 @@ export default function AdminUsersPage() {
     setLoading(true);
     try {
       const list = await getUsersFromFirestore();
-      setUsers(list);
+      const sorted = [...list].sort((a, b) =>
+        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+      );
+      setUsers(sorted);
     } catch (error) {
       console.error("Error loading users:", error);
     } finally {

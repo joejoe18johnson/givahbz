@@ -8,9 +8,21 @@ export async function uploadProfilePhoto(userId: string, file: File): Promise<st
   return await getDownloadURL(fileRef);
 }
 
-// Upload campaign image
+// Upload campaign image (for live campaigns)
 export async function uploadCampaignImage(campaignId: string, file: File): Promise<string> {
   const fileRef = ref(storage, `campaigns/${campaignId}/${Date.now()}_${file.name}`);
+  await uploadBytes(fileRef, file);
+  return await getDownloadURL(fileRef);
+}
+
+/** Upload cover image for a campaign under review (before it has a campaign id). */
+export async function uploadUnderReviewCampaignImage(
+  pendingId: string,
+  index: 0 | 1,
+  file: File
+): Promise<string> {
+  const ext = file.name.split(".").pop() || "jpg";
+  const fileRef = ref(storage, `campaigns-under-review/${pendingId}/image${index + 1}.${ext}`);
   await uploadBytes(fileRef, file);
   return await getDownloadURL(fileRef);
 }

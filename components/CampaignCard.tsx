@@ -156,7 +156,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           {/* Creator */}
           <div className="pt-4 border-t border-gray-200 mt-auto">
             <p className="text-sm text-gray-600">
-              by <Link href={`/profile/${campaign.creator}`} className="font-medium text-gray-900 underline hover:text-primary-600 transition-colors" onClick={(e) => e.stopPropagation()}>{campaign.creator}</Link>
+              by <span className="font-medium text-gray-900">{campaign.creator}</span>
             </p>
           </div>
         </div>

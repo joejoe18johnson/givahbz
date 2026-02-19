@@ -29,10 +29,19 @@ export default function AdminDashboardPage() {
         getCampaignsUnderReviewCount(),
         getUsersFromFirestore(),
       ]);
-      setCampaigns(fetchedCampaigns);
-      setDonations(fetchedDonations);
+      const campaignsNewestFirst = [...fetchedCampaigns].sort((a, b) =>
+        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+      );
+      const donationsNewestFirst = [...fetchedDonations].sort((a, b) =>
+        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+      );
+      const usersNewestFirst = [...userList].sort((a, b) =>
+        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+      );
+      setCampaigns(campaignsNewestFirst);
+      setDonations(donationsNewestFirst);
       setUnderReviewCount(count);
-      setUsers(userList);
+      setUsers(usersNewestFirst);
     } catch (error) {
       console.error("Error loading admin data:", error);
     } finally {

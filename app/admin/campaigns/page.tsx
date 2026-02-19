@@ -23,7 +23,10 @@ export default function AdminCampaignsPage() {
     setIsLoading(true);
     try {
       const fetchedCampaigns = await getCampaignsForAdmin();
-      setCampaigns(fetchedCampaigns);
+      const sorted = [...fetchedCampaigns].sort((a, b) =>
+        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+      );
+      setCampaigns(sorted);
     } catch (error) {
       console.error("Error loading campaigns:", error);
       setLoadError(error instanceof Error ? error.message : "Failed to load campaigns");

@@ -230,6 +230,9 @@ export interface CampaignUnderReviewDoc {
   creatorId: string;
   submittedAt: string;
   status: "pending" | "approved" | "rejected";
+  /** Cover image URLs (user-uploaded). */
+  image?: string;
+  image2?: string;
 }
 
 /**
@@ -283,6 +286,8 @@ function mapDocToCampaignUnderReview(d: { id: string; data: () => Record<string,
     creatorId: data.creatorId as string,
     submittedAt: (data.submittedAt as string) || ((data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ?? new Date().toISOString()),
     status: (data.status as CampaignUnderReviewDoc["status"]) || "pending",
+    image: data.image as string | undefined,
+    image2: data.image2 as string | undefined,
   };
 }
 
@@ -311,6 +316,8 @@ export async function getCampaignUnderReviewById(id: string): Promise<CampaignUn
     creatorId: data.creatorId,
     submittedAt: data.submittedAt || (data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString()),
     status: data.status || "pending",
+    image: data.image,
+    image2: data.image2,
   } as CampaignUnderReviewDoc;
 }
 
@@ -320,6 +327,7 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
   if (!underReview) throw new Error("Campaign under review not found");
   if (underReview.status !== "pending") throw new Error("Campaign is no longer pending");
 
+  const defaultImage = "https://picsum.photos/seed/campaign/800/600";
   const campaignPayload: Omit<Campaign, "id"> = {
     title: underReview.title,
     description: underReview.description,
@@ -331,7 +339,8 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
     backers: 0,
     daysLeft: 30,
     category: underReview.category,
-    image: "https://picsum.photos/seed/campaign/800/600",
+    image: underReview.image || defaultImage,
+    image2: underReview.image2 || underReview.image || defaultImage,
     location: "",
     createdAt: new Date().toISOString().split("T")[0],
     verified: true,

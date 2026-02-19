@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
 import { addCampaignUnderReviewToFirestore } from "@/lib/firebase/firestore";
+import { uploadUnderReviewCampaignImage } from "@/lib/firebase/storage";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 
@@ -27,6 +28,7 @@ export default function CreateCampaignPage() {
   const [proofDragOver, setProofDragOver] = useState(false);
   const [imageFiles, setImageFiles] = useState<[File | null, File | null]>([null, null]);
   const [imageDragOver, setImageDragOver] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { alert } = useThemedModal();
 
   useEffect(() => {
@@ -154,7 +156,14 @@ export default function CreateCampaignPage() {
       submittedAt: new Date().toISOString(),
     });
 
+    setIsSubmitting(true);
     try {
+      // Upload cover images to Storage (path uses pendingId; doc id is assigned by Firestore later)
+      const [imageUrl1, imageUrl2] = await Promise.all([
+        uploadUnderReviewCampaignImage(pendingId, 0, imageFiles[0]!),
+        uploadUnderReviewCampaignImage(pendingId, 1, imageFiles[1]!),
+      ]);
+
       // Only under-review: never written to public "campaigns". Appears in "all campaigns" only after admin approval.
       await addCampaignUnderReviewToFirestore({
         title: formData.title,
@@ -164,11 +173,15 @@ export default function CreateCampaignPage() {
         category: formData.category,
         creatorName,
         creatorId,
+        image: imageUrl1,
+        image2: imageUrl2,
       });
       router.push("/my-campaigns");
     } catch (err) {
       console.error("Failed to submit campaign for review:", err);
-      alert("Your campaign could not be sent for review. Check that you're signed in and that Firestore rules allow writes to campaignsUnderReview. Please try again.", { variant: "error" });
+      alert("Your campaign could not be sent for review. Check that you're signed in and that Firestore/Storage rules allow writes. Please try again.", { variant: "error" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -566,9 +579,10 @@ export default function CreateCampaignPage() {
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
-            className="bg-success-500 text-white px-8 py-3 rounded-full font-medium hover:bg-success-600 transition-colors"
+            disabled={isSubmitting}
+            className="bg-success-500 text-white px-8 py-3 rounded-full font-medium hover:bg-success-600 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Submit for Review
+            {isSubmitting ? "Uploading images & submitting…" : "Submit for Review"}
           </button>
           <button
             type="button"
