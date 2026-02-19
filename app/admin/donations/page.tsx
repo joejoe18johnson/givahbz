@@ -1,23 +1,54 @@
 "use client";
 
-import { useMemo } from "react";
-import { adminDonations } from "@/lib/adminData";
+import { useState, useEffect } from "react";
+import { getDonations } from "@/lib/firebase/firestore";
+import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 
 export default function AdminDonationsPage() {
-  const donationsNewestFirst = useMemo(
-    () => [...adminDonations].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    []
-  );
-  const totalCompleted = adminDonations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
-  const totalPending = adminDonations.filter((d) => d.status === "pending").reduce((sum, d) => sum + d.amount, 0);
+  const [donations, setDonations] = useState<AdminDonation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDonations() {
+      setIsLoading(true);
+      try {
+        const fetchedDonations = await getDonations();
+        // Sort by newest first (getDonations already returns sorted, but ensure it's correct)
+        const sorted = [...fetchedDonations].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setDonations(sorted);
+      } catch (error) {
+        console.error("Error loading donations:", error);
+        setDonations([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadDonations();
+  }, []);
+
+  const totalCompleted = donations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
+  const totalPending = donations.filter((d) => d.status === "pending").reduce((sum, d) => sum + d.amount, 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading donations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Donations</h1>
-          <p className="text-gray-600 mt-1">{adminDonations.length} donations total</p>
+          <p className="text-gray-600 mt-1">{donations.length} donations total</p>
         </div>
         <div className="flex gap-4 text-sm">
           <span className="text-gray-600">Completed: <strong className="text-success-600">{formatCurrency(totalCompleted)}</strong></span>
@@ -42,21 +73,29 @@ export default function AdminDonationsPage() {
               </tr>
             </thead>
             <tbody>
-              {donationsNewestFirst.map((d) => (
-                <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="px-5 py-3 text-gray-500 font-mono">{d.id}</td>
-                  <td className="px-5 py-3 text-gray-600">{new Date(d.createdAt).toLocaleString()}</td>
-                  <td className="px-5 py-3 text-gray-900 max-w-[220px] truncate" title={d.campaignTitle}>{d.campaignTitle}</td>
-                  <td className="px-5 py-3 text-gray-900">{d.anonymous ? "Anonymous" : d.donorName}</td>
-                  <td className="px-5 py-3 text-gray-600 truncate max-w-[160px]">{d.anonymous ? "—" : d.donorEmail}</td>
-                  <td className="px-5 py-3 font-medium">{formatCurrency(d.amount)}</td>
-                  <td className="px-5 py-3 text-gray-600 capitalize">{d.method.replace("-", " ")}</td>
-                  <td className="px-5 py-3">{d.anonymous ? "Yes" : "No"}</td>
-                  <td className="px-5 py-3">
-                    <span className={d.status === "completed" ? "text-success-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
+              {donations.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+                    No donations yet
                   </td>
                 </tr>
-              ))}
+              ) : (
+                donations.map((d) => (
+                  <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <td className="px-5 py-3 text-gray-500 font-mono">{d.id}</td>
+                    <td className="px-5 py-3 text-gray-600">{new Date(d.createdAt).toLocaleString()}</td>
+                    <td className="px-5 py-3 text-gray-900 max-w-[220px] truncate" title={d.campaignTitle}>{d.campaignTitle}</td>
+                    <td className="px-5 py-3 text-gray-900">{d.anonymous ? "Anonymous" : d.donorName}</td>
+                    <td className="px-5 py-3 text-gray-600 truncate max-w-[160px]">{d.anonymous ? "—" : d.donorEmail}</td>
+                    <td className="px-5 py-3 font-medium">{formatCurrency(d.amount)}</td>
+                    <td className="px-5 py-3 text-gray-600 capitalize">{d.method.replace("-", " ")}</td>
+                    <td className="px-5 py-3">{d.anonymous ? "Yes" : "No"}</td>
+                    <td className="px-5 py-3">
+                      <span className={d.status === "completed" ? "text-success-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
