@@ -214,6 +214,67 @@ export async function getCampaignsUnderReviewCount(): Promise<number> {
   return snapshot.size;
 }
 
+export async function getCampaignUnderReviewById(id: string): Promise<CampaignUnderReviewDoc | null> {
+  const docRef = doc(db, campaignsUnderReviewCollection, id);
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    id: snap.id,
+    title: data.title,
+    description: data.description,
+    fullDescription: data.fullDescription,
+    goal: data.goal,
+    category: data.category,
+    creatorName: data.creatorName,
+    creatorId: data.creatorId,
+    submittedAt: data.submittedAt || (data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString()),
+    status: data.status || "pending",
+  } as CampaignUnderReviewDoc;
+}
+
+/** Approve a campaign: publish to live campaigns and notify the creator. */
+export async function approveAndPublishCampaign(underReviewId: string): Promise<{ campaignId: string }> {
+  const underReview = await getCampaignUnderReviewById(underReviewId);
+  if (!underReview) throw new Error("Campaign under review not found");
+  if (underReview.status !== "pending") throw new Error("Campaign is no longer pending");
+
+  const campaignPayload: Omit<Campaign, "id"> = {
+    title: underReview.title,
+    description: underReview.description,
+    fullDescription: underReview.fullDescription || underReview.description,
+    creator: underReview.creatorName,
+    creatorType: "individual",
+    goal: underReview.goal,
+    raised: 0,
+    backers: 0,
+    daysLeft: 30,
+    category: underReview.category,
+    image: "https://picsum.photos/seed/campaign/800/600",
+    location: "",
+    createdAt: new Date().toISOString().split("T")[0],
+    verified: true,
+  };
+  const campaignId = await createCampaign(campaignPayload);
+
+  if (underReview.creatorId) {
+    await addNotification(underReview.creatorId, {
+      type: "campaign_approved",
+      title: "Campaign approved",
+      body: `Your campaign "${underReview.title}" has been approved and is now live.`,
+      campaignId,
+      read: false,
+    });
+  }
+
+  await updateDoc(doc(db, campaignsUnderReviewCollection, underReviewId), {
+    status: "approved",
+    publishedCampaignId: campaignId,
+    updatedAt: serverTimestamp(),
+  });
+  return { campaignId };
+}
+
 export async function updateCampaignUnderReviewStatus(id: string, status: "approved" | "rejected"): Promise<void> {
   await updateDoc(doc(db, campaignsUnderReviewCollection, id), {
     status,
@@ -223,6 +284,73 @@ export async function updateCampaignUnderReviewStatus(id: string, status: "appro
 
 export async function deleteCampaignUnderReview(id: string): Promise<void> {
   await deleteDoc(doc(db, campaignsUnderReviewCollection, id));
+}
+
+// User notifications
+const notificationsCollection = "notifications";
+
+export interface UserNotification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  campaignId?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export async function addNotification(
+  userId: string,
+  data: { type: string; title: string; body: string; campaignId?: string; read: boolean }
+): Promise<string> {
+  const docRef = doc(collection(db, notificationsCollection));
+  await setDoc(docRef, {
+    userId,
+    type: data.type,
+    title: data.title,
+    body: data.body,
+    campaignId: data.campaignId ?? null,
+    read: data.read,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
+  const q = query(
+    collection(db, notificationsCollection),
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      body: data.body,
+      campaignId: data.campaignId,
+      read: data.read ?? false,
+      createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
+    } as UserNotification;
+  });
+}
+
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  const q = query(
+    collection(db, notificationsCollection),
+    where("userId", "==", userId),
+    where("read", "==", false)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.size;
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  await updateDoc(doc(db, notificationsCollection, notificationId), { read: true });
 }
 
 // Hearted campaigns (user-specific)

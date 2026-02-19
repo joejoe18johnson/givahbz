@@ -3,15 +3,18 @@
 import { useState, useEffect } from "react";
 import {
   getCampaignsUnderReviewFromFirestore,
+  approveAndPublishCampaign,
   updateCampaignUnderReviewStatus,
   type CampaignUnderReviewDoc,
 } from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
+import { useThemedModal } from "@/components/ThemedModal";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminUnderReviewPage() {
   const [list, setList] = useState<CampaignUnderReviewDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const { alert, confirm } = useThemedModal();
 
   const load = async () => {
     setLoading(true);
@@ -30,24 +33,36 @@ export default function AdminUnderReviewPage() {
   }, []);
 
   const handleApprove = async (id: string) => {
-    if (!confirm("Approve this campaign? It will be removed from under review. (You can later publish it to the live campaigns list.)")) return;
+    const ok = await confirm("Approve this campaign? It will go live immediately and the creator will be notified.", {
+      title: "Approve campaign",
+      confirmLabel: "Approve",
+      cancelLabel: "Cancel",
+      variant: "success",
+    });
+    if (!ok) return;
     try {
-      await updateCampaignUnderReviewStatus(id, "approved");
+      await approveAndPublishCampaign(id);
       setList((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
       console.error("Error approving:", error);
-      alert("Failed to approve. Please try again.");
+      alert("Failed to approve. Please try again.", { variant: "error" });
     }
   };
 
   const handleReject = async (id: string) => {
-    if (!confirm("Reject and remove this campaign from review? The creator would need to resubmit.")) return;
+    const ok = await confirm("Reject and remove this campaign from review? The creator would need to resubmit.", {
+      title: "Reject campaign",
+      confirmLabel: "Reject",
+      cancelLabel: "Cancel",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await updateCampaignUnderReviewStatus(id, "rejected");
       setList((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
       console.error("Error rejecting:", error);
-      alert("Failed to reject. Please try again.");
+      alert("Failed to reject. Please try again.", { variant: "error" });
     }
   };
 

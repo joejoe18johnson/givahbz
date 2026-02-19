@@ -140,6 +140,12 @@ service cloud.firestore {
       allow update, delete: if request.auth != null;
     }
     
+    // Notifications: users can only read/update their own; any authenticated user can create (e.g. admin when approving campaign)
+    match /notifications/{notificationId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
+    }
+    
     // Donations: users can read their own donations, admins can read all
     match /donations/{donationId} {
       allow read: if request.auth != null && 

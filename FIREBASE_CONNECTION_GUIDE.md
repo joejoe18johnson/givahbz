@@ -132,6 +132,15 @@ When a non-admin user creates a campaign, it should appear in **Admin → Under 
 3. **Check Firestore data**  
    In Firebase Console → Firestore, look for the **campaignsUnderReview** collection. If it’s missing or empty, the write is being denied (fix rules) or the create flow isn’t running (check console errors on submit).
 
+### Notifications not loading (or console asks for an index)
+
+If the app logs a Firestore index error for the **notifications** collection, add composite indexes in Firebase Console → Firestore → Indexes:
+
+1. **List notifications:** Collection **notifications**, fields **userId** (Ascending), **createdAt** (Descending).
+2. **Unread count:** Collection **notifications**, fields **userId** (Ascending), **read** (Ascending).
+
+Use the link in the console error if one is shown; it will open the correct index form.
+
 ### "Firebase: Error (auth/invalid-api-key)"
 
 - Check that `.env` file has correct `NEXT_PUBLIC_FIREBASE_API_KEY`

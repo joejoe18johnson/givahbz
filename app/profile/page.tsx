@@ -17,9 +17,11 @@ import {
   CheckCircle2,
   AlertTriangle
 } from "lucide-react";
+import { useThemedModal } from "@/components/ThemedModal";
 
 export default function ProfilePage() {
   const { user, isLoading, updateUser } = useAuth();
+  const { alert } = useThemedModal();
   const [editingName, setEditingName] = useState(false);
   const [editingBirthday, setEditingBirthday] = useState(false);
   const [editingPassword, setEditingPassword] = useState(false);
@@ -107,7 +109,7 @@ export default function ProfilePage() {
     // TODO: Implement password change logic (requires current password verification)
     // For now, just close the edit mode
     setEditingPassword(false);
-    alert("Password change functionality will be implemented with backend integration.");
+    alert("Password change functionality will be implemented with backend integration.", { title: "Coming soon", variant: "info" });
   };
 
   const handleDeactivateAccount = () => {
@@ -119,11 +121,11 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
-        alert("Please select an image file");
+        alert("Please select an image file", { variant: "error" });
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert("Image size must be less than 5MB");
+        alert("Image size must be less than 5MB", { variant: "error" });
         return;
       }
       setProfilePhotoFile(file);
@@ -471,7 +473,7 @@ export default function ProfilePage() {
                 onClick={() => {
                   // TODO: Implement password reset email functionality
                   const userEmail = user?.email || "";
-                  alert(`Password reset email will be sent to ${userEmail}`);
+                  alert(`Password reset email will be sent to ${userEmail}`, { title: "Reset password", variant: "info" });
                   // In production, this would call an API endpoint to send reset email
                   console.log("Password reset requested for:", userEmail);
                 }}

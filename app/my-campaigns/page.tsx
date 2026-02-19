@@ -15,6 +15,7 @@ import {
   removeCampaignUnderReview,
   type CampaignUnderReview,
 } from "@/lib/campaignsUnderReview";
+import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 import SafeImage from "@/components/SafeImage";
 import {
@@ -37,6 +38,7 @@ import { useRouter } from "next/navigation";
 export default function MyCampaignsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const { confirm } = useThemedModal();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [stoppedIds, setStoppedIds] = useState<Set<string>>(new Set());
@@ -75,22 +77,34 @@ export default function MyCampaignsPage() {
     setStoppedCampaignIds(Array.from(next));
   }, [stoppedIds]);
 
-  const handleDelete = useCallback((e: React.MouseEvent, campaignId: string) => {
+  const handleDelete = useCallback(async (e: React.MouseEvent, campaignId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this campaign? This cannot be undone.")) return;
+    const ok = await confirm("Are you sure you want to delete this campaign? This cannot be undone.", {
+      title: "Delete campaign",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "danger",
+    });
+    if (!ok) return;
     const next = new Set(deletedIds).add(campaignId);
     setDeletedIds(next);
     setDeletedCampaignIds(Array.from(next));
-  }, [deletedIds]);
+  }, [deletedIds, confirm]);
 
-  const handleWithdrawReview = useCallback((e: React.MouseEvent, id: string) => {
+  const handleWithdrawReview = useCallback(async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm("Withdraw this campaign from review? You can submit a new one later.")) return;
+    const ok = await confirm("Withdraw this campaign from review? You can submit a new one later.", {
+      title: "Withdraw from review",
+      confirmLabel: "Withdraw",
+      cancelLabel: "Cancel",
+      variant: "danger",
+    });
+    if (!ok) return;
     removeCampaignUnderReview(id);
     setUnderReview((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  }, [confirm]);
 
   if (isLoading || campaignsLoading) {
     return (

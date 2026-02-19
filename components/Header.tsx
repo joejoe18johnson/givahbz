@@ -1,19 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Heart, LogOut, Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, Heart, LogOut, Menu, X, Bell } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { getHeartedCampaignIds } from "./HeartedCampaigns";
+import {
+  getUserNotifications,
+  getUnreadNotificationCount,
+  markNotificationRead,
+  type UserNotification,
+} from "@/lib/firebase/firestore";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [heartedCount, setHeartedCount] = useState(0);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notificationDropdownRef = useRef<HTMLDivElement>(null);
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
+
+  const loadNotifications = async () => {
+    if (!user?.id) return;
+    try {
+      const [list, count] = await Promise.all([
+        getUserNotifications(user.id),
+        getUnreadNotificationCount(user.id),
+      ]);
+      setNotifications(list.slice(0, 10));
+      setUnreadCount(count);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.id) loadNotifications();
+    const interval = setInterval(() => user?.id && loadNotifications(), 60000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(e.target as Node)) {
+        setShowNotificationDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleNotificationClick = async (n: UserNotification) => {
+    if (!n.read) {
+      try {
+        await markNotificationRead(n.id);
+        setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+        setUnreadCount((c) => Math.max(0, c - 1));
+      } catch {
+        // ignore
+      }
+    }
+    setShowNotificationDropdown(false);
+    setMobileMenuOpen(false);
+    if (n.campaignId) router.push(`/campaigns/${n.campaignId}`);
+    else router.push("/my-campaigns");
+  };
   
   // Update heart count
   const updateHeartCount = () => {
@@ -122,6 +179,53 @@ export default function Header() {
                 >
                   Start Fundraising
                 </Link>
+                <div className="relative" ref={notificationDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowNotificationDropdown((v) => !v)}
+                    className="relative p-1.5 rounded-full text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors"
+                    aria-label="Notifications"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full bg-primary-600 text-white text-xs font-medium">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  {showNotificationDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-80 max-h-[20rem] overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-lg py-2 z-50">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <h3 className="font-medium text-gray-900">Notifications</h3>
+                      </div>
+                      {notifications.length === 0 ? (
+                        <p className="px-4 py-6 text-sm text-gray-500 text-center">No notifications yet</p>
+                      ) : (
+                        <ul className="py-2">
+                          {notifications.map((n) => (
+                            <li key={n.id}>
+                              <button
+                                type="button"
+                                onClick={() => handleNotificationClick(n)}
+                                className={`w-full text-left px-4 py-3 hover:bg-gray-50 ${!n.read ? "bg-primary-50/50" : ""}`}
+                              >
+                                <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                                <p className="text-xs text-gray-600 line-clamp-2">{n.body}</p>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <Link
+                        href="/my-campaigns"
+                        onClick={() => setShowNotificationDropdown(false)}
+                        className="block px-4 py-2 text-center text-sm text-primary-600 font-medium hover:bg-gray-50"
+                      >
+                        My Campaigns
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <Link
                   href="/liked-campaigns"
                   className="relative text-gray-700 hover:text-primary-600 transition-colors"
@@ -262,6 +366,15 @@ export default function Header() {
                   </Link>
                   <Link href="/profile" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>My Profile</Link>
                   <Link href="/my-campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>My Campaigns</Link>
+                  <Link href="/notifications" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 flex items-center gap-2" onClick={closeMobileMenu}>
+                    <Bell className="w-4 h-4" />
+                    Notifications
+                    {unreadCount > 0 && (
+                      <span className="ml-auto bg-primary-600 text-white text-xs font-medium rounded-full min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
                   <button onClick={handleLogout} className="px-4 py-3 rounded-lg text-left text-gray-700 hover:bg-gray-100 flex items-center gap-2">
                     <LogOut className="w-4 h-4" /> Sign Out
                   </button>

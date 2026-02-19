@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
 import { addCampaignUnderReviewToFirestore } from "@/lib/firebase/firestore";
+import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 
 export default function CreateCampaignPage() {
@@ -26,6 +27,7 @@ export default function CreateCampaignPage() {
   const [proofDragOver, setProofDragOver] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageDragOver, setImageDragOver] = useState(false);
+  const { alert } = useThemedModal();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -59,7 +61,7 @@ export default function CreateCampaignPage() {
     e.preventDefault();
 
     if (proofFiles.length === 0) {
-      alert("Please upload at least one proof document to verify your need.");
+      alert("Please upload at least one proof document to verify your need.", { title: "Proof required", variant: "error" });
       return;
     }
 
@@ -91,7 +93,7 @@ export default function CreateCampaignPage() {
       router.push("/my-campaigns");
     } catch (err) {
       console.error("Failed to submit campaign for review:", err);
-      alert("Your campaign could not be sent for review. Check that you're signed in and that Firestore rules allow writes to campaignsUnderReview. Please try again.");
+      alert("Your campaign could not be sent for review. Check that you're signed in and that Firestore rules allow writes to campaignsUnderReview. Please try again.", { variant: "error" });
     }
   };
 
