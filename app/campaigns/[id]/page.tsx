@@ -83,60 +83,123 @@ export default function CampaignPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Hero Image */}
-      <div className="relative h-96 w-full bg-gray-200 rounded-2xl mb-8 overflow-hidden">
-        {campaign.image ? (
-          <div className="absolute inset-0">
-            <SafeImage
-              src={campaign.image}
-              alt={campaign.title}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-              fallback={
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
-                  <div className="text-primary-600 text-8xl font-medium opacity-20">
-                    {campaign.title.charAt(0)}
+      {/* Top row: image (reduced width) + stats/share/donate aligned at top with gap */}
+      <div className="flex flex-col lg:flex-row lg:items-start gap-8 mb-8">
+        {/* Hero Image - reduced width on desktop */}
+        <div className="relative h-80 lg:h-96 w-full lg:max-w-xl lg:w-full lg:shrink-0 bg-gray-200 rounded-2xl overflow-hidden">
+          {campaign.image ? (
+            <div className="absolute inset-0">
+              <SafeImage
+                src={campaign.image}
+                alt={campaign.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 576px"
+                priority
+                fallback={
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+                    <div className="text-primary-600 text-8xl font-medium opacity-20">
+                      {campaign.title.charAt(0)}
+                    </div>
                   </div>
-                </div>
-              }
-            />
-          </div>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
-            <div className="text-primary-600 text-8xl font-medium opacity-20">
-              {campaign.title.charAt(0)}
+                }
+              />
             </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
+              <div className="text-primary-600 text-8xl font-medium opacity-20">
+                {campaign.title.charAt(0)}
+              </div>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute top-4 right-4 flex gap-2">
+            <ShareCampaign
+              campaignId={campaign.id}
+              campaignTitle={campaign.title}
+              variant="compact"
+            />
+            <button
+              onClick={handleToggleHeart}
+              className={`bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg ${
+                !user
+                  ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
+                  : isHearted
+                  ? "text-red-500"
+                  : "text-gray-700"
+              }`}
+              aria-label={!user ? "Log in to like campaigns" : isHearted ? "Remove from hearted" : "Add to hearted"}
+              title={!user ? "Log in to like campaigns" : undefined}
+            >
+              <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : !user ? "opacity-50" : ""}`} />
+            </button>
           </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        <div className="absolute top-4 right-4 flex gap-2">
-          <ShareCampaign
-            campaignId={campaign.id}
-            campaignTitle={campaign.title}
-            variant="compact"
-          />
-          <button
-            onClick={handleToggleHeart}
-            className={`bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors shadow-lg ${
-              !user
-                ? "bg-white/60 hover:bg-white/80 text-gray-400 cursor-not-allowed"
-                : isHearted
-                ? "text-red-500"
-                : "text-gray-700"
-            }`}
-            aria-label={!user ? "Log in to like campaigns" : isHearted ? "Remove from hearted" : "Add to hearted"}
-            title={!user ? "Log in to like campaigns" : undefined}
-          >
-            <Heart className={`w-5 h-5 ${isHearted ? "fill-red-500" : !user ? "opacity-50" : ""}`} />
-          </button>
+        </div>
+
+        {/* Stats, Share, Donate - aligned top, space between */}
+        <div className="w-full lg:max-w-sm lg:shrink-0 lg:self-start">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 sticky top-24">
+            {/* Progress */}
+            <div className="mb-5">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium text-primary-600">
+                  {formatCurrency(campaign.raised)}
+                </span>
+                <span className="text-gray-500">
+                  of {formatCurrency(campaign.goal)} goal
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                <div
+                  className="bg-primary-600 h-3 rounded-full transition-all"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+              <div className="text-sm text-gray-600">
+                {progressPercentage.toFixed(1)}% funded
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3 mb-5 pb-5 border-b border-gray-200">
+              <div>
+                <div className="text-lg font-medium text-gray-900">{campaign.backers}</div>
+                <div className="text-xs text-gray-600 flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  backers
+                </div>
+              </div>
+              <div>
+                <div className="text-lg font-medium text-gray-900">{campaign.daysLeft}</div>
+                <div className="text-xs text-gray-600 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  days left
+                </div>
+              </div>
+            </div>
+
+            {/* Share */}
+            <ShareCampaign
+              campaignId={campaign.id}
+              campaignTitle={campaign.title}
+              variant="full"
+              className="mb-5 pb-5 border-b border-gray-200"
+            />
+
+            {/* Donate */}
+            <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
+
+            {/* Rewards */}
+            {campaign.rewards && campaign.rewards.length > 0 && (
+              <RewardsSection rewards={campaign.rewards} />
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-3xl">
         {/* Main Content */}
-        <div className="lg:col-span-2">
+        <div>
           {/* Category Badge and Verification */}
           <div className="mb-4 flex items-center gap-3 flex-wrap">
             <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium">
@@ -192,66 +255,6 @@ export default function CampaignPage({ params }: PageProps) {
           {campaign.updates && campaign.updates.length > 0 && (
             <CampaignUpdates updates={campaign.updates} />
           )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="lg:col-span-1 lg:self-start">
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            {/* Progress */}
-            <div className="mb-6">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="font-medium text-primary-600">
-                  {formatCurrency(campaign.raised)}
-                </span>
-                <span className="text-gray-500">
-                  of {formatCurrency(campaign.goal)} goal
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-                <div
-                  className="bg-primary-600 h-3 rounded-full transition-all"
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-              <div className="text-sm text-gray-600">
-                {progressPercentage.toFixed(1)}% funded
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200">
-              <div>
-                <div className="text-lg font-medium text-gray-900">{campaign.backers}</div>
-                <div className="text-xs text-gray-600 flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  backers
-                </div>
-              </div>
-              <div>
-                <div className="text-lg font-medium text-gray-900">{campaign.daysLeft}</div>
-                <div className="text-xs text-gray-600 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  days left
-                </div>
-              </div>
-            </div>
-
-            {/* Share */}
-            <ShareCampaign
-              campaignId={campaign.id}
-              campaignTitle={campaign.title}
-              variant="full"
-              className="mb-4 pb-4 border-b border-gray-200"
-            />
-
-            {/* Donate Button (hidden when campaign is stopped) */}
-            <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
-
-            {/* Rewards */}
-            {campaign.rewards && campaign.rewards.length > 0 && (
-              <RewardsSection rewards={campaign.rewards} />
-            )}
-          </div>
         </div>
       </div>
 
