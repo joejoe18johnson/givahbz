@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Search, Heart, LogOut, Menu, X, Bell } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getHeartedCampaignIds } from "./HeartedCampaigns";
 import {
   getUserNotifications,
@@ -25,6 +25,8 @@ export default function Header() {
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isAdminRoute = pathname?.startsWith("/admin");
 
   const loadNotifications = useCallback(async () => {
     if (!user?.id) return;
@@ -159,12 +161,14 @@ export default function Header() {
             >
               Campaigns
             </Link>
-            <Link
-              href="/how-it-works"
-              className="text-gray-700 hover:text-primary-600 transition-colors"
-            >
-              How It Works
-            </Link>
+            {!isAdminRoute && (
+              <Link
+                href="/how-it-works"
+                className="text-gray-700 hover:text-primary-600 transition-colors"
+              >
+                How It Works
+              </Link>
+            )}
             {isAdmin && (
                 <Link
                   href="/admin"
@@ -175,12 +179,14 @@ export default function Header() {
               )}
             {user ? (
               <>
-                <Link
-                  href="/campaigns/create"
-                  className="text-gray-700 hover:text-primary-600 transition-colors"
-                >
-                  Start Fundraising
-                </Link>
+                {!isAdminRoute && (
+                  <Link
+                    href="/campaigns/create"
+                    className="text-gray-700 hover:text-primary-600 transition-colors"
+                  >
+                    Start Fundraising
+                  </Link>
+                )}
                 <div className="relative" ref={notificationDropdownRef}>
                   <button
                     type="button"
@@ -356,13 +362,17 @@ export default function Header() {
             <nav className="flex flex-col gap-1">
               <Link href="/" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Home</Link>
               <Link href="/campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Campaigns</Link>
-              <Link href="/how-it-works" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>How It Works</Link>
+              {!isAdminRoute && (
+                <Link href="/how-it-works" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>How It Works</Link>
+              )}
               {isAdmin && (
                 <Link href="/admin" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Admin</Link>
               )}
               {user ? (
                 <>
-                  <Link href="/campaigns/create" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Start Fundraising</Link>
+                  {!isAdminRoute && (
+                    <Link href="/campaigns/create" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Start Fundraising</Link>
+                  )}
                   <Link href="/liked-campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 flex items-center gap-2" onClick={closeMobileMenu}>
                     <Heart className="w-4 h-4" />
                     Liked Campaigns
