@@ -37,12 +37,11 @@ export async function getCampaign(campaignId: string): Promise<Campaign | null> 
   if (!docSnap.exists()) return null;
   const data = docSnap.data() as Record<string, unknown>;
   if (data.status === "on_hold") return null;
-  // Convert Firestore Timestamp to string date if needed
-  const createdAt = data.createdAt?.toDate ? (data.createdAt as { toDate: () => Date }).toDate().toISOString().split("T")[0] : (data.createdAt as string);
+  const createdAt = normalizeCreatedAt(data);
   return {
     ...data,
     id: docSnap.id,
-    createdAt: createdAt || new Date().toISOString().split("T")[0],
+    createdAt,
   } as Campaign;
 }
 
