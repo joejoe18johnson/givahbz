@@ -114,7 +114,6 @@ export default function AdminCampaignsPage() {
           <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-gray-50 text-left text-gray-500">
-                <th className="px-5 py-3 font-medium">ID</th>
                 <th className="px-5 py-3 font-medium">Title</th>
                 <th className="px-5 py-3 font-medium">Creator</th>
                 <th className="px-5 py-3 font-medium">Type</th>
@@ -127,12 +126,12 @@ export default function AdminCampaignsPage() {
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Verified</th>
                 <th className="px-5 py-3 font-medium">Actions</th>
+                <th className="px-5 py-3 font-medium">ID</th>
               </tr>
             </thead>
             <tbody>
               {campaigns.map((c) => (
                 <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="px-5 py-3 text-gray-500 font-mono">{c.id}</td>
                   <td className="px-5 py-3">
                     <Link href={`/campaigns/${c.id}`} className="text-primary-600 hover:underline max-w-[200px] truncate block" title={c.title}>
                       {c.title}
@@ -192,6 +191,7 @@ export default function AdminCampaignsPage() {
                       {deletingId === c.id ? "Deleting…" : "Delete"}
                     </button>
                   </td>
+                  <td className="px-5 py-3 text-gray-500 font-mono text-xs">{c.id}</td>
                 </tr>
               ))}
             </tbody>
