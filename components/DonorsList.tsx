@@ -95,7 +95,12 @@ export default function DonorsList({ campaignId }: DonorsListProps) {
 
       {/* Donors List */}
       <div className="divide-y divide-gray-100">
-        {donations.length === 0 ? (
+        {isLoading ? (
+          <div className="px-5 py-12 text-center text-gray-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-3" />
+            <p>Loading donors...</p>
+          </div>
+        ) : donations.length === 0 ? (
           <div className="px-5 py-12 text-center text-gray-500">
             <p>No donors yet. Be the first to support this campaign!</p>
           </div>

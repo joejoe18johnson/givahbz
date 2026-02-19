@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Heart, CreditCard, Building2, Wallet, CheckCircle2, Copy } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { recordDonationAndUpdateCampaign } from "@/lib/firebase/firestore";
 
 interface DonationModalProps {
   campaignId: string;
@@ -54,9 +55,26 @@ export default function DonationModal({
   };
 
   const handlePayment = async () => {
+    if (!selectedMethod) return;
     setIsProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Simulate payment processing delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const donation = {
+        campaignId,
+        campaignTitle,
+        amount,
+        donorEmail: donorInfo.email.trim(),
+        donorName: donorInfo.anonymous ? "Anonymous" : donorInfo.name.trim(),
+        anonymous: donorInfo.anonymous,
+        method: selectedMethod as "credit-card" | "bank" | "digiwallet" | "paypal",
+        status: "completed" as const,
+        note: note.trim() || undefined,
+      };
+
+      await recordDonationAndUpdateCampaign(donation, campaignId);
+
       setIsProcessing(false);
       setIsSuccess(true);
       setTimeout(() => {
@@ -67,7 +85,11 @@ export default function DonationModal({
         setNote("");
         setCardDetails({ cardNumber: "", expiryDate: "", cvv: "", cardholderName: "" });
       }, 3000);
-    }, 2000);
+    } catch (error) {
+      console.error("Error recording donation:", error);
+      setIsProcessing(false);
+      alert("There was a problem recording your donation. Please try again or contact support.");
+    }
   };
 
   const copyBankDetails = () => {

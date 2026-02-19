@@ -12,6 +12,7 @@ import {
   orderBy,
   serverTimestamp,
   Timestamp,
+  increment,
 } from "firebase/firestore";
 import { db } from "./config";
 import { Campaign } from "@/lib/data";
@@ -190,16 +191,17 @@ export async function getCampaignsOnHoldForUser(creatorId: string): Promise<(Cam
 
 // Donations operations
 export async function getDonations(campaignId?: string): Promise<AdminDonation[]> {
-  let q = query(collection(db, donationsCollection), orderBy("createdAt", "desc"));
-  
+  let q;
   if (campaignId) {
-    q = query(q, where("campaignId", "==", campaignId));
+    // Query by campaignId only (no composite index needed); sort in memory
+    q = query(collection(db, donationsCollection), where("campaignId", "==", campaignId));
+  } else {
+    q = query(collection(db, donationsCollection), orderBy("createdAt", "desc"));
   }
-  
+
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((docSnap) => {
+  const donations = querySnapshot.docs.map((docSnap) => {
     const data = docSnap.data();
-    // Convert Firestore Timestamp to string date if needed
     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt;
     return {
       ...data,
@@ -207,6 +209,11 @@ export async function getDonations(campaignId?: string): Promise<AdminDonation[]
       createdAt: createdAt || new Date().toISOString(),
     };
   }) as AdminDonation[];
+
+  if (campaignId) {
+    donations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  return donations;
 }
 
 export async function createDonation(donation: Omit<AdminDonation, "id">): Promise<string> {
@@ -216,6 +223,24 @@ export async function createDonation(donation: Omit<AdminDonation, "id">): Promi
     createdAt: serverTimestamp(),
   });
   return docRef.id;
+}
+
+/**
+ * Record a donation in Firestore and increment the campaign's raised amount and backers.
+ * Call this when a donation is completed (after payment processing).
+ */
+export async function recordDonationAndUpdateCampaign(
+  donation: Omit<AdminDonation, "id">,
+  campaignId: string
+): Promise<string> {
+  const donationId = await createDonation(donation);
+  const campaignRef = doc(db, campaignsCollection, campaignId);
+  await updateDoc(campaignRef, {
+    raised: increment(donation.amount),
+    backers: increment(1),
+    updatedAt: serverTimestamp(),
+  });
+  return donationId;
 }
 
 // Campaigns under review (admin workflow)
