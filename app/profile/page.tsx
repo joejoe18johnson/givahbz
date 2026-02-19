@@ -177,8 +177,14 @@ export default function ProfilePage() {
   const handleSavePhone = async () => {
     const raw = phoneInput.trim();
     if (!raw) return;
-    if (raw.length < 8 || !/^[\d\s\-+()]+$/.test(raw)) {
-      alert("Please enter a valid phone number (e.g. +501 123-4567 or 123-4567).", { variant: "error" });
+    // Only allow digits and hyphens
+    if (!/^[\d-]+$/.test(raw)) {
+      alert("Phone number can only contain numbers and hyphens (e.g. 501-123-4567 or 5011234567).", { variant: "error" });
+      return;
+    }
+    const digitsOnly = raw.replace(/\D/g, "");
+    if (digitsOnly.length < 7) {
+      alert("Please enter a valid phone number with at least 7 digits (e.g. 501-123-4567 or 5011234567).", { variant: "error" });
       return;
     }
     try {
@@ -209,21 +215,26 @@ export default function ProfilePage() {
 
     setIsUploadingId(true);
     try {
+      console.log("Starting ID document upload...", { userId: user.id, documentType: idDocumentType, fileName: idDocumentFile.name, fileSize: idDocumentFile.size });
       const documentUrl = await uploadVerificationDocument(user.id, idDocumentFile, idDocumentType);
+      console.log("Document uploaded successfully, URL:", documentUrl);
+      console.log("Updating user profile with document URL...");
       await updateUser({ 
         idDocument: documentUrl, 
         idDocumentType: idDocumentType as "social_security" | "passport",
         idVerified: false,
         idPending: true 
       });
+      console.log("User profile updated successfully");
       setIdDocumentFile(null);
       if (idFileInputRef.current) {
         idFileInputRef.current.value = '';
       }
       alert("ID document uploaded successfully. It will be reviewed by an admin.", { variant: "success" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading ID document:", error);
-      alert("Failed to upload ID document. Please try again.", { variant: "error" });
+      const errorMessage = error?.message || String(error);
+      alert(`Failed to upload ID document: ${errorMessage}`, { variant: "error" });
     } finally {
       setIsUploadingId(false);
     }
@@ -433,7 +444,7 @@ export default function ProfilePage() {
                   type="tel"
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="e.g. +5011234567 or 5011234567"
+                  placeholder="e.g. 501-123-4567 or 5011234567"
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[200px]"
                   autoFocus
                 />

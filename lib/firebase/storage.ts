@@ -55,9 +55,41 @@ export async function uploadVerificationDocument(
   file: File,
   documentType: string
 ): Promise<string> {
-  const fileRef = ref(storage, `verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`);
-  await uploadBytes(fileRef, file);
-  return await getDownloadURL(fileRef);
+  try {
+    if (!file) {
+      throw new Error("File is required");
+    }
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      throw new Error("File must be an image (JPG, PNG) or PDF document");
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("File size must be less than 10MB");
+    }
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+    if (!documentType) {
+      throw new Error("Document type is required");
+    }
+    
+    const fileRef = ref(storage, `verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`);
+    console.log(`Uploading verification document to: verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    console.log("Verification document uploaded, getting download URL...");
+    const url = await getDownloadURL(fileRef);
+    console.log("Verification document URL obtained:", url);
+    return url;
+  } catch (error: any) {
+    console.error("Error uploading verification document:", error);
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
+      throw new Error("Permission denied: Unable to upload document. Please check your Firebase Storage rules.");
+    } else if (errorMessage.includes("quota") || errorMessage.includes("Quota")) {
+      throw new Error("Storage quota exceeded: Unable to upload document.");
+    } else {
+      throw new Error(`Failed to upload verification document: ${errorMessage}`);
+    }
+  }
 }
 
 // Delete file
