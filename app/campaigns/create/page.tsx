@@ -106,6 +106,7 @@ export default function CreateCampaignPage() {
     });
 
     try {
+      // Quarantine: submitted only to under-review; never to public campaigns until admin approves
       await addCampaignUnderReviewToFirestore({
         title: formData.title,
         description: formData.description,
