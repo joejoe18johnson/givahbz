@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useRef, useState } from "react"
 import { CheckCircle2, AlertTriangle, Info } from "lucide-react";
 
 type AlertVariant = "success" | "error" | "info";
-type ConfirmVariant = "primary" | "danger" | "success";
+type ConfirmVariant = "primary" | "danger" | "success" | "warning";
 
 const alertStyles: Record<AlertVariant, { icon: typeof CheckCircle2; border: string; iconBg: string; iconColor: string; title: string }> = {
   success: {
@@ -54,6 +54,14 @@ const confirmStyles: Record<ConfirmVariant, { icon: typeof CheckCircle2; border:
     iconColor: "text-verified-600",
     confirmBtn: "bg-verified-600 text-white",
     confirmHover: "hover:bg-verified-700",
+  },
+  warning: {
+    icon: AlertTriangle,
+    border: "border-amber-200",
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-600",
+    confirmBtn: "bg-amber-600 text-white",
+    confirmHover: "hover:bg-amber-700",
   },
 };
 
