@@ -93,6 +93,16 @@ export default function AdminLayout({
           donations: donations.filter((d) => new Date(d.createdAt).getTime() >= since).length,
           phonePending,
         });
+        // First visit or cleared storage: treat current counts as already seen so no bubble until new items arrive
+        try {
+          if (typeof window !== "undefined" && !localStorage.getItem(NOTIFICATIONS_SEEN_KEY)) {
+            const seen = { underReview: underReviewCount, phonePending };
+            localStorage.setItem(NOTIFICATIONS_SEEN_KEY, JSON.stringify(seen));
+            setLastSeen(seen);
+          }
+        } catch {
+          // ignore
+        }
       } catch {
         setNotifications([]);
         setSectionCounts({ campaigns: 0, users: 0, donations: 0, underReview: 0, phonePending: 0 });
