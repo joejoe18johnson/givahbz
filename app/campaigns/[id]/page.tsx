@@ -29,6 +29,7 @@ export default function CampaignPage({ params }: PageProps) {
   const [isHearted, setIsHearted] = useState(false);
   const [coverIndex, setCoverIndex] = useState(0);
   const coverCarouselRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number>(0);
   const { user } = useAuth();
   const { alert } = useThemedModal();
 
@@ -110,14 +111,15 @@ export default function CampaignPage({ params }: PageProps) {
             );
             return (
               <>
-                <div className="sm:hidden w-full min-w-0 h-[220px] rounded-xl overflow-hidden relative">
+                <div className="sm:hidden w-full min-w-0 h-[220px] rounded-xl overflow-hidden relative isolate">
                   <div
                     ref={coverCarouselRef}
-                    className="flex h-full overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory touch-pan-x [&::-webkit-scrollbar]:hidden"
+                    className="flex h-full w-full overflow-x-scroll overflow-y-hidden scroll-smooth snap-x snap-mandatory touch-pan-x [&::-webkit-scrollbar]:hidden"
                     style={{
                       WebkitOverflowScrolling: "touch",
                       scrollbarWidth: "none",
                       msOverflowStyle: "none",
+                      touchAction: "pan-x",
                     }}
                     onScroll={() => {
                       const el = coverCarouselRef.current;
@@ -127,12 +129,33 @@ export default function CampaignPage({ params }: PageProps) {
                       const clamped = Math.max(0, Math.min(index, slides.length - 1));
                       setCoverIndex(clamped);
                     }}
+                    onTouchStart={(e) => {
+                      touchStartX.current = e.touches[0]?.clientX ?? 0;
+                    }}
+                    onTouchEnd={(e) => {
+                      const el = coverCarouselRef.current;
+                      if (!el || slides.length === 0) return;
+                      const endX = e.changedTouches[0]?.clientX ?? 0;
+                      const delta = endX - touchStartX.current;
+                      const width = el.offsetWidth;
+                      const currentIndex = Math.round(el.scrollLeft / width);
+                      const clampedCurrent = Math.max(0, Math.min(currentIndex, slides.length - 1));
+                      if (delta < -50) {
+                        const next = Math.min(clampedCurrent + 1, slides.length - 1);
+                        setCoverIndex(next);
+                        el.scrollTo({ left: next * width, behavior: "smooth" });
+                      } else if (delta > 50) {
+                        const prev = Math.max(clampedCurrent - 1, 0);
+                        setCoverIndex(prev);
+                        el.scrollTo({ left: prev * width, behavior: "smooth" });
+                      }
+                    }}
                   >
                     {slides.map((src, i) => (
                       <div
                         key={i}
-                        className="relative flex-shrink-0 w-full h-full bg-gray-200 snap-start snap-always"
-                        style={{ minWidth: "100%" }}
+                        className="relative flex-shrink-0 w-full h-full bg-gray-200 snap-start snap-always touch-pan-x"
+                        style={{ minWidth: "100%", touchAction: "pan-x" }}
                       >
                         {src ? (
                           <SafeImage
