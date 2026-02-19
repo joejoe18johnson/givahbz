@@ -58,9 +58,10 @@ function normalizeCreatedAt(data: Record<string, unknown>): string {
 }
 
 /**
- * Public campaigns list. QUARANTINE: Reads only from "campaigns" (live).
- * Under-review campaigns are in campaignsUnderReview and are never included here.
- * They are quarantined until an admin approves (approveAndPublishCampaign).
+ * Public "all campaigns" list. QUARANTINE: Reads ONLY from "campaigns" (live).
+ * User-created campaigns go to campaignsUnderReview and are NEVER in this list
+ * until an admin approves (approveAndPublishCampaign). Under-review items are
+ * never included here.
  */
 export async function getCampaigns(filters?: {
   category?: string;
@@ -118,6 +119,11 @@ export async function getCampaigns(filters?: {
   return campaigns;
 }
 
+/**
+ * Writes directly to public campaigns. Do NOT use for user submissions.
+ * User-created campaigns must go via addCampaignUnderReviewToFirestore only;
+ * they appear in "all campaigns" only after admin calls approveAndPublishCampaign.
+ */
 export async function createCampaign(campaign: Omit<Campaign, "id">): Promise<string> {
   const docRef = doc(collection(db, campaignsCollection));
   await setDoc(docRef, {
@@ -137,6 +143,7 @@ export async function updateCampaign(campaignId: string, updates: Partial<Campai
 
 /**
  * Permanently delete a campaign from the live "campaigns" collection.
+ * Removes it from the site entirely: home, /campaigns, and detail page (which will 404).
  * Under-review campaigns are in campaignsUnderReview; use deleteCampaignUnderReview for those.
  */
 export async function deleteCampaign(campaignId: string): Promise<void> {
@@ -332,11 +339,8 @@ export async function approveAndPublishCampaign(underReviewId: string): Promise<
     });
   }
 
-  await updateDoc(doc(db, campaignsUnderReviewCollection, underReviewId), {
-    status: "approved",
-    publishedCampaignId: campaignId,
-    updatedAt: serverTimestamp(),
-  });
+  // Remove from under review so it no longer appears on the user's My Campaigns page
+  await deleteDoc(doc(db, campaignsUnderReviewCollection, underReviewId));
   return { campaignId };
 }
 

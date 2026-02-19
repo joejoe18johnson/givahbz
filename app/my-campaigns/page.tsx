@@ -105,7 +105,7 @@ export default function MyCampaignsPage() {
     e.preventDefault();
     e.stopPropagation();
     const ok = await confirm(
-      "Are you sure you want to delete this campaign? It will be removed from the main site and this cannot be undone.",
+      "Are you sure you want to delete this campaign? It will be removed from the site entirely (home, campaigns list, and campaign page) and cannot be undone.",
       {
         title: "Delete campaign",
         confirmLabel: "Delete",
@@ -117,11 +117,14 @@ export default function MyCampaignsPage() {
     try {
       await deleteCampaign(campaignId);
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+      const nextDeleted = new Set(deletedIds).add(campaignId);
+      setDeletedIds(nextDeleted);
+      setDeletedCampaignIds(Array.from(nextDeleted));
     } catch (err) {
       console.error("Error deleting campaign:", err);
       alert("Could not delete the campaign. You may not have permission, or it may already be removed.", { variant: "error" });
     }
-  }, [confirm, alert]);
+  }, [confirm, alert, deletedIds]);
 
   const handleWithdrawReview = useCallback(async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
