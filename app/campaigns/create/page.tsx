@@ -9,8 +9,8 @@ const REQUIRE_VERIFICATION_TO_CREATE = false;
 import { useRouter } from "next/navigation";
 import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
 import { addCampaignUnderReviewToFirestore } from "@/lib/firebase/firestore";
-import { uploadUnderReviewCampaignImage } from "@/lib/firebase/storage";
 import { compressImageForUpload } from "@/lib/compressImage";
+import { auth } from "@/lib/firebase/config";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 
@@ -210,22 +210,48 @@ export default function CreateCampaignPage() {
 
     setIsSubmitting(true);
     try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error("You must be signed in to submit. Please sign in and try again.");
+      }
+      const token = await currentUser.getIdToken();
+
       // Compress images to speed up upload and avoid timeouts
       const [file1, file2] = await Promise.all([
         compressImageForUpload(imageFiles[0]!),
         compressImageForUpload(imageFiles[1]!),
       ]);
-      const uploadPromises = [
-        uploadUnderReviewCampaignImage(pendingId, 0, file1).catch((err) => {
+
+      // Upload via API to avoid CORS/preflight issues with Firebase Storage in the browser
+      const uploadViaApi = async (file: File, index: 0 | 1): Promise<string> => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("pendingId", pendingId);
+        form.append("index", String(index));
+        const res = await fetch("/api/upload-campaign-image", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = typeof data.error === "string" ? data.error : "Upload failed";
+          throw new Error(msg);
+        }
+        if (typeof data.url !== "string") throw new Error("No URL returned");
+        return data.url;
+      };
+
+      const [imageUrl1, imageUrl2] = await Promise.all([
+        uploadViaApi(file1, 0).catch((err) => {
           console.error("Error uploading image 1:", err);
           throw new Error(`Failed to upload first image: ${err?.message || err}`);
         }),
-        uploadUnderReviewCampaignImage(pendingId, 1, file2).catch((err) => {
+        uploadViaApi(file2, 1).catch((err) => {
           console.error("Error uploading image 2:", err);
           throw new Error(`Failed to upload second image: ${err?.message || err}`);
         }),
-      ];
-      const [imageUrl1, imageUrl2] = await Promise.all(uploadPromises);
+      ]);
       console.log("Images uploaded successfully:", { imageUrl1, imageUrl2 });
 
       console.log("Saving campaign to Firestore...");

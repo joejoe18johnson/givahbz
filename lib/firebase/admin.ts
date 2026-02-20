@@ -181,3 +181,32 @@ export async function adminUploadVerificationDocument(
   const url = await getDownloadURL(file);
   return url;
 }
+
+/**
+ * Upload a campaign-under-review cover image (server-side). Returns the download URL.
+ * Call from API route after verifying the request is from an authenticated user.
+ */
+export async function adminUploadCampaignUnderReviewImage(
+  pendingId: string,
+  index: 0 | 1,
+  buffer: Buffer,
+  originalFileName: string,
+  mimeType: string
+): Promise<string> {
+  const app = getAdminApp();
+  if (!app) {
+    throw new Error("Server is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON.");
+  }
+  const storage = getStorage(app);
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || undefined;
+  const bucket = storage.bucket(bucketName);
+  const ext = (originalFileName.split(".").pop() || "").toLowerCase() || "jpg";
+  const path = `campaigns-under-review/${pendingId}/image${index + 1}.${ext}`;
+  const file = bucket.file(path);
+  await file.save(buffer, {
+    contentType: mimeType || "image/jpeg",
+    metadata: { cacheControl: "private, max-age=31536000" },
+  });
+  const url = await getDownloadURL(file);
+  return url;
+}
