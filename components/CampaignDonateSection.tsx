@@ -8,11 +8,13 @@ import { StopCircle } from "lucide-react";
 interface CampaignDonateSectionProps {
   campaignId: string;
   campaignTitle: string;
+  onDonationModalChange?: (open: boolean) => void;
 }
 
 export default function CampaignDonateSection({
   campaignId,
   campaignTitle,
+  onDonationModalChange,
 }: CampaignDonateSectionProps) {
   const [stopped, setStopped] = useState(false);
 
@@ -31,5 +33,11 @@ export default function CampaignDonateSection({
     );
   }
 
-  return <DonateButton campaignId={campaignId} campaignTitle={campaignTitle} />;
+  return (
+    <DonateButton
+      campaignId={campaignId}
+      campaignTitle={campaignTitle}
+      onDonationModalChange={onDonationModalChange}
+    />
+  );
 }

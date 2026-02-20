@@ -28,6 +28,7 @@ export default function CampaignPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isHearted, setIsHearted] = useState(false);
   const [coverIndex, setCoverIndex] = useState(0);
+  const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
   const coverCarouselRef = useRef<HTMLDivElement>(null);
   const scrollRAF = useRef<number | null>(null);
   const { user } = useAuth();
@@ -345,7 +346,11 @@ export default function CampaignPage({ params }: PageProps) {
               className="mb-5 pb-5 border-b border-gray-200"
             />
             <div id="campaign-donate" className="pb-24 sm:pb-8">
-              <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
+              <CampaignDonateSection
+                campaignId={campaign.id}
+                campaignTitle={campaign.title}
+                onDonationModalChange={setIsDonationModalOpen}
+              />
             </div>
             {campaign.rewards && campaign.rewards.length > 0 && (
               <RewardsSection rewards={campaign.rewards} />
@@ -393,6 +398,23 @@ export default function CampaignPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {/* Mobile-only sticky Donate bar - hidden once donation modal is open */}
+      {!isDonationModalOpen && (
+        <>
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+            <button
+              type="button"
+              onClick={() => document.getElementById("campaign-donate")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              className="w-full min-h-[48px] bg-green-500 text-white rounded-xl font-semibold text-base active:bg-green-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <Heart className="w-5 h-5" />
+              Donate to this campaign
+            </button>
+          </div>
+          <div className="lg:hidden h-20" aria-hidden="true" />
+        </>
+      )}
 
       {/* Donors List - same width as cover/main content column */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-4 lg:gap-6">

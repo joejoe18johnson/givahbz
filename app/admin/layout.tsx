@@ -27,8 +27,21 @@ export default function AdminLayout({
 
   const [notifications, setNotifications] = useState<CampaignUnderReviewDoc[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
-  const [sectionCounts, setSectionCounts] = useState({ campaigns: 0, users: 0, donations: 0, underReview: 0, phonePending: 0 });
-  const [lastSeen, setLastSeen] = useState({ underReview: 0, phonePending: 0 });
+  const [sectionCounts, setSectionCounts] = useState({
+    campaigns: 0,
+    users: 0,
+    donations: 0,
+    underReview: 0,
+    phonePending: 0,
+    pendingDonations: 0,
+    addressPending: 0,
+  });
+  const [lastSeen, setLastSeen] = useState({
+    underReview: 0,
+    phonePending: 0,
+    pendingDonations: 0,
+    addressPending: 0,
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Load last-seen from localStorage on mount so "new" = only items since last open
@@ -37,10 +50,17 @@ export default function AdminLayout({
       if (typeof window === "undefined") return;
       const raw = localStorage.getItem(NOTIFICATIONS_SEEN_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as { underReview?: number; phonePending?: number };
+        const parsed = JSON.parse(raw) as {
+          underReview?: number;
+          phonePending?: number;
+          pendingDonations?: number;
+          addressPending?: number;
+        };
         setLastSeen({
           underReview: typeof parsed.underReview === "number" ? parsed.underReview : 0,
           phonePending: typeof parsed.phonePending === "number" ? parsed.phonePending : 0,
+          pendingDonations: typeof parsed.pendingDonations === "number" ? parsed.pendingDonations : 0,
+          addressPending: typeof parsed.addressPending === "number" ? parsed.addressPending : 0,
         });
       }
     } catch {
@@ -54,6 +74,8 @@ export default function AdminLayout({
     const seen = {
       underReview: sectionCounts.underReview,
       phonePending: sectionCounts.phonePending,
+      pendingDonations: sectionCounts.pendingDonations,
+      addressPending: sectionCounts.addressPending,
     };
     setLastSeen(seen);
     try {
@@ -61,11 +83,20 @@ export default function AdminLayout({
     } catch {
       // ignore
     }
-  }, [showNotificationDropdown, sectionCounts.underReview, sectionCounts.phonePending]);
+  }, [
+    showNotificationDropdown,
+    sectionCounts.underReview,
+    sectionCounts.phonePending,
+    sectionCounts.pendingDonations,
+    sectionCounts.addressPending,
+  ]);
 
   const newUnderReview = Math.max(0, sectionCounts.underReview - lastSeen.underReview);
   const newPhonePending = Math.max(0, sectionCounts.phonePending - lastSeen.phonePending);
-  const newNotificationTotal = newUnderReview + newPhonePending;
+  const newPendingDonations = Math.max(0, sectionCounts.pendingDonations - lastSeen.pendingDonations);
+  const newAddressPending = Math.max(0, sectionCounts.addressPending - lastSeen.addressPending);
+  const newNotificationTotal =
+    newUnderReview + newPhonePending + newPendingDonations + newAddressPending;
 
   const sevenDaysAgo = () => {
     const d = new Date();
@@ -90,17 +121,26 @@ export default function AdminLayout({
         setNotifications(underReviewNewestFirst.slice(0, 10));
         const since = sevenDaysAgo();
         const phonePending = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
+        const addressPending = users.filter((u) => u.addressDocument && !u.addressVerified).length;
+        const pendingDonations = donations.filter((d) => d.status === "pending").length;
         setSectionCounts({
           underReview: underReviewCount,
           campaigns: campaigns.filter((c) => new Date(c.createdAt).getTime() >= since).length,
           users: users.filter((u) => u.createdAt && new Date(u.createdAt).getTime() >= since).length,
           donations: donations.filter((d) => new Date(d.createdAt).getTime() >= since).length,
           phonePending,
+          pendingDonations,
+          addressPending,
         });
         // First visit or cleared storage: treat current counts as already seen so no bubble until new items arrive
         try {
           if (typeof window !== "undefined" && !localStorage.getItem(NOTIFICATIONS_SEEN_KEY)) {
-            const seen = { underReview: underReviewCount, phonePending };
+            const seen = {
+              underReview: underReviewCount,
+              phonePending,
+              pendingDonations,
+              addressPending,
+            };
             localStorage.setItem(NOTIFICATIONS_SEEN_KEY, JSON.stringify(seen));
             setLastSeen(seen);
           }
@@ -109,7 +149,15 @@ export default function AdminLayout({
         }
       } catch {
         setNotifications([]);
-        setSectionCounts({ campaigns: 0, users: 0, donations: 0, underReview: 0, phonePending: 0 });
+        setSectionCounts({
+          campaigns: 0,
+          users: 0,
+          donations: 0,
+          underReview: 0,
+          phonePending: 0,
+          pendingDonations: 0,
+          addressPending: 0,
+        });
       }
     }
     load();
@@ -242,6 +290,36 @@ export default function AdminLayout({
                         <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newPhonePending}</span>
                       )}
                     </Link>
+                    <Link
+                      href="/admin/donations"
+                      onClick={() => setShowNotificationDropdown(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                        newPendingDonations > 0 ? "bg-amber-50 border border-amber-200 hover:bg-amber-100" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className={`text-sm ${newPendingDonations > 0 ? "text-amber-900 font-medium" : "text-gray-700"}`}>
+                        Pending donations to approve
+                        {newPendingDonations > 0 && <span className="ml-1.5 text-amber-600 text-xs">(new)</span>}
+                      </span>
+                      {newPendingDonations > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newPendingDonations}</span>
+                      )}
+                    </Link>
+                    <Link
+                      href="/admin/users"
+                      onClick={() => setShowNotificationDropdown(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                        newAddressPending > 0 ? "bg-amber-50 border border-amber-200 hover:bg-amber-100" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className={`text-sm ${newAddressPending > 0 ? "text-amber-900 font-medium" : "text-gray-700"}`}>
+                        Address documents to review
+                        {newAddressPending > 0 && <span className="ml-1.5 text-amber-600 text-xs">(new)</span>}
+                      </span>
+                      {newAddressPending > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newAddressPending}</span>
+                      )}
+                    </Link>
                     <div className="border-t border-gray-100 pt-2 mt-1">
                       <p className="px-3 py-1 text-xs text-gray-500">Quick links</p>
                       <Link href="/admin/campaigns" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700">
@@ -307,10 +385,21 @@ export default function AdminLayout({
             </Link>
             <Link
               href="/admin/donations"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/donations" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                pathname === "/admin/donations"
+                  ? "bg-primary-50 text-primary-700 font-medium"
+                  : newPendingDonations > 0
+                    ? "bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100"
+                    : "text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <Heart className="w-4 h-4" />
               <span className="flex-1">Donations</span>
+              {newPendingDonations > 0 && (
+                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  {newPendingDonations > 99 ? "99+" : newPendingDonations}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/under-review"
