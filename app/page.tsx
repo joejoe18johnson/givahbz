@@ -137,7 +137,7 @@ export default function Home() {
 
   return (
     <>
-      {/* First viewport: hero + Community Wins heading visible */}
+      {/* First viewport: hero + Community Shares Burdens heading visible */}
       <div className="min-h-screen flex flex-col">
         <div className="flex-1 container mx-auto px-4 py-8 md:py-12 flex flex-col justify-center">
           {/* Hero Section - Two column layout */}
@@ -216,12 +216,12 @@ export default function Home() {
         </section>
         </div>
 
-        {/* Community Wins - visible at bottom of first viewport */}
-        <section id="community-wins" className="flex-shrink-0 -mt-[40px] pt-4 pb-8 md:pb-12">
+        {/* Community Shares Burdens - visible at bottom of first viewport */}
+        <section id="community-shares-burdens" className="flex-shrink-0 -mt-[40px] pt-4 pb-8 md:pb-12">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-center break-words max-w-full px-2">
-              <span className="text-primary-600">Community Wins.</span>{" "}
-              <span className={`text-success-600 ${permanentMarker.className}`}>Always.</span>
+              <span className="text-primary-600">Community Shares </span>
+              <span className={`text-success-600 ${permanentMarker.className}`}>Burdens</span>
             </h2>
           </div>
         </section>
