@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
 import { addCampaignUnderReviewToFirestore } from "@/lib/firebase/firestore";
 import { uploadUnderReviewCampaignImage } from "@/lib/firebase/storage";
+import { compressImageForUpload } from "@/lib/compressImage";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 
