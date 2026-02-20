@@ -32,26 +32,28 @@ function loadServiceAccountKey(): Record<string, string> | null {
       // fall through
     }
   }
+  const cwd = process.cwd();
   const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+  const pathCandidates: string[] = [];
   if (pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "") {
-    const trimmed = pathEnv.trim().replace(/^["']|["']$/g, "");
-    const cwd = process.cwd();
-    const pathsToTry = [
-      resolve(cwd, trimmed),
-      trimmed,
-    ];
-    for (const filePath of pathsToTry) {
-      try {
-        if (!existsSync(filePath)) continue;
-        const content = readFileSync(filePath, "utf8");
-        const parsed = JSON.parse(content) as Record<string, string>;
-        if (parsed.private_key && parsed.client_email) {
-          cachedKey = parsed;
-          return cachedKey;
-        }
-      } catch {
-        continue;
+    const trimmed = pathEnv.trim().replace(/^["']|["']$/g, "").replace(/\r/g, "");
+    if (trimmed) {
+      pathCandidates.push(resolve(cwd, trimmed), trimmed);
+    }
+  }
+  // Fallback: default filename in project root (in case env wasn't loaded)
+  pathCandidates.push(resolve(cwd, "firebase-service-account.json"));
+  for (const filePath of pathCandidates) {
+    try {
+      if (!existsSync(filePath)) continue;
+      const content = readFileSync(filePath, "utf8");
+      const parsed = JSON.parse(content) as Record<string, string>;
+      if (parsed.private_key && parsed.client_email) {
+        cachedKey = parsed;
+        return cachedKey;
       }
+    } catch {
+      continue;
     }
   }
   cachedKey = null;
