@@ -21,8 +21,7 @@ import {
   FileText
 } from "lucide-react";
 import { useThemedModal } from "@/components/ThemedModal";
-
-type IdDocumentTypeValue = "social_security" | "passport" | "";
+import type { IdDocumentTypeValue, InputChangeEvent } from "./types";
 
 export default function ProfilePage() {
   const { user, isLoading, updateUser, logout } = useAuth();
@@ -35,16 +34,16 @@ export default function ProfilePage() {
   const [birthday, setBirthday] = useState(user?.birthday || "");
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [phoneInput, setPhoneInput] = useState("");
-  const [idDocumentType, setIdDocumentType] = useState<IdDocumentTypeValue>(user?.idDocumentType || "");
-  const [idDocumentFile, setIdDocumentFile] = useState<File | null>(null);
+  const [idDocumentType, setIdDocumentType] = useState(user?.idDocumentType || "" as IdDocumentTypeValue);
+  const [idDocumentFile, setIdDocumentFile] = useState(null as File | null);
   const [isUploadingId, setIsUploadingId] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [addressDocumentFile, setAddressDocumentFile] = useState<File | null>(null);
   const [isUploadingAddress, setIsUploadingAddress] = useState(false);
   const [addressUploadProgress, setAddressUploadProgress] = useState(0);
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profilePhoto || null);
-  const idFileInputRef = useRef<HTMLInputElement>(null);
-  const addressFileInputRef = useRef<HTMLInputElement>(null);
+  const [profilePhoto, setProfilePhoto] = useState(user?.profilePhoto || null as string | null);
+  const idFileInputRef = useRef(null as HTMLInputElement | null);
+  const addressFileInputRef = useRef(null as HTMLInputElement | null);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [deactivatePhrase, setDeactivatePhrase] = useState("");
@@ -52,7 +51,7 @@ export default function ProfilePage() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showSavedPopup, setShowSavedPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef(null as HTMLInputElement | null);
   
   // Track last saved state
   const [lastSavedState, setLastSavedState] = useState({
@@ -276,7 +275,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleIdFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIdFileChange = (e: InputChangeEvent) => {
     const file = e.target.files?.[0];
     if (!file) {
       console.log("No file selected");
@@ -377,7 +376,7 @@ export default function ProfilePage() {
     setPhoneInput("");
   };
 
-  const profileContent = (
+  const profileContent = (() => (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
       {/* Themed success popup */}
       {showSavedPopup && (
@@ -1151,6 +1150,6 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
-  );
+  ))();
   return profileContent;
 }
