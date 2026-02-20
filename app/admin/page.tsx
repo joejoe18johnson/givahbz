@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone, PauseCircle, PlayCircle, Trash2, UserX, UserCheck, MapPin } from "lucide-react";
+import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone, PauseCircle, PlayCircle, Trash2, UserX, UserCheck, MapPin, FileText, ExternalLink } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const { user: currentUser } = useAuth();
@@ -165,7 +165,7 @@ export default function AdminDashboardPage() {
         <p className="text-gray-600 mt-1">Overview of all platform data</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats - 4 cards in one row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <div className="flex items-center gap-3">
@@ -211,6 +211,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Quick links - 3 cards in one row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/admin/under-review"
           className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm block hover:border-primary-200 transition-colors"
@@ -241,7 +245,7 @@ export default function AdminDashboardPage() {
         </Link>
         <Link
           href="/admin/users"
-          className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow"
+          className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm block hover:border-primary-200 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
@@ -306,6 +310,7 @@ export default function AdminDashboardPage() {
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Phone</th>
                   <th className="px-5 py-3 font-medium">Phone approved</th>
+                  <th className="px-5 py-3 font-medium">Docs</th>
                   <th className="px-5 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
@@ -333,6 +338,33 @@ export default function AdminDashboardPage() {
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {u.idDocument ? (
+                            <a
+                              href={u.idDocument}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs"
+                              title="View ID document"
+                            >
+                              <FileText className="w-3 h-3" /> ID
+                            </a>
+                          ) : null}
+                          {u.addressDocument ? (
+                            <a
+                              href={u.addressDocument}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs"
+                              title="View address document"
+                            >
+                              <FileText className="w-3 h-3" /> Addr
+                            </a>
+                          ) : null}
+                          {!u.idDocument && !u.addressDocument && <span className="text-gray-400 text-xs">—</span>}
+                        </div>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex flex-wrap gap-1.5">

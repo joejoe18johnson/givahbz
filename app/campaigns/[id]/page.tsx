@@ -344,7 +344,9 @@ export default function CampaignPage({ params }: PageProps) {
               variant="full"
               className="mb-5 pb-5 border-b border-gray-200"
             />
-            <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
+            <div id="campaign-donate">
+              <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
+            </div>
             {campaign.rewards && campaign.rewards.length > 0 && (
               <RewardsSection rewards={campaign.rewards} />
             )}
@@ -391,6 +393,20 @@ export default function CampaignPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {/* Mobile-only sticky Donate bar - scrolls to donate section */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+        <button
+          type="button"
+          onClick={() => document.getElementById("campaign-donate")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          className="w-full min-h-[48px] bg-success-500 text-white rounded-xl font-semibold text-base active:bg-success-600 transition-colors flex items-center justify-center gap-2"
+        >
+          <Heart className="w-5 h-5" />
+          Donate to this campaign
+        </button>
+      </div>
+      {/* Spacer so page content isn't hidden behind sticky bar on mobile */}
+      <div className="lg:hidden h-20" aria-hidden="true" />
 
       {/* Donors List - same width as cover/main content column */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-4 lg:gap-6">

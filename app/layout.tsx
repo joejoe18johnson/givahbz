@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
+import CreateCampaignFab from "@/components/CreateCampaignFab";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
           <Header />
           <main className="min-h-screen pt-16">{children}</main>
           <Footer />
+          <CreateCampaignFab />
         </Providers>
       </body>
     </html>

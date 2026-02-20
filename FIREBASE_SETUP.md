@@ -215,6 +215,19 @@ service firebase.storage {
 - Check Storage security rules
 - Verify user is authenticated
 
+### Verification document upload (ID / Address) not working
+1. **Enable Storage**: In Firebase Console go to **Build > Storage** and click **Get started** if you haven’t already.
+2. **Set storage bucket**: In `.env`, set `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com` (same as in your Firebase project settings). If missing, the app will try the default bucket from your project ID.
+3. **Storage rules**: In Firebase Console go to **Storage > Rules**. Ensure you have a rule that allows authenticated users to write to their own folder:
+   ```javascript
+   match /verification-docs/{userId}/{allPaths=**} {
+     allow read, write: if request.auth != null && request.auth.uid == userId;
+   }
+   ```
+   You can copy the full rules from **Step 7** in this guide. Then click **Publish**.
+4. **Sign in**: Uploads only work when the user is signed in. If the error says "You must be signed in", sign out and sign back in, then try again.
+5. **File type**: Use a JPG, PNG, or PDF under 10MB.
+
 ### Data not appearing
 - Check Firebase Console to see if data exists
 - Run the seed script again if needed

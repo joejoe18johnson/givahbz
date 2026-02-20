@@ -1,5 +1,5 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } from "firebase/storage";
-import { storage } from "./config";
+import { storage, auth } from "./config";
 
 // Helper function to add timeout to promises
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
@@ -59,6 +59,12 @@ export async function uploadUnderReviewCampaignImage(
   }
 }
 
+// Sanitize file name for Storage path (no path separators or problematic chars)
+function sanitizeFileName(name: string): string {
+  const base = name.replace(/\.[^/.]+$/, "").trim() || "document";
+  return base.replace(/[/\\?#*[\]^\s]+/g, "_").slice(0, 180) || "document";
+}
+
 // Upload verification document with timeout and progress tracking
 export async function uploadVerificationDocument(
   userId: string,
@@ -82,9 +88,16 @@ export async function uploadVerificationDocument(
     if (!documentType) {
       throw new Error("Document type is required");
     }
-    
-    const fileRef = ref(storage, `verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`);
-    console.log(`Uploading verification document to: verification-docs/${userId}/${documentType}/${Date.now()}_${file.name}`, `Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    const currentUid = auth.currentUser?.uid;
+    if (!currentUid || currentUid !== userId) {
+      throw new Error("You must be signed in to upload. Please sign in and try again.");
+    }
+
+    const safeName = sanitizeFileName(file.name);
+    const ext = file.name.split(".").pop()?.toLowerCase() || (file.type === "application/pdf" ? "pdf" : "jpg");
+    const path = `verification-docs/${userId}/${documentType}/${Date.now()}_${safeName}.${ext}`;
+    const fileRef = ref(storage, path);
+    console.log(`Uploading verification document to: ${path}`, `Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
     
     const startTime = Date.now();
     
@@ -132,16 +145,26 @@ export async function uploadVerificationDocument(
     return url;
   } catch (error: any) {
     console.error("Error uploading verification document:", error);
+    const code = error?.code || "";
     const errorMessage = error?.message || String(error);
-    if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
-      throw new Error("Upload timed out. Please check your internet connection and try again with a smaller file.");
-    } else if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
-      throw new Error("Permission denied: Unable to upload document. Please check your Firebase Storage rules.");
-    } else if (errorMessage.includes("quota") || errorMessage.includes("Quota")) {
-      throw new Error("Storage quota exceeded: Unable to upload document.");
-    } else {
-      throw new Error(`Failed to upload verification document: ${errorMessage}`);
+    if (code === "storage/unauthenticated" || errorMessage.includes("unauthenticated")) {
+      throw new Error("You must be signed in to upload. Please sign in and try again.");
     }
+    if (code === "storage/unauthorized" || errorMessage.includes("permission") || errorMessage.includes("Permission")) {
+      throw new Error(
+        "Permission denied. In Firebase Console go to Storage > Rules and ensure verification-docs allow write for authenticated users."
+      );
+    }
+    if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
+      throw new Error("Upload timed out. Check your internet connection and try again with a smaller file.");
+    }
+    if (errorMessage.includes("quota") || errorMessage.includes("Quota")) {
+      throw new Error("Storage quota exceeded. Try a smaller file or contact support.");
+    }
+    if (code === "storage/unknown" && !errorMessage) {
+      throw new Error("Upload failed. Check that Firebase Storage is enabled and your storage bucket is set in .env (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET).");
+    }
+    throw new Error(`Upload failed: ${errorMessage}`);
   }
 }
 

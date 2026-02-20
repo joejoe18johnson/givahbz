@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { getUsersFromFirestore, setUserPhoneVerified, setIdVerified, setAddressVerified, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
-import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle, UserX, UserCheck } from "lucide-react";
+import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle, UserX, UserCheck, FileText, ExternalLink } from "lucide-react";
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
@@ -187,6 +187,7 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3 font-medium">Phone approved</th>
                 <th className="px-5 py-3 font-medium">ID verified</th>
                 <th className="px-5 py-3 font-medium">Address verified</th>
+                <th className="px-5 py-3 font-medium">Documents</th>
                 <th className="px-5 py-3 font-medium bg-gray-50 sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">Actions</th>
               </tr>
             </thead>
@@ -234,6 +235,48 @@ export default function AdminUsersPage() {
                       ) : (
                         <span className="text-gray-400 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> Not submitted</span>
                       )}
+                    </td>
+                    <td className="px-5 py-3">
+                      {u.addressVerified ? (
+                        <span className="text-verified-600 inline-flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Verified</span>
+                      ) : u.addressPending ? (
+                        <span className="text-amber-600 inline-flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Pending</span>
+                      ) : (
+                        <span className="text-gray-400 inline-flex items-center gap-1"><XCircle className="w-4 h-4" /> Not submitted</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        {u.idDocument ? (
+                          <a
+                            href={u.idDocument}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs font-medium"
+                            title="View ID document"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            View ID
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : null}
+                        {u.addressDocument ? (
+                          <a
+                            href={u.addressDocument}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs font-medium"
+                            title="View address document"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            View address
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : null}
+                        {!u.idDocument && !u.addressDocument && (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3 align-top bg-white sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">
                       <div className="flex flex-wrap items-center gap-2 min-w-[200px]">

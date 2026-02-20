@@ -42,17 +42,17 @@ export default function DonateButton({ campaignId, campaignTitle = "Campaign" }:
       <div className="mb-4">
         <label className="block text-xs font-medium mb-2">Select or enter amount</label>
         
-        {/* Preset Amount Buttons */}
-        <div className="grid grid-cols-3 gap-1.5 mb-2">
+        {/* Preset Amount Buttons - min 44px height for touch on mobile */}
+        <div className="grid grid-cols-3 gap-2 mb-2">
           {presetAmounts.map((presetAmount) => (
             <button
               key={presetAmount}
               type="button"
               onClick={() => handlePresetClick(presetAmount)}
-              className={`px-2 py-2 rounded-lg text-xs font-medium transition-colors ${
+              className={`min-h-[44px] px-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 selectedPreset === presetAmount
                   ? "bg-success-500 text-white border-2 border-success-500"
-                  : "border-2 border-gray-300 text-gray-700 hover:border-primary-500 hover:text-primary-600"
+                  : "border-2 border-gray-300 text-gray-700 hover:border-primary-500 hover:text-primary-600 active:bg-gray-50"
               }`}
             >
               BZ${presetAmount.toLocaleString()}
@@ -60,25 +60,27 @@ export default function DonateButton({ campaignId, campaignTitle = "Campaign" }:
           ))}
         </div>
 
-        {/* Custom Amount Input */}
+        {/* Custom Amount Input - larger tap target on mobile */}
         <div className="mb-2">
           <label className="block text-xs font-medium mb-1.5">Other Amount</label>
           <input
             type="text"
+            inputMode="numeric"
             value={amount}
             onChange={handleCustomAmountChange}
             placeholder="Enter amount"
-            className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full min-h-[44px] px-3 py-2.5 text-base border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             min="1"
             step="1"
           />
         </div>
 
-        {/* Donate Button */}
+        {/* Donate Button - min 48px height for touch on mobile */}
         <button
+          type="button"
           onClick={handleDonate}
           disabled={!amount || parseFloat(amount) <= 0 || isNaN(parseFloat(amount))}
-          className="w-full bg-success-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-success-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="w-full min-h-[48px] bg-success-500 text-white px-4 py-3 rounded-lg text-base font-medium hover:bg-success-600 active:bg-success-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           {amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0
             ? `Donate ${formatCurrency(parseFloat(amount))}`
