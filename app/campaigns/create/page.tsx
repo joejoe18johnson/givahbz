@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { Upload, FileText, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+
+/** TEMPORARY: set to true to require phone + ID + address verification before creating campaigns. */
+const REQUIRE_VERIFICATION_TO_CREATE = false;
 import { useRouter } from "next/navigation";
 import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
 import { addCampaignUnderReviewToFirestore } from "@/lib/firebase/firestore";
@@ -104,7 +107,7 @@ export default function CreateCampaignPage() {
     );
   }
 
-  if (!user.phoneVerified || !user.idVerified || !user.addressVerified) {
+  if (REQUIRE_VERIFICATION_TO_CREATE && (!user.phoneVerified || !user.idVerified || !user.addressVerified)) {
     const missingVerifications = [];
     const pendingVerifications = [];
     
