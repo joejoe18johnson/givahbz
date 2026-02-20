@@ -159,6 +159,24 @@ service cloud.firestore {
 }
 ```
 
+## Step 6b: Approve donations (optional server-side)
+
+If you see **"Missing or insufficient permissions"** when approving donations in the admin panel, you can either:
+
+**Option A – Firestore rules (client-side)**  
+Ensure your Firestore rules include an **update** rule for `donations` so admins can update (see `firestore.rules` in the project and the donations block with `allow update` for admin). Publish the rules in Firebase Console.
+
+**Option B – Server-side approve (recommended)**  
+Use the Firebase Admin SDK so the server performs the update (no client rules needed):
+
+1. In Firebase Console go to **Project settings** (gear) > **Service accounts**.
+2. Click **Generate new private key** and download the JSON file.
+3. Add to your `.env` (or Vercel env vars) a **single** variable with the **entire** JSON as one line (escape quotes if needed), for example:
+   - **Name:** `FIREBASE_SERVICE_ACCOUNT_JSON`
+   - **Value:** paste the full JSON (e.g. `{"type":"service_account","project_id":"your-project",...}`).
+4. Ensure `ADMIN_EMAILS` (or `NEXT_PUBLIC_ADMIN_EMAILS`) is set and includes the email you use to sign in as admin.
+5. Restart the dev server (or redeploy). The admin **Approve** button will then call the server API, which uses the Admin SDK and bypasses Firestore security rules.
+
 ## Step 7: Set Up Storage Security Rules (Production)
 
 1. Go to **Storage** > **Rules**

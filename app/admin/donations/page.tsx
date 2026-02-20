@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getDonations, approveDonation } from "@/lib/firebase/firestore";
+import { getDonations } from "@/lib/firebase/firestore";
+import { auth } from "@/lib/firebase/config";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
@@ -35,7 +36,22 @@ export default function AdminDonationsPage() {
   async function handleApprove(donationId: string) {
     setApprovingId(donationId);
     try {
-      await approveDonation(donationId);
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("You must be signed in to approve donations.");
+      }
+      const token = await user.getIdToken();
+      const res = await fetch("/api/admin/approve-donation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ donationId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = typeof data.error === "string" ? data.error : "Failed to approve donation.";
+        const hint = typeof data.hint === "string" ? data.hint : "";
+        throw new Error(hint ? `${msg} ${hint}` : msg);
+      }
       await loadDonations();
       alert("Donation approved. The campaign totals have been updated.", {
         title: "Approved",
