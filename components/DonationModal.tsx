@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Heart, CreditCard, Building2, Wallet, CheckCircle2, Copy } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { recordDonationAndUpdateCampaign, createDonation } from "@/lib/firebase/firestore";
+import { useThemedModal } from "@/components/ThemedModal";
 
 interface DonationModalProps {
   campaignId: string;
@@ -22,6 +23,7 @@ export default function DonationModal({
   isOpen,
   onClose,
 }: DonationModalProps) {
+  const { alert } = useThemedModal();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
   const [donorInfo, setDonorInfo] = useState({
     name: "",
@@ -97,7 +99,10 @@ export default function DonationModal({
     } catch (error) {
       console.error("Error recording donation:", error);
       setIsProcessing(false);
-      alert("There was a problem recording your donation. Please try again or contact support.");
+      alert("There was a problem recording your donation. Please try again or contact support.", {
+        title: "Donation failed",
+        variant: "error",
+      });
     }
   };
 

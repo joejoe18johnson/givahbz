@@ -30,8 +30,6 @@ export default function CampaignPage({ params }: PageProps) {
   const [coverIndex, setCoverIndex] = useState(0);
   const coverCarouselRef = useRef<HTMLDivElement>(null);
   const scrollRAF = useRef<number | null>(null);
-  const touchStart = useRef<{ x: number; y: number; scrollLeft: number } | null>(null);
-  const touchLock = useRef<"horizontal" | "vertical" | null>(null);
   const { user } = useAuth();
   const { alert } = useThemedModal();
 
@@ -127,50 +125,8 @@ export default function CampaignPage({ params }: PageProps) {
                       WebkitOverflowScrolling: "touch",
                       scrollbarWidth: "none",
                       msOverflowStyle: "none",
-                      touchAction: "pan-y",
+                      touchAction: "pan-x pan-y",
                       scrollBehavior: "auto",
-                    }}
-                    onTouchStart={(e) => {
-                      if (e.touches.length !== 1) return;
-                      const el = coverCarouselRef.current;
-                      touchStart.current = {
-                        x: e.touches[0].clientX,
-                        y: e.touches[0].clientY,
-                        scrollLeft: el ? el.scrollLeft : 0,
-                      };
-                      touchLock.current = null;
-                    }}
-                    onTouchMove={(e) => {
-                      if (e.touches.length !== 1 || !touchStart.current) return;
-                      const dx = e.touches[0].clientX - touchStart.current.x;
-                      const dy = e.touches[0].clientY - touchStart.current.y;
-                      if (touchLock.current === "vertical") return;
-                      if (touchLock.current === "horizontal") {
-                        e.preventDefault();
-                        const el = coverCarouselRef.current;
-                        if (el) {
-                          const maxScroll = el.scrollWidth - el.offsetWidth;
-                          el.scrollLeft = Math.max(0, Math.min(maxScroll, touchStart.current.scrollLeft - dx));
-                        }
-                        return;
-                      }
-                      const absX = Math.abs(dx);
-                      const absY = Math.abs(dy);
-                      if (absX > 8 || absY > 8) {
-                        touchLock.current = absX > absY ? "horizontal" : "vertical";
-                        if (touchLock.current === "horizontal") {
-                          e.preventDefault();
-                          const el = coverCarouselRef.current;
-                          if (el) {
-                            const maxScroll = el.scrollWidth - el.offsetWidth;
-                            el.scrollLeft = Math.max(0, Math.min(maxScroll, touchStart.current.scrollLeft - dx));
-                          }
-                        }
-                      }
-                    }}
-                    onTouchEnd={() => {
-                      touchStart.current = null;
-                      touchLock.current = null;
                     }}
                     onScroll={() => {
                       const el = coverCarouselRef.current;

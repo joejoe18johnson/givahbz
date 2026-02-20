@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { getDonations, approveDonation } from "@/lib/firebase/firestore";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
+import { useThemedModal } from "@/components/ThemedModal";
 
 export default function AdminDonationsPage() {
+  const { alert } = useThemedModal();
   const [donations, setDonations] = useState<AdminDonation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -35,9 +37,17 @@ export default function AdminDonationsPage() {
     try {
       await approveDonation(donationId);
       await loadDonations();
+      alert("Donation approved. The campaign totals have been updated.", {
+        title: "Approved",
+        variant: "success",
+      });
     } catch (error) {
       console.error("Error approving donation:", error);
-      alert(error instanceof Error ? error.message : "Failed to approve donation.");
+      const message = error instanceof Error ? error.message : "Failed to approve donation.";
+      alert(message, {
+        title: "Could not approve",
+        variant: "error",
+      });
     } finally {
       setApprovingId(null);
     }
