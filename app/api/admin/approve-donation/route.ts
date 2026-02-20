@@ -61,11 +61,20 @@ export async function POST(request: NextRequest) {
   }
 
   const adminEmails = getAdminEmails();
-  if (adminEmails.length === 0 || !adminEmails.includes(email)) {
+  if (adminEmails.length === 0) {
     return NextResponse.json(
       {
-        error: "Your account is not an admin.",
-        hint: `Add your sign-in email to ADMIN_EMAILS in .env (e.g. ADMIN_EMAILS=${email}). Then restart and sign in again.`,
+        error: "No admin emails configured.",
+        hint: "Set ADMIN_EMAILS (or NEXT_PUBLIC_ADMIN_EMAILS) in .env to a comma-separated list of admin emails, then restart.",
+      },
+      { status: 503 }
+    );
+  }
+  if (!adminEmails.includes(email)) {
+    return NextResponse.json(
+      {
+        error: "Your account is not listed as an admin.",
+        hint: `You're signed in as "${email}". Add this exact email to ADMIN_EMAILS in .env, then restart the server and try again.`,
       },
       { status: 403 }
     );
