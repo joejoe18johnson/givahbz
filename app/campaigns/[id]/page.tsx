@@ -344,7 +344,7 @@ export default function CampaignPage({ params }: PageProps) {
               variant="full"
               className="mb-5 pb-5 border-b border-gray-200"
             />
-            <div id="campaign-donate">
+            <div id="campaign-donate" className="pb-24 sm:pb-8">
               <CampaignDonateSection campaignId={campaign.id} campaignTitle={campaign.title} />
             </div>
             {campaign.rewards && campaign.rewards.length > 0 && (
