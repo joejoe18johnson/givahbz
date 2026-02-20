@@ -66,15 +66,19 @@ export function getConfigDiagnostic(): string | null {
   const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
   const hasPath = pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "";
   const hasJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON && typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON === "string" && process.env.FIREBASE_SERVICE_ACCOUNT_JSON.trim() !== "";
+  const cwd = process.cwd();
+  const defaultPath = resolve(cwd, "firebase-service-account.json");
+  const defaultExists = existsSync(defaultPath);
   if (hasPath) {
-    const trimmed = pathEnv!.trim().replace(/^["']|["']$/g, "");
-    const resolved = resolve(process.cwd(), trimmed);
+    const trimmed = pathEnv!.trim().replace(/^["']|["']$/g, "").replace(/\r/g, "");
+    const resolved = resolve(cwd, trimmed);
     const exists = existsSync(resolved) || existsSync(trimmed);
-    if (!exists) return `File not found at ${resolved}. Check FIREBASE_SERVICE_ACCOUNT_PATH and restart.`;
+    if (!exists) return `File not found at ${resolved}. For Vercel: use FIREBASE_SERVICE_ACCOUNT_JSON (full JSON) in Project Settings → Environment Variables.`;
     return "Key file found but missing private_key or client_email, or invalid JSON.";
   }
   if (hasJson) return "FIREBASE_SERVICE_ACCOUNT_JSON is set but invalid or incomplete.";
-  return "Set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_SERVICE_ACCOUNT_JSON in .env and restart the server.";
+  if (defaultExists) return "Key file exists at project root but was not loaded. Restart the server from the project root (e.g. cd /path/to/CrowdFund && npm run dev).";
+  return "Local: add FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json to .env and put the key file in the project root, then restart. Vercel: add FIREBASE_SERVICE_ACCOUNT_JSON (paste full JSON) in Project Settings → Environment Variables.";
 }
 
 function getAdminApp(): admin.app.App | null {
