@@ -149,10 +149,11 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
     
-    // Donations: anyone can read (for public donor lists on campaign pages); anyone can create (guest donors)
+    // Donations: anyone can read; create by anyone (donors); update only by admin (approve pending donations)
     match /donations/{donationId} {
       allow read: if true;
       allow create: if true;
+      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }

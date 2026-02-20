@@ -30,6 +30,8 @@ export default function CampaignPage({ params }: PageProps) {
   const [coverIndex, setCoverIndex] = useState(0);
   const coverCarouselRef = useRef<HTMLDivElement>(null);
   const scrollRAF = useRef<number | null>(null);
+  const touchStart = useRef<{ x: number; y: number; scrollLeft: number } | null>(null);
+  const touchLock = useRef<"horizontal" | "vertical" | null>(null);
   const { user } = useAuth();
   const { alert } = useThemedModal();
 
@@ -120,13 +122,55 @@ export default function CampaignPage({ params }: PageProps) {
                 <div className="sm:hidden w-full min-w-0 h-[220px] rounded-xl overflow-hidden relative isolate">
                   <div
                     ref={coverCarouselRef}
-                    className="flex h-full w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-pan-x [&::-webkit-scrollbar]:hidden"
+                    className="flex h-full w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
                     style={{
                       WebkitOverflowScrolling: "touch",
                       scrollbarWidth: "none",
                       msOverflowStyle: "none",
-                      touchAction: "pan-x",
+                      touchAction: "pan-y",
                       scrollBehavior: "auto",
+                    }}
+                    onTouchStart={(e) => {
+                      if (e.touches.length !== 1) return;
+                      const el = coverCarouselRef.current;
+                      touchStart.current = {
+                        x: e.touches[0].clientX,
+                        y: e.touches[0].clientY,
+                        scrollLeft: el ? el.scrollLeft : 0,
+                      };
+                      touchLock.current = null;
+                    }}
+                    onTouchMove={(e) => {
+                      if (e.touches.length !== 1 || !touchStart.current) return;
+                      const dx = e.touches[0].clientX - touchStart.current.x;
+                      const dy = e.touches[0].clientY - touchStart.current.y;
+                      if (touchLock.current === "vertical") return;
+                      if (touchLock.current === "horizontal") {
+                        e.preventDefault();
+                        const el = coverCarouselRef.current;
+                        if (el) {
+                          const maxScroll = el.scrollWidth - el.offsetWidth;
+                          el.scrollLeft = Math.max(0, Math.min(maxScroll, touchStart.current.scrollLeft - dx));
+                        }
+                        return;
+                      }
+                      const absX = Math.abs(dx);
+                      const absY = Math.abs(dy);
+                      if (absX > 8 || absY > 8) {
+                        touchLock.current = absX > absY ? "horizontal" : "vertical";
+                        if (touchLock.current === "horizontal") {
+                          e.preventDefault();
+                          const el = coverCarouselRef.current;
+                          if (el) {
+                            const maxScroll = el.scrollWidth - el.offsetWidth;
+                            el.scrollLeft = Math.max(0, Math.min(maxScroll, touchStart.current.scrollLeft - dx));
+                          }
+                        }
+                      }
+                    }}
+                    onTouchEnd={() => {
+                      touchStart.current = null;
+                      touchLock.current = null;
                     }}
                     onScroll={() => {
                       const el = coverCarouselRef.current;
@@ -144,8 +188,8 @@ export default function CampaignPage({ params }: PageProps) {
                     {slides.map((src, i) => (
                       <div
                         key={i}
-                        className="relative flex-shrink-0 w-full h-full bg-gray-200 snap-start touch-pan-x"
-                        style={{ minWidth: "100%", touchAction: "pan-x" }}
+                        className="relative flex-shrink-0 w-full h-full bg-gray-200 snap-start"
+                        style={{ minWidth: "100%" }}
                       >
                         {src ? (
                           <SafeImage
@@ -393,6 +437,20 @@ export default function CampaignPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {/* Mobile-only sticky Donate bar - scrolls to donate section */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+        <button
+          type="button"
+          onClick={() => document.getElementById("campaign-donate")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          className="w-full min-h-[48px] bg-green-500 text-white rounded-xl font-semibold text-base active:bg-green-600 transition-colors flex items-center justify-center gap-2"
+        >
+          <Heart className="w-5 h-5" />
+          Donate to this campaign
+        </button>
+      </div>
+      {/* Spacer so page content isn't hidden behind sticky bar on mobile */}
+      <div className="lg:hidden h-20" aria-hidden="true" />
 
       {/* Donors List - same width as cover/main content column */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-4 lg:gap-6">
