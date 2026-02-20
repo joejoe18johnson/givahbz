@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { useThemedModal } from "@/components/ThemedModal";
 
+type IdDocumentTypeValue = "social_security" | "passport" | "";
+
 export default function ProfilePage() {
   const { user, isLoading, updateUser, logout } = useAuth();
   const { alert } = useThemedModal();
@@ -376,7 +378,6 @@ export default function ProfilePage() {
   };
 
   return (
-    <>
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
       {/* Themed success popup */}
       {showSavedPopup && (
@@ -650,7 +651,7 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">ID Type</label>
                   <select
                     value={idDocumentType}
-                    onChange={(e) => setIdDocumentType(e.target.value as "social_security" | "passport" | "")}
+                    onChange={(e) => setIdDocumentType(e.target.value as IdDocumentTypeValue)}
                     disabled={user?.idPending === true}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
                   >
@@ -1150,6 +1151,5 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
-    </>
   );
 }
