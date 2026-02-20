@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
-import { adminApproveDonation, isAdminConfigured } from "@/lib/firebase/admin";
+import { adminApproveDonation, isAdminConfigured, getConfigDiagnostic } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,10 +20,11 @@ function getAdminEmails(): string[] {
 
 export async function POST(request: NextRequest) {
   if (!isAdminConfigured()) {
+    const hint = getConfigDiagnostic();
     return NextResponse.json(
       {
         error: "Server is not configured to approve donations.",
-        hint: "Add FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string) or FIREBASE_SERVICE_ACCOUNT_PATH (path to the JSON file) to .env. Get the key: Firebase Console → Project settings → Service accounts → Generate new private key.",
+        hint: hint || "Add FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_PATH to .env. Get the key: Firebase Console → Project settings → Service accounts → Generate new private key.",
       },
       { status: 503 }
     );

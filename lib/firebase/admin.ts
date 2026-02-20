@@ -10,35 +10,69 @@
 
 import * as admin from "firebase-admin";
 import { getStorage, getDownloadURL } from "firebase-admin/storage";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
 const donationsCollection = "donations";
 const campaignsCollection = "campaigns";
 
+let cachedKey: Record<string, string> | null | undefined = undefined;
+
 function loadServiceAccountKey(): Record<string, string> | null {
+  if (cachedKey !== undefined) return cachedKey;
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (raw && typeof raw === "string" && raw.trim() !== "") {
     try {
-      return JSON.parse(raw) as Record<string, string>;
+      const parsed = JSON.parse(raw) as Record<string, string>;
+      if (parsed.private_key && parsed.client_email) {
+        cachedKey = parsed;
+        return cachedKey;
+      }
     } catch {
-      return null;
+      // fall through
     }
   }
   const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
   if (pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "") {
-    const trimmed = pathEnv.trim();
-    for (const filePath of [resolve(process.cwd(), trimmed), trimmed]) {
+    const trimmed = pathEnv.trim().replace(/^["']|["']$/g, "");
+    const cwd = process.cwd();
+    const pathsToTry = [
+      resolve(cwd, trimmed),
+      trimmed,
+    ];
+    for (const filePath of pathsToTry) {
       try {
+        if (!existsSync(filePath)) continue;
         const content = readFileSync(filePath, "utf8");
         const parsed = JSON.parse(content) as Record<string, string>;
-        if (parsed.private_key && parsed.client_email) return parsed;
+        if (parsed.private_key && parsed.client_email) {
+          cachedKey = parsed;
+          return cachedKey;
+        }
       } catch {
         continue;
       }
     }
   }
+  cachedKey = null;
   return null;
+}
+
+/** Returns a short hint when not configured (for API error response). */
+export function getConfigDiagnostic(): string | null {
+  if (loadServiceAccountKey() != null) return null;
+  const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+  const hasPath = pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "";
+  const hasJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON && typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON === "string" && process.env.FIREBASE_SERVICE_ACCOUNT_JSON.trim() !== "";
+  if (hasPath) {
+    const trimmed = pathEnv!.trim().replace(/^["']|["']$/g, "");
+    const resolved = resolve(process.cwd(), trimmed);
+    const exists = existsSync(resolved) || existsSync(trimmed);
+    if (!exists) return `File not found at ${resolved}. Check FIREBASE_SERVICE_ACCOUNT_PATH and restart.`;
+    return "Key file found but missing private_key or client_email, or invalid JSON.";
+  }
+  if (hasJson) return "FIREBASE_SERVICE_ACCOUNT_JSON is set but invalid or incomplete.";
+  return "Set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_SERVICE_ACCOUNT_JSON in .env and restart the server.";
 }
 
 function getAdminApp(): admin.app.App | null {
