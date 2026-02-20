@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
-import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone, PauseCircle, PlayCircle, Trash2, UserX, UserCheck } from "lucide-react";
+import { Megaphone, Users, Heart, DollarSign, ArrowRight, Clock, Phone, PauseCircle, PlayCircle, Trash2, UserX, UserCheck, MapPin } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const { user: currentUser } = useAuth();

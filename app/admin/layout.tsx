@@ -20,7 +20,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const NOTIFICATIONS_SEEN_KEY = "crowdfund_admin_notifications_seen";

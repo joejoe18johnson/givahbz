@@ -71,6 +71,7 @@ export default function DonationModal({
         method: selectedMethod as "credit-card" | "bank" | "digiwallet" | "paypal",
         status: "completed" as const,
         note: note.trim() || undefined,
+        createdAt: new Date().toISOString(),
       };
 
       await recordDonationAndUpdateCampaign(donation, campaignId);
