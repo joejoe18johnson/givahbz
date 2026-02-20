@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { uploadProfilePhoto, uploadVerificationDocument } from "@/lib/firebase/storage";
+import { uploadProfilePhoto } from "@/lib/firebase/storage";
+import { auth } from "@/lib/firebase/config";
+import { compressImageForUpload } from "@/lib/compressImage";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -227,6 +229,36 @@ export default function ProfilePage() {
     }
   };
 
+  async function uploadVerificationViaApi(
+    file: File,
+    documentType: string,
+    onProgress?: (p: number) => void
+  ): Promise<string> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error("You must be signed in to upload.");
+    onProgress?.(10);
+    const fileToSend = await compressImageForUpload(file);
+    onProgress?.(30);
+    const token = await currentUser.getIdToken();
+    const formData = new FormData();
+    formData.append("file", fileToSend);
+    formData.append("documentType", documentType);
+    onProgress?.(50);
+    const res = await fetch("/api/upload-verification", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    onProgress?.(90);
+    if (!res.ok) {
+      throw new Error(typeof data.error === "string" ? data.error : "Upload failed.");
+    }
+    onProgress?.(100);
+    if (typeof data.url !== "string") throw new Error("No URL returned.");
+    return data.url;
+  }
+
   const handleIdDocumentUpload = async () => {
     if (user?.idPending) {
       alert("You already have an ID document pending verification. Please wait for the verification process to complete before uploading a new document.", { variant: "error" });
@@ -245,11 +277,10 @@ export default function ProfilePage() {
     setIsUploadingId(true);
     setUploadProgress(0);
     try {
-      const documentUrl = await uploadVerificationDocument(
-        user.id,
+      const documentUrl = await uploadVerificationViaApi(
         idDocumentFile,
         idDocumentType,
-        (progress) => setUploadProgress(progress)
+        (p) => setUploadProgress(p)
       );
       try {
         await updateUser({
@@ -314,11 +345,10 @@ export default function ProfilePage() {
     setIsUploadingAddress(true);
     setAddressUploadProgress(0);
     try {
-      const documentUrl = await uploadVerificationDocument(
-        user.id,
+      const documentUrl = await uploadVerificationViaApi(
         addressDocumentFile,
         "address",
-        (progress) => setAddressUploadProgress(progress)
+        (p) => setAddressUploadProgress(p)
       );
       try {
         await updateUser({

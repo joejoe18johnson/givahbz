@@ -1,6 +1,6 @@
 /**
  * Firebase Admin SDK for server-only operations (bypasses Firestore security rules).
- * Used for admin actions like approving donations when client rules block update.
+ * Used for admin actions like approving donations and uploading verification docs.
  *
  * Set FIREBASE_SERVICE_ACCOUNT_JSON in env to the full JSON key (from Firebase Console
  * > Project Settings > Service accounts > Generate new private key). In .env the
@@ -8,6 +8,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { getStorage, getDownloadURL } from "firebase-admin/storage";
 
 const donationsCollection = "donations";
 const campaignsCollection = "campaigns";
@@ -81,4 +82,40 @@ export async function adminApproveDonation(donationId: string): Promise<void> {
 
 export function isAdminConfigured(): boolean {
   return getAdminApp() != null;
+}
+
+/** Sanitize for Storage path (no path separators or problematic chars). */
+function sanitizeFileName(name: string): string {
+  const base = name.replace(/\.[^/.]+$/, "").trim() || "document";
+  return base.replace(/[/\\?#*[\]^\s]+/g, "_").slice(0, 180) || "document";
+}
+
+/**
+ * Upload a verification document to Storage (server-side). Returns the download URL.
+ * Call from API route only after verifying the request is from the same user (uid).
+ */
+export async function adminUploadVerificationDocument(
+  userId: string,
+  buffer: Buffer,
+  documentType: string,
+  originalFileName: string,
+  mimeType: string
+): Promise<string> {
+  const app = getAdminApp();
+  if (!app) {
+    throw new Error("Server is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON.");
+  }
+  const storage = getStorage(app);
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || undefined;
+  const bucket = storage.bucket(bucketName);
+  const ext = (originalFileName.split(".").pop() || "").toLowerCase() || (mimeType === "application/pdf" ? "pdf" : "jpg");
+  const safeName = sanitizeFileName(originalFileName);
+  const path = `verification-docs/${userId}/${documentType}/${Date.now()}_${safeName}.${ext}`;
+  const file = bucket.file(path);
+  await file.save(buffer, {
+    contentType: mimeType || "application/octet-stream",
+    metadata: { cacheControl: "private, max-age=31536000" },
+  });
+  const url = await getDownloadURL(file);
+  return url;
 }
