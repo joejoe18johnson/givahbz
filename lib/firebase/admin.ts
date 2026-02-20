@@ -27,12 +27,15 @@ function loadServiceAccountKey(): Record<string, string> | null {
   }
   const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
   if (pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "") {
-    try {
-      const path = resolve(process.cwd(), pathEnv.trim());
-      const content = readFileSync(path, "utf8");
-      return JSON.parse(content) as Record<string, string>;
-    } catch {
-      return null;
+    const trimmed = pathEnv.trim();
+    for (const filePath of [resolve(process.cwd(), trimmed), trimmed]) {
+      try {
+        const content = readFileSync(filePath, "utf8");
+        const parsed = JSON.parse(content) as Record<string, string>;
+        if (parsed.private_key && parsed.client_email) return parsed;
+      } catch {
+        continue;
+      }
     }
   }
   return null;
