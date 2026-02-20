@@ -1,33 +1,47 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getDonations } from "@/lib/firebase/firestore";
+import { getDonations, approveDonation } from "@/lib/firebase/firestore";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 
 export default function AdminDonationsPage() {
   const [donations, setDonations] = useState<AdminDonation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+
+  async function loadDonations() {
+    setIsLoading(true);
+    try {
+      const fetchedDonations = await getDonations();
+      const sorted = [...fetchedDonations].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setDonations(sorted);
+    } catch (error) {
+      console.error("Error loading donations:", error);
+      setDonations([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadDonations() {
-      setIsLoading(true);
-      try {
-        const fetchedDonations = await getDonations();
-        // Sort by newest first (getDonations already returns sorted, but ensure it's correct)
-        const sorted = [...fetchedDonations].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        setDonations(sorted);
-      } catch (error) {
-        console.error("Error loading donations:", error);
-        setDonations([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
     loadDonations();
   }, []);
+
+  async function handleApprove(donationId: string) {
+    setApprovingId(donationId);
+    try {
+      await approveDonation(donationId);
+      await loadDonations();
+    } catch (error) {
+      console.error("Error approving donation:", error);
+      alert(error instanceof Error ? error.message : "Failed to approve donation.");
+    } finally {
+      setApprovingId(null);
+    }
+  }
 
   const totalCompleted = donations.filter((d) => d.status === "completed").reduce((sum, d) => sum + d.amount, 0);
   const totalPending = donations.filter((d) => d.status === "pending").reduce((sum, d) => sum + d.amount, 0);
@@ -70,12 +84,13 @@ export default function AdminDonationsPage() {
                 <th className="px-5 py-3 font-medium">Method</th>
                 <th className="px-5 py-3 font-medium">Anonymous</th>
                 <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {donations.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={10} className="px-5 py-12 text-center text-gray-500">
                     No donations yet
                   </td>
                 </tr>
@@ -92,6 +107,20 @@ export default function AdminDonationsPage() {
                     <td className="px-5 py-3">{d.anonymous ? "Yes" : "No"}</td>
                     <td className="px-5 py-3">
                       <span className={d.status === "completed" ? "text-success-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
+                    </td>
+                    <td className="px-5 py-3">
+                      {d.status === "pending" ? (
+                        <button
+                          type="button"
+                          onClick={() => handleApprove(d.id)}
+                          disabled={approvingId === d.id}
+                          className="text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {approvingId === d.id ? "Approving…" : "Approve"}
+                        </button>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                   </tr>
                 ))

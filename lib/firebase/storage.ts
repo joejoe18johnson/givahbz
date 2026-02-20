@@ -1,5 +1,6 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } from "firebase/storage";
 import { storage, auth } from "./config";
+import { compressImageForUpload } from "@/lib/compressImage";
 
 // Helper function to add timeout to promises
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
@@ -65,6 +66,19 @@ function sanitizeFileName(name: string): string {
   return base.replace(/[/\\?#*[\]^\s]+/g, "_").slice(0, 180) || "document";
 }
 
+// Allowed extensions for verification docs (some browsers send generic MIME)
+const VERIFICATION_ALLOWED_EXT = new Set([
+  "jpg", "jpeg", "png", "gif", "webp", "heic", "pdf",
+]);
+
+function isAllowedVerificationFile(file: File): boolean {
+  const mimeOk =
+    file.type.startsWith("image/") || file.type === "application/pdf";
+  if (mimeOk) return true;
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  return VERIFICATION_ALLOWED_EXT.has(ext);
+}
+
 // Upload verification document with timeout and progress tracking
 export async function uploadVerificationDocument(
   userId: string,
@@ -76,8 +90,10 @@ export async function uploadVerificationDocument(
     if (!file) {
       throw new Error("File is required");
     }
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      throw new Error("File must be an image (JPG, PNG) or PDF document");
+    if (!isAllowedVerificationFile(file)) {
+      throw new Error(
+        "File must be an image (JPG, PNG, HEIC, etc.) or PDF. Please choose a different file."
+      );
     }
     if (file.size > 10 * 1024 * 1024) {
       throw new Error("File size must be less than 10MB");
@@ -88,21 +104,28 @@ export async function uploadVerificationDocument(
     if (!documentType) {
       throw new Error("Document type is required");
     }
-    const currentUid = auth.currentUser?.uid;
+    // Ensure auth is ready (can be briefly null after redirect)
+    let currentUid = auth.currentUser?.uid;
+    if (!currentUid || currentUid !== userId) {
+      await new Promise((r) => setTimeout(r, 300));
+      currentUid = auth.currentUser?.uid ?? undefined;
+    }
     if (!currentUid || currentUid !== userId) {
       throw new Error("You must be signed in to upload. Please sign in and try again.");
     }
 
-    const safeName = sanitizeFileName(file.name);
-    const ext = file.name.split(".").pop()?.toLowerCase() || (file.type === "application/pdf" ? "pdf" : "jpg");
+    // Compress images before upload to avoid timeouts and speed up transfer
+    const fileToUpload = await compressImageForUpload(file);
+    const safeName = sanitizeFileName(fileToUpload.name);
+    const ext = fileToUpload.name.split(".").pop()?.toLowerCase() || (fileToUpload.type === "application/pdf" ? "pdf" : "jpg");
     const path = `verification-docs/${userId}/${documentType}/${Date.now()}_${safeName}.${ext}`;
     const fileRef = ref(storage, path);
-    console.log(`Uploading verification document to: ${path}`, `Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    console.log(`Uploading verification document to: ${path}`, `Size: ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
     
     const startTime = Date.now();
     
     // Use uploadBytesResumable for better control and progress tracking
-    const uploadTask = uploadBytesResumable(fileRef, file);
+    const uploadTask = uploadBytesResumable(fileRef, fileToUpload);
     
     // Create a promise that resolves when upload completes
     const uploadPromise = new Promise<void>((resolve, reject) => {
@@ -161,8 +184,12 @@ export async function uploadVerificationDocument(
     if (errorMessage.includes("quota") || errorMessage.includes("Quota")) {
       throw new Error("Storage quota exceeded. Try a smaller file or contact support.");
     }
-    if (code === "storage/unknown" && !errorMessage) {
-      throw new Error("Upload failed. Check that Firebase Storage is enabled and your storage bucket is set in .env (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET).");
+    if (code === "storage/unknown" || code === "storage/object-not-found") {
+      const hint =
+        !errorMessage || errorMessage.length < 20
+          ? " Check that Firebase Storage is enabled and NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET is set in .env."
+          : "";
+      throw new Error(`Upload failed: ${errorMessage || "Unknown error"}${hint}`);
     }
     throw new Error(`Upload failed: ${errorMessage}`);
   }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Heart, CreditCard, Building2, Wallet, CheckCircle2, Copy } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { recordDonationAndUpdateCampaign } from "@/lib/firebase/firestore";
+import { recordDonationAndUpdateCampaign, createDonation } from "@/lib/firebase/firestore";
 
 interface DonationModalProps {
   campaignId: string;
@@ -40,6 +40,7 @@ export default function DonationModal({
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [donationWasPending, setDonationWasPending] = useState(false);
 
   const bankAccountDetails = {
     bankName: "Belize Bank",
@@ -61,6 +62,7 @@ export default function DonationModal({
       // Simulate payment processing delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
+      const isPendingMethod = selectedMethod === "bank" || selectedMethod === "digiwallet";
       const donation = {
         campaignId,
         campaignTitle,
@@ -69,18 +71,24 @@ export default function DonationModal({
         donorName: donorInfo.anonymous ? "Anonymous" : donorInfo.name.trim(),
         anonymous: donorInfo.anonymous,
         method: selectedMethod as "credit-card" | "bank" | "digiwallet" | "paypal",
-        status: "completed" as const,
+        status: (isPendingMethod ? "pending" : "completed") as "pending" | "completed",
         note: note.trim() || undefined,
         createdAt: new Date().toISOString(),
       };
 
-      await recordDonationAndUpdateCampaign(donation, campaignId);
+      if (isPendingMethod) {
+        await createDonation(donation);
+      } else {
+        await recordDonationAndUpdateCampaign(donation, campaignId);
+      }
 
+      setDonationWasPending(isPendingMethod);
       setIsProcessing(false);
       setIsSuccess(true);
       setTimeout(() => {
         onClose();
         setIsSuccess(false);
+        setDonationWasPending(false);
         setSelectedMethod(null);
         setDonorInfo({ name: "", email: "", phone: "", anonymous: false });
         setNote("");
@@ -145,10 +153,14 @@ export default function DonationModal({
               </div>
               <h3 className="text-3xl font-medium mb-4">Thank You!</h3>
               <p className="text-lg text-gray-600 mb-2">
-                Your donation of {formatCurrency(amount)} has been received.
+                {donationWasPending
+                  ? `Your donation of ${formatCurrency(amount)} has been recorded.`
+                  : `Your donation of ${formatCurrency(amount)} has been received.`}
               </p>
               <p className="text-gray-600">
-                Your support makes a real difference. Thank you for helping!
+                {donationWasPending
+                  ? "The campaign will be updated once we verify your transfer. Thank you for helping!"
+                  : "Your support makes a real difference. Thank you for helping!"}
               </p>
             </div>
           ) : (

@@ -245,31 +245,36 @@ export default function ProfilePage() {
     setIsUploadingId(true);
     setUploadProgress(0);
     try {
-      console.log("Starting ID document upload...", { userId: user.id, documentType: idDocumentType, fileName: idDocumentFile.name, fileSize: idDocumentFile.size });
       const documentUrl = await uploadVerificationDocument(
-        user.id, 
-        idDocumentFile, 
+        user.id,
+        idDocumentFile,
         idDocumentType,
         (progress) => setUploadProgress(progress)
       );
-      console.log("Document uploaded successfully, URL:", documentUrl);
-      console.log("Updating user profile with document URL...");
-      await updateUser({ 
-        idDocument: documentUrl, 
-        idDocumentType: idDocumentType as "social_security" | "passport",
-        idVerified: false,
-        idPending: true 
-      });
-      console.log("User profile updated successfully");
+      try {
+        await updateUser({
+          idDocument: documentUrl,
+          idDocumentType: idDocumentType as "social_security" | "passport",
+          idVerified: false,
+          idPending: true,
+        });
+      } catch (updateErr: any) {
+        console.error("Error saving ID document to profile:", updateErr);
+        alert(
+          "Document uploaded but we couldn’t save it to your profile. Please try again or contact support.",
+          { variant: "error" }
+        );
+        return;
+      }
       setIdDocumentFile(null);
       if (idFileInputRef.current) {
-        idFileInputRef.current.value = '';
+        idFileInputRef.current.value = "";
       }
       alert("ID document uploaded successfully. It will be reviewed by an admin.", { variant: "success" });
     } catch (error: any) {
       console.error("Error uploading ID document:", error);
       const errorMessage = error?.message || String(error);
-      alert(`Failed to upload ID document: ${errorMessage}`, { variant: "error" });
+      alert(`Upload failed: ${errorMessage}`, { variant: "error" });
     } finally {
       setIsUploadingId(false);
       setUploadProgress(0);
@@ -278,28 +283,21 @@ export default function ProfilePage() {
 
   const handleIdFileChange = (e: InputChangeEvent) => {
     const file = e.target.files?.[0];
-    if (!file) {
-      console.log("No file selected");
-      return;
-    }
-    console.log("File selected:", file.name, file.type, file.size);
-    
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      alert("Please select an image file (JPG, PNG) or PDF document.", { variant: "error" });
-      if (idFileInputRef.current) {
-        idFileInputRef.current.value = '';
-      }
+    if (!file) return;
+    const allowedTypes = /^image\//.test(file.type) || file.type === "application/pdf";
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    const allowedExt = ["jpg", "jpeg", "png", "gif", "webp", "heic", "pdf"].includes(ext);
+    if (!allowedTypes && !allowedExt) {
+      alert("Please select an image (JPG, PNG, HEIC, etc.) or PDF.", { variant: "error" });
+      if (idFileInputRef.current) idFileInputRef.current.value = "";
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert("File size must be less than 10MB", { variant: "error" });
-      if (idFileInputRef.current) {
-        idFileInputRef.current.value = '';
-      }
+      alert("File size must be less than 10MB.", { variant: "error" });
+      if (idFileInputRef.current) idFileInputRef.current.value = "";
       return;
     }
     setIdDocumentFile(file);
-    console.log("File set successfully:", file.name);
   };
 
   const handleAddressDocumentUpload = async () => {
@@ -316,30 +314,35 @@ export default function ProfilePage() {
     setIsUploadingAddress(true);
     setAddressUploadProgress(0);
     try {
-      console.log("Starting address document upload...", { userId: user.id, fileName: addressDocumentFile.name, fileSize: addressDocumentFile.size });
       const documentUrl = await uploadVerificationDocument(
-        user.id, 
-        addressDocumentFile, 
+        user.id,
+        addressDocumentFile,
         "address",
         (progress) => setAddressUploadProgress(progress)
       );
-      console.log("Address document uploaded successfully, URL:", documentUrl);
-      console.log("Updating user profile with address document URL...");
-      await updateUser({ 
-        addressDocument: documentUrl, 
-        addressVerified: false,
-        addressPending: true 
-      });
-      console.log("User profile updated successfully");
+      try {
+        await updateUser({
+          addressDocument: documentUrl,
+          addressVerified: false,
+          addressPending: true,
+        });
+      } catch (updateErr: any) {
+        console.error("Error saving address document to profile:", updateErr);
+        alert(
+          "Document uploaded but we couldn’t save it to your profile. Please try again or contact support.",
+          { variant: "error" }
+        );
+        return;
+      }
       setAddressDocumentFile(null);
       if (addressFileInputRef.current) {
-        addressFileInputRef.current.value = '';
+        addressFileInputRef.current.value = "";
       }
       alert("Address document uploaded successfully. It will be reviewed by an admin.", { variant: "success" });
     } catch (error: any) {
       console.error("Error uploading address document:", error);
       const errorMessage = error?.message || String(error);
-      alert(`Failed to upload address document: ${errorMessage}`, { variant: "error" });
+      alert(`Upload failed: ${errorMessage}`, { variant: "error" });
     } finally {
       setIsUploadingAddress(false);
       setAddressUploadProgress(0);
@@ -348,28 +351,21 @@ export default function ProfilePage() {
 
   const handleAddressFileChange = (e: InputChangeEvent) => {
     const file = e.target.files?.[0];
-    if (!file) {
-      console.log("No file selected");
-      return;
-    }
-    console.log("Address file selected:", file.name, file.type, file.size);
-    
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      alert("Please select an image file (JPG, PNG) or PDF document.", { variant: "error" });
-      if (addressFileInputRef.current) {
-        addressFileInputRef.current.value = '';
-      }
+    if (!file) return;
+    const allowedTypes = /^image\//.test(file.type) || file.type === "application/pdf";
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    const allowedExt = ["jpg", "jpeg", "png", "gif", "webp", "heic", "pdf"].includes(ext);
+    if (!allowedTypes && !allowedExt) {
+      alert("Please select an image (JPG, PNG, HEIC, etc.) or PDF.", { variant: "error" });
+      if (addressFileInputRef.current) addressFileInputRef.current.value = "";
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert("File size must be less than 10MB", { variant: "error" });
-      if (addressFileInputRef.current) {
-        addressFileInputRef.current.value = '';
-      }
+      alert("File size must be less than 10MB.", { variant: "error" });
+      if (addressFileInputRef.current) addressFileInputRef.current.value = "";
       return;
     }
     setAddressDocumentFile(file);
-    console.log("Address file set successfully:", file.name);
   };
 
   const handleAddPhone = () => {

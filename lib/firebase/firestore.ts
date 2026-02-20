@@ -243,6 +243,38 @@ export async function recordDonationAndUpdateCampaign(
   return donationId;
 }
 
+/**
+ * Approve a pending donation (e.g. bank transfer or DigiWallet). Updates donation status to
+ * "completed" and adds the amount to the campaign's raised total and backers count.
+ */
+export async function approveDonation(donationId: string): Promise<void> {
+  const donationRef = doc(db, donationsCollection, donationId);
+  const donationSnap = await getDoc(donationRef);
+  if (!donationSnap.exists()) {
+    throw new Error("Donation not found");
+  }
+  const data = donationSnap.data();
+  const status = data.status as string;
+  if (status === "completed") {
+    throw new Error("Donation is already completed");
+  }
+  const campaignId = data.campaignId as string;
+  const amount = Number(data.amount);
+  if (!campaignId || !Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Invalid donation data");
+  }
+  await updateDoc(donationRef, {
+    status: "completed",
+    updatedAt: serverTimestamp(),
+  });
+  const campaignRef = doc(db, campaignsCollection, campaignId);
+  await updateDoc(campaignRef, {
+    raised: increment(amount),
+    backers: increment(1),
+    updatedAt: serverTimestamp(),
+  });
+}
+
 // Campaigns under review (admin workflow)
 export interface CampaignUnderReviewDoc {
   id: string;
