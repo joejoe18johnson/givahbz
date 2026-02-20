@@ -26,6 +26,14 @@ export async function uploadCampaignImage(campaignId: string, file: File): Promi
   return await getDownloadURL(fileRef);
 }
 
+const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "heic"]);
+
+function isImageFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  return IMAGE_EXT.has(ext);
+}
+
 /** Upload cover image for a campaign under review (before it has a campaign id). */
 export async function uploadUnderReviewCampaignImage(
   pendingId: string,
@@ -36,10 +44,10 @@ export async function uploadUnderReviewCampaignImage(
     if (!file) {
       throw new Error("File is required");
     }
-    if (!file.type.startsWith("image/")) {
-      throw new Error("File must be an image");
+    if (!isImageFile(file)) {
+      throw new Error("File must be an image (JPG, PNG, etc.)");
     }
-    const ext = file.name.split(".").pop() || "jpg";
+    const ext = (file.name.split(".").pop() || "").toLowerCase() || "jpg";
     const fileRef = ref(storage, `campaigns-under-review/${pendingId}/image${index + 1}.${ext}`);
     console.log(`Uploading image ${index + 1} to: campaigns-under-review/${pendingId}/image${index + 1}.${ext}`);
     await uploadBytes(fileRef, file);

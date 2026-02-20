@@ -210,19 +210,21 @@ export default function CreateCampaignPage() {
 
     setIsSubmitting(true);
     try {
-      console.log("Starting image uploads...");
-      // Upload cover images to Storage (path uses pendingId; doc id is assigned by Firestore later)
+      // Compress images to speed up upload and avoid timeouts
+      const [file1, file2] = await Promise.all([
+        compressImageForUpload(imageFiles[0]!),
+        compressImageForUpload(imageFiles[1]!),
+      ]);
       const uploadPromises = [
-        uploadUnderReviewCampaignImage(pendingId, 0, imageFiles[0]!).catch((err) => {
+        uploadUnderReviewCampaignImage(pendingId, 0, file1).catch((err) => {
           console.error("Error uploading image 1:", err);
-          throw new Error(`Failed to upload first image: ${err.message || err}`);
+          throw new Error(`Failed to upload first image: ${err?.message || err}`);
         }),
-        uploadUnderReviewCampaignImage(pendingId, 1, imageFiles[1]!).catch((err) => {
+        uploadUnderReviewCampaignImage(pendingId, 1, file2).catch((err) => {
           console.error("Error uploading image 2:", err);
-          throw new Error(`Failed to upload second image: ${err.message || err}`);
+          throw new Error(`Failed to upload second image: ${err?.message || err}`);
         }),
       ];
-      
       const [imageUrl1, imageUrl2] = await Promise.all(uploadPromises);
       console.log("Images uploaded successfully:", { imageUrl1, imageUrl2 });
 
@@ -299,9 +301,12 @@ export default function CreateCampaignPage() {
     setProofFiles(proofFiles.filter((_, i) => i !== index));
   };
 
+  const isImage = (file: File) =>
+    file.type.startsWith("image/") || ["jpg", "jpeg", "png", "gif", "webp", "heic"].includes((file.name.split(".").pop() || "").toLowerCase());
+
   const handleImageChange = (index: 0 | 1) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
+    if (file && isImage(file)) {
       setImageFiles((prev) => {
         const next: [File | null, File | null] = [...prev];
         next[index] = file;
@@ -315,7 +320,7 @@ export default function CreateCampaignPage() {
     e.preventDefault();
     setImageDragOver(null);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) {
+    if (file && isImage(file)) {
       setImageFiles((prev) => {
         const next: [File | null, File | null] = [...prev];
         next[index] = file;

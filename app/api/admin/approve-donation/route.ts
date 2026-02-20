@@ -11,7 +11,19 @@ function getAdminAuth(): admin.auth.Auth | null {
 }
 
 function getAdminEmails(): string[] {
-  const raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
+  let raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
+  if (!raw.trim()) {
+    try {
+      const path = require("path");
+      const dotenv = require("dotenv");
+      const cwd = process.cwd();
+      dotenv.config({ path: path.join(cwd, ".env.local") });
+      dotenv.config({ path: path.join(cwd, ".env") });
+      raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
+    } catch {
+      // ignore
+    }
+  }
   return raw
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -63,10 +75,14 @@ export async function POST(request: NextRequest) {
 
   const adminEmails = getAdminEmails();
   if (adminEmails.length === 0) {
+    const isVercel = !!process.env.VERCEL;
+    const hint = isVercel
+      ? "On Vercel: add ADMIN_EMAILS in Project Settings → Environment Variables (comma-separated admin emails), then redeploy."
+      : "Add ADMIN_EMAILS=your@email.com to the .env file in the project root, then restart the dev server (stop and run npm run dev again).";
     return NextResponse.json(
       {
         error: "No admin emails configured.",
-        hint: "Set ADMIN_EMAILS (or NEXT_PUBLIC_ADMIN_EMAILS) to a comma-separated list of admin emails. Local: add to .env and restart. Vercel: add in Project Settings → Environment Variables, then redeploy.",
+        hint,
       },
       { status: 503 }
     );
