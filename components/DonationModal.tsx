@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Heart, CreditCard, Building2, Wallet, CheckCircle2, Copy } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { recordDonationAndUpdateCampaign } from "@/lib/firebase/firestore";
@@ -100,24 +100,44 @@ export default function DonationModal({
     setTimeout(() => setBankDetailsCopied(false), 2000);
   };
 
+  // Lock body scroll when modal is open (fixes mobile scroll-through)
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-medium">Complete Your Donation</h2>
+    <div
+      className="fixed inset-0 min-h-[100dvh] bg-black/50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto overscroll-contain"
+      style={{ WebkitOverflowScrolling: "touch" }}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="bg-white rounded-t-2xl sm:rounded-lg max-w-2xl w-full max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto flex flex-col"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        {/* Header - larger touch target for close on mobile */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:p-6 py-4 flex items-center justify-between shrink-0">
+          <h2 className="text-xl sm:text-2xl font-medium">Complete Your Donation</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2 text-gray-500 hover:text-gray-700 active:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
+        {/* Content - scrollable on mobile */}
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">
           {isSuccess ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -215,13 +235,14 @@ export default function DonationModal({
                 </div>
               </div>
 
-              {/* Payment Method Selection */}
+              {/* Payment Method Selection - touch-friendly on mobile */}
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Select Payment Method</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <button
+                    type="button"
                     onClick={() => setSelectedMethod("credit-card")}
-                    className={`p-4 border-2 rounded-full transition-all ${
+                    className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
                       selectedMethod === "credit-card"
                         ? "border-primary-600 bg-primary-50"
                         : "border-gray-200 hover:border-primary-300"
@@ -233,8 +254,9 @@ export default function DonationModal({
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setSelectedMethod("bank")}
-                    className={`p-4 border-2 rounded-full transition-all ${
+                    className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
                       selectedMethod === "bank"
                         ? "border-primary-600 bg-primary-50"
                         : "border-gray-200 hover:border-primary-300"
@@ -246,8 +268,9 @@ export default function DonationModal({
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setSelectedMethod("digiwallet")}
-                    className={`p-4 border-2 rounded-full transition-all ${
+                    className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
                       selectedMethod === "digiwallet"
                         ? "border-primary-600 bg-primary-50"
                         : "border-gray-200 hover:border-primary-300"
@@ -259,8 +282,9 @@ export default function DonationModal({
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setSelectedMethod("paypal")}
-                    className={`p-4 border-2 rounded-full transition-all ${
+                    className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
                       selectedMethod === "paypal"
                         ? "border-primary-600 bg-primary-50"
                         : "border-gray-200 hover:border-primary-300"
@@ -468,15 +492,17 @@ export default function DonationModal({
                 </div>
               )}
 
-              {/* Submit Button */}
-              <div className="flex gap-4">
+              {/* Submit Button - min height for touch on mobile */}
+              <div className="flex gap-3 sm:gap-4 pt-2">
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="flex-1 border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 min-h-[48px] border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl sm:rounded-full font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handlePayment}
                   disabled={
                     !selectedMethod ||
@@ -489,7 +515,7 @@ export default function DonationModal({
                         !cardDetails.cvv ||
                         !cardDetails.cardholderName))
                   }
-                  className="flex-1 bg-success-500 text-white px-6 py-3 rounded-full font-medium hover:bg-success-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 min-h-[48px] bg-success-500 text-white px-6 py-3 rounded-xl sm:rounded-full font-medium hover:bg-success-600 active:bg-success-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <>
