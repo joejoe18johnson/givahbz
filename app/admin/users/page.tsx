@@ -188,7 +188,7 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3 font-medium">ID verified</th>
                 <th className="px-5 py-3 font-medium">Address verified</th>
                 <th className="px-5 py-3 font-medium">Documents</th>
-                <th className="px-5 py-3 font-medium bg-gray-50 sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">Actions</th>
+                <th className="px-5 py-3 font-medium bg-gray-50 sticky right-0 z-10 min-w-[220px] w-[220px] shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -278,8 +278,11 @@ export default function AdminUsersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3 align-top bg-white sticky right-0 shadow-[-4px_0_8px_rgba(0,0,0,0.06)]">
-                      <div className="flex flex-wrap items-center gap-2 min-w-[200px]">
+                    <td className="px-5 py-3 align-top bg-white sticky right-0 z-10 min-w-[220px] w-[220px] shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {isSelf ? (
+                          <span className="text-gray-400 text-xs">(You)</span>
+                        ) : null}
                         {u.phoneNumber && !u.phoneVerified && (
                           <button
                             type="button"
