@@ -35,7 +35,7 @@ export default function ProfilePage() {
   const [birthday, setBirthday] = useState(user?.birthday || "");
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [phoneInput, setPhoneInput] = useState("");
-  const [idDocumentType, setIdDocumentType] = useState<"social_security" | "passport" | "">(user?.idDocumentType || "");
+  const [idDocumentType, setIdDocumentType] = useState<IdDocumentTypeValue>(user?.idDocumentType || "");
   const [idDocumentFile, setIdDocumentFile] = useState<File | null>(null);
   const [isUploadingId, setIsUploadingId] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -153,7 +153,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: InputChangeEvent) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     if (!file.type.startsWith("image/")) {
@@ -346,7 +346,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddressFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddressFileChange = (e: InputChangeEvent) => {
     const file = e.target.files?.[0];
     if (!file) {
       console.log("No file selected");
@@ -377,7 +377,7 @@ export default function ProfilePage() {
     setPhoneInput("");
   };
 
-  return (
+  const profileContent = (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
       {/* Themed success popup */}
       {showSavedPopup && (
@@ -1152,4 +1152,5 @@ export default function ProfilePage() {
       </div>
     </div>
   );
+  return profileContent;
 }
