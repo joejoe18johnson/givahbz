@@ -2,33 +2,52 @@
  * Firebase Admin SDK for server-only operations (bypasses Firestore security rules).
  * Used for admin actions like approving donations and uploading verification docs.
  *
- * Set FIREBASE_SERVICE_ACCOUNT_JSON in env to the full JSON key (from Firebase Console
- * > Project Settings > Service accounts > Generate new private key). In .env the
- * private_key newlines are often stored as \n - we replace \\n with real newlines.
+ * Configure using ONE of:
+ * 1. FIREBASE_SERVICE_ACCOUNT_JSON = full JSON key as a string (in .env, one line).
+ * 2. FIREBASE_SERVICE_ACCOUNT_PATH = path to the JSON file (e.g. ./firebase-service-account.json).
+ * Get the key: Firebase Console → Project settings → Service accounts → Generate new private key.
  */
 
 import * as admin from "firebase-admin";
 import { getStorage, getDownloadURL } from "firebase-admin/storage";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 const donationsCollection = "donations";
 const campaignsCollection = "campaigns";
+
+function loadServiceAccountKey(): Record<string, string> | null {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (raw && typeof raw === "string" && raw.trim() !== "") {
+    try {
+      return JSON.parse(raw) as Record<string, string>;
+    } catch {
+      return null;
+    }
+  }
+  const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+  if (pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "") {
+    try {
+      const path = resolve(process.cwd(), pathEnv.trim());
+      const content = readFileSync(path, "utf8");
+      return JSON.parse(content) as Record<string, string>;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 function getAdminApp(): admin.app.App | null {
   if (admin.apps.length > 0) {
     return admin.app() as admin.app.App;
   }
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (!raw || typeof raw !== "string" || raw.trim() === "") {
+  const key = loadServiceAccountKey();
+  if (!key || !key.private_key || !key.client_email) {
     return null;
   }
   try {
-    const key = JSON.parse(raw) as {
-      project_id?: string;
-      client_email?: string;
-      private_key?: string;
-    };
-    if (!key.private_key || !key.client_email) return null;
-    const privateKey = key.private_key.replace(/\\n/g, "\n");
+    const privateKey = (key.private_key as string).replace(/\\n/g, "\n");
     const credential = admin.credential.cert({
       projectId: key.project_id,
       clientEmail: key.client_email,

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Server is not configured to approve donations.",
-        hint: "Add FIREBASE_SERVICE_ACCOUNT_JSON to your .env (Firebase Console → Project settings → Service accounts → Generate new private key). See FIREBASE_SETUP.md.",
+        hint: "Add FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string) or FIREBASE_SERVICE_ACCOUNT_PATH (path to the JSON file) to .env. Get the key: Firebase Console → Project settings → Service accounts → Generate new private key.",
       },
       { status: 503 }
     );
