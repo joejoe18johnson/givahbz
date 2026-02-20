@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "No admin emails configured.",
-        hint: "Set ADMIN_EMAILS (or NEXT_PUBLIC_ADMIN_EMAILS) in .env to a comma-separated list of admin emails, then restart.",
+        hint: "Set ADMIN_EMAILS (or NEXT_PUBLIC_ADMIN_EMAILS) to a comma-separated list of admin emails. Local: add to .env and restart. Vercel: add in Project Settings → Environment Variables, then redeploy.",
       },
       { status: 503 }
     );
