@@ -209,7 +209,9 @@ export default function CreateCampaignPage() {
     });
 
     setIsSubmitting(true);
-    try {
+    const UPLOAD_TIMEOUT_MS = 90000; // 90 seconds total for uploads + save
+
+    const runSubmit = async () => {
       const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error("You must be signed in to submit. Please sign in and try again.");
@@ -222,24 +224,36 @@ export default function CreateCampaignPage() {
         compressImageForUpload(imageFiles[1]!),
       ]);
 
-      // Upload via API to avoid CORS/preflight issues with Firebase Storage in the browser
+      // Upload via API with timeout so we don't hang forever
       const uploadViaApi = async (file: File, index: 0 | 1): Promise<string> => {
         const form = new FormData();
         form.append("file", file);
         form.append("pendingId", pendingId);
         form.append("index", String(index));
-        const res = await fetch("/api/upload-campaign-image", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: form,
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const msg = typeof data.error === "string" ? data.error : "Upload failed";
-          throw new Error(msg);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s per image
+        try {
+          const res = await fetch("/api/upload-campaign-image", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const msg = typeof data.error === "string" ? data.error : "Upload failed";
+            throw new Error(msg);
+          }
+          if (typeof data.url !== "string") throw new Error("No URL returned");
+          return data.url;
+        } catch (e: any) {
+          clearTimeout(timeoutId);
+          if (e?.name === "AbortError") {
+            throw new Error("Upload timed out. Try smaller images or check your connection.");
+          }
+          throw e;
         }
-        if (typeof data.url !== "string") throw new Error("No URL returned");
-        return data.url;
       };
 
       const [imageUrl1, imageUrl2] = await Promise.all([
@@ -252,9 +266,7 @@ export default function CreateCampaignPage() {
           throw new Error(`Failed to upload second image: ${err?.message || err}`);
         }),
       ]);
-      console.log("Images uploaded successfully:", { imageUrl1, imageUrl2 });
 
-      console.log("Saving campaign to Firestore...");
       // Only under-review: never written to public "campaigns". Appears in "all campaigns" only after admin approval.
       await addCampaignUnderReviewToFirestore({
         title: formData.title,
@@ -267,21 +279,32 @@ export default function CreateCampaignPage() {
         image: imageUrl1,
         image2: imageUrl2,
       });
-      console.log("Campaign saved successfully");
       router.push("/my-campaigns");
+    };
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Submission timed out. Please check your connection and try again.")), UPLOAD_TIMEOUT_MS);
+    });
+
+    try {
+      await Promise.race([runSubmit(), timeoutPromise]);
     } catch (err: any) {
       console.error("Failed to submit campaign for review:", err);
       const errorMessage = err?.message || String(err);
       let userMessage = "Your campaign could not be sent for review. Please try again.";
-      
-      if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
+
+      if (errorMessage.includes("timed out") || errorMessage.includes("timeout")) {
+        userMessage = errorMessage;
+      } else if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
         userMessage = "Permission denied. Please check that you're signed in and have permission to create campaigns.";
-      } else if (errorMessage.includes("upload")) {
-        userMessage = `Failed to upload images: ${errorMessage}. Please check your internet connection and try again.`;
+      } else if (errorMessage.includes("upload") || errorMessage.includes("Upload")) {
+        userMessage = errorMessage.length > 120 ? `Upload failed: ${errorMessage.slice(0, 120)}…` : errorMessage;
       } else if (errorMessage.includes("Firestore") || errorMessage.includes("firestore")) {
         userMessage = "Failed to save campaign data. Please check your connection and try again.";
+      } else if (errorMessage.length < 200) {
+        userMessage = errorMessage;
       }
-      
+
       alert(userMessage, { title: "Submission Failed", variant: "error" });
     } finally {
       setIsSubmitting(false);
