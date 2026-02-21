@@ -176,6 +176,11 @@ export default function CreateCampaignPage() {
     }
 
     const goalNum = parseFloat(formData.goal) || 0;
+    const MAX_GOAL = 5000;
+    if (goalNum > MAX_GOAL) {
+      alert(`Funding goal cannot exceed BZ$${MAX_GOAL.toLocaleString()}.`, { title: "Goal too high", variant: "error" });
+      return;
+    }
     const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const creatorName = user?.name ?? "User";
     const creatorId = user?.id ?? "";
@@ -511,10 +516,12 @@ export default function CreateCampaignPage() {
             onChange={handleChange}
             required
             min="1"
+            max="5000"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
-            placeholder="5000"
+            placeholder="e.g. 2000 (max BZ$5,000)"
             step="0.01"
           />
+          <p className="text-xs text-gray-500 mt-1">Maximum funding goal is BZ$5,000.</p>
         </div>
 
         {/* Location */}
