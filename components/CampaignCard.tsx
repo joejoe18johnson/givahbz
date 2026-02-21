@@ -110,12 +110,6 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
             </button>
           </div>
           <div className="absolute top-2 right-2 flex gap-2">
-            {campaign.verified && (
-              <div className="bg-verified-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-                <CheckCircle2 className="w-3 h-3" />
-                Verified
-              </div>
-            )}
             <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-primary-600 shadow-lg">
               {campaign.category}
             </div>
@@ -124,6 +118,14 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
 
         {/* Content */}
         <div className="p-6 flex flex-col flex-1">
+          {campaign.verified && (
+            <div className="-mt-3 mb-1.5">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-verified-100 text-verified-700 text-[10px] font-medium">
+                <CheckCircle2 className="w-2.5 h-2.5" />
+                Verified
+              </span>
+            </div>
+          )}
           <h3 className="text-xl font-medium text-gray-900 mb-2 line-clamp-2">{campaign.title}</h3>
           <p className="text-gray-600 text-sm mb-4 line-clamp-2">{campaign.description}</p>
 
