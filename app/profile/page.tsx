@@ -260,7 +260,7 @@ export default function ProfilePage() {
   }
 
   const handleIdDocumentUpload = async () => {
-    if (user?.idPending) {
+    if (user?.idPending && user?.idDocument) {
       alert("You already have an ID document pending verification. Please wait for the verification process to complete before uploading a new document.", { variant: "error" });
       return;
     }

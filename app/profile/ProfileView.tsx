@@ -138,6 +138,8 @@ export default function ProfileView(props: ProfileViewProps) {
     onDeactivateCancel,
   } = props;
 
+  const idBlocked = user?.idVerified || (user?.idPending === true && !!user?.idDocument);
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
       {showSavedPopup && (
@@ -383,7 +385,7 @@ export default function ProfileView(props: ProfileViewProps) {
                   <select
                     value={idDocumentType}
                     onChange={(e) => setIdDocumentType((e.target.value || "") as IdDocumentTypeValue)}
-                    disabled={user?.idPending === true}
+                    disabled={idBlocked}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
                   >
                     <option value="">Select ID type</option>
@@ -395,7 +397,7 @@ export default function ProfileView(props: ProfileViewProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Document</label>
                   <div className="flex items-center gap-2 flex-wrap">
                     <input ref={idFileInputRef} type="file" accept="image/*,.pdf" onChange={handleIdFileChange} className="sr-only" id="id-document-upload" aria-label="Choose ID document file" tabIndex={-1} />
-                    {user?.idPending || user?.idVerified ? (
+                    {idBlocked ? (
                       <button type="button" disabled className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed">
                         <Upload className="w-4 h-4" />
                         {idDocumentFile ? idDocumentFile.name : "Choose file"}
@@ -406,7 +408,7 @@ export default function ProfileView(props: ProfileViewProps) {
                         {idDocumentFile ? idDocumentFile.name : "Choose file"}
                       </label>
                     )}
-                    {idDocumentFile && !user?.idPending && (
+                    {idDocumentFile && !idBlocked && (
                       <button
                         type="button"
                         onClick={() => {
@@ -425,7 +427,7 @@ export default function ProfileView(props: ProfileViewProps) {
                   <button
                     type="button"
                     onClick={handleIdDocumentUpload}
-                    disabled={!idDocumentType || !idDocumentFile || isUploadingId || user?.idVerified || user?.idPending === true}
+                    disabled={!idDocumentType || !idDocumentFile || isUploadingId || idBlocked}
                     className="px-4 py-2 bg-success-500 text-white rounded-lg hover:bg-success-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full"
                   >
                     {isUploadingId ? `Uploading... ${uploadProgress > 0 ? `${Math.round(uploadProgress)}%` : ""}` : "Upload ID Document"}
@@ -436,7 +438,7 @@ export default function ProfileView(props: ProfileViewProps) {
                     </div>
                   )}
                 </div>
-                {user?.idPending && <p className="text-sm text-amber-600 mt-2">You cannot upload a new ID document while your current submission is pending verification.</p>}
+                {idBlocked && user?.idPending && <p className="text-sm text-amber-600 mt-2">You cannot upload a new ID document while your current submission is pending verification.</p>}
               </div>
             </div>
           )}
