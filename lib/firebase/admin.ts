@@ -146,6 +146,22 @@ export function isAdminConfigured(): boolean {
   return getAdminApp() != null;
 }
 
+/**
+ * Get the Storage bucket name for Admin SDK. Many Firebase projects use the default
+ * bucket as projectId.appspot.com; the client config often shows projectId.firebasestorage.app
+ * which can 404 for Admin. We use .appspot.com when env has .firebasestorage.app so uploads work.
+ */
+function getStorageBucketNameForAdmin(app: admin.app.App): string {
+  const envBucket = (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim();
+  const projectId = app.options.projectId || (loadServiceAccountKey()?.project_id as string | undefined);
+  if (envBucket.endsWith(".firebasestorage.app") && projectId) {
+    return `${projectId}.appspot.com`;
+  }
+  if (envBucket) return envBucket;
+  if (projectId) return `${projectId}.appspot.com`;
+  return "";
+}
+
 /** Sanitize for Storage path (no path separators or problematic chars). */
 function sanitizeFileName(name: string): string {
   const base = name.replace(/\.[^/.]+$/, "").trim() || "document";
@@ -168,7 +184,10 @@ export async function adminUploadVerificationDocument(
     throw new Error("Server is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON.");
   }
   const storage = getStorage(app);
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || undefined;
+  const bucketName = getStorageBucketNameForAdmin(app);
+  if (!bucketName) {
+    throw new Error("Storage bucket not configured. Set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env.");
+  }
   const bucket = storage.bucket(bucketName);
   const ext = (originalFileName.split(".").pop() || "").toLowerCase() || (mimeType === "application/pdf" ? "pdf" : "jpg");
   const safeName = sanitizeFileName(originalFileName);
@@ -198,7 +217,10 @@ export async function adminUploadCampaignUnderReviewImage(
     throw new Error("Server is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON.");
   }
   const storage = getStorage(app);
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || undefined;
+  const bucketName = getStorageBucketNameForAdmin(app);
+  if (!bucketName) {
+    throw new Error("Storage bucket not configured. Set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env.");
+  }
   const bucket = storage.bucket(bucketName);
   const ext = (originalFileName.split(".").pop() || "").toLowerCase() || "jpg";
   const path = `campaigns-under-review/${pendingId}/image${index + 1}.${ext}`;
