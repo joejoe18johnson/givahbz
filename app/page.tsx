@@ -3,7 +3,7 @@
 import { Permanent_Marker } from "next/font/google";
 import CampaignCard from "@/components/CampaignCard";
 import { Campaign } from "@/lib/data";
-import { getTrendingCampaigns } from "@/lib/campaignUtils";
+import { getTopCampaignsByFunding } from "@/lib/campaignUtils";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import SafeImage from "@/components/SafeImage";
 import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calendar, Users, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
@@ -95,7 +95,7 @@ export default function Home() {
     loadCampaigns();
   }, []);
 
-  const allTrendingCampaigns = getTrendingCampaigns(campaigns, campaigns.length);
+  const allTrendingCampaigns = getTopCampaignsByFunding(campaigns, 12);
   const cardsPerPage = 4;
   const totalPages = Math.max(1, Math.ceil(allTrendingCampaigns.length / cardsPerPage));
   const TRENDING_PAGE_WIDTH = 280 * cardsPerPage + 24 * (cardsPerPage - 1); // card w + gap
@@ -290,7 +290,7 @@ export default function Home() {
                   key={campaign.id}
                   className="flex-shrink-0 w-[85vw] max-w-[340px] h-[420px] snap-center snap-always"
                 >
-                  <div className="h-full rounded-lg border border-gray-200 hover:border-success-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white">
+                  <div className="h-full rounded-lg border border-gray-200 hover:border-verified-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white">
                     <CampaignCard campaign={campaign} />
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export default function Home() {
               {allTrendingCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="flex-shrink-0 w-[280px] h-[420px] snap-start rounded-lg border border-gray-200 hover:border-success-500 hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 overflow-hidden bg-white"
+                  className="flex-shrink-0 w-[280px] h-[420px] snap-start rounded-lg border border-gray-200 hover:border-verified-500 hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 overflow-hidden bg-white"
                 >
                   <CampaignCard campaign={campaign} />
                 </div>

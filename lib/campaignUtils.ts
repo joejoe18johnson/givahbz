@@ -31,3 +31,12 @@ export function getTrendingCampaigns(campaigns: Campaign[], limit: number = 6): 
     .slice(0, limit)
     .map(item => item.campaign);
 }
+
+/**
+ * Get top campaigns by most funding (raised amount), for trending section. Max 12.
+ */
+export function getTopCampaignsByFunding(campaigns: Campaign[], limit: number = 12): Campaign[] {
+  return [...campaigns]
+    .sort((a, b) => (Number(b.raised) || 0) - (Number(a.raised) || 0))
+    .slice(0, limit);
+}
