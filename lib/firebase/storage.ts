@@ -34,38 +34,18 @@ function isImageFile(file: File): boolean {
   return IMAGE_EXT.has(ext);
 }
 
-/** Upload cover image for a campaign under review (before it has a campaign id). */
+/**
+ * @deprecated Do NOT use from the client. Direct browser uploads to Firebase Storage cause CORS/preflight 404.
+ * Campaign create flow must use POST /api/upload-campaign-image (server-side upload) instead.
+ */
 export async function uploadUnderReviewCampaignImage(
-  pendingId: string,
-  index: 0 | 1,
-  file: File
+  _pendingId: string,
+  _index: 0 | 1,
+  _file: File
 ): Promise<string> {
-  try {
-    if (!file) {
-      throw new Error("File is required");
-    }
-    if (!isImageFile(file)) {
-      throw new Error("File must be an image (JPG, PNG, etc.)");
-    }
-    const ext = (file.name.split(".").pop() || "").toLowerCase() || "jpg";
-    const fileRef = ref(storage, `campaigns-under-review/${pendingId}/image${index + 1}.${ext}`);
-    console.log(`Uploading image ${index + 1} to: campaigns-under-review/${pendingId}/image${index + 1}.${ext}`);
-    await uploadBytes(fileRef, file);
-    console.log(`Image ${index + 1} uploaded, getting download URL...`);
-    const url = await getDownloadURL(fileRef);
-    console.log(`Image ${index + 1} URL obtained:`, url);
-    return url;
-  } catch (error: any) {
-    console.error(`Error uploading image ${index + 1}:`, error);
-    const errorMessage = error?.message || String(error);
-    if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
-      throw new Error(`Permission denied: Unable to upload image ${index + 1}. Please check your Firebase Storage rules.`);
-    } else if (errorMessage.includes("quota") || errorMessage.includes("Quota")) {
-      throw new Error(`Storage quota exceeded: Unable to upload image ${index + 1}.`);
-    } else {
-      throw new Error(`Failed to upload image ${index + 1}: ${errorMessage}`);
-    }
-  }
+  throw new Error(
+    "Campaign images must be uploaded via the app. If you see this, the create campaign form may be using an outdated version. Refresh the page and try again."
+  );
 }
 
 // Sanitize file name for Storage path (no path separators or problematic chars)

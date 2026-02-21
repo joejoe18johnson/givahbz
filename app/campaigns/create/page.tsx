@@ -229,7 +229,7 @@ export default function CreateCampaignPage() {
         compressImageForUpload(imageFiles[1]!),
       ]);
 
-      // Upload via API with timeout so we don't hang forever
+      // Upload via our API (server uploads to Storage). Do NOT use client Firebase Storage - it causes CORS/preflight 404.
       const uploadViaApi = async (file: File, index: 0 | 1): Promise<string> => {
         const form = new FormData();
         form.append("file", file);
@@ -237,8 +237,9 @@ export default function CreateCampaignPage() {
         form.append("index", String(index));
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s per image
+        const apiUrl = typeof window !== "undefined" ? `${window.location.origin}/api/upload-campaign-image` : "/api/upload-campaign-image";
         try {
-          const res = await fetch("/api/upload-campaign-image", {
+          const res = await fetch(apiUrl, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
             body: form,
