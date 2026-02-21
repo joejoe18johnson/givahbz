@@ -506,9 +506,14 @@ export default function CreateCampaignPage() {
 
         {/* Goal Amount */}
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Funding Goal (BZ$) *
-          </label>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <label className="block text-sm font-medium">
+              Funding Goal (BZ$) *
+            </label>
+            <span className="text-xs font-medium text-verified-700 bg-verified-50 px-2 py-1 rounded">
+              Maximum BZ$5,000
+            </span>
+          </div>
           <input
             type="number"
             name="goal"
@@ -518,10 +523,13 @@ export default function CreateCampaignPage() {
             min="1"
             max="5000"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
-            placeholder="e.g. 2000 (max BZ$5,000)"
+            placeholder="e.g. 2000"
             step="0.01"
+            aria-describedby="goal-max-notice"
           />
-          <p className="text-xs text-gray-500 mt-1">Maximum funding goal is BZ$5,000.</p>
+          <p id="goal-max-notice" className="text-sm text-gray-600 mt-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+            You can ask for up to <strong>BZ$5,000</strong> per campaign. This is the maximum total funding goal allowed.
+          </p>
         </div>
 
         {/* Location */}
