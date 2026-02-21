@@ -161,6 +161,12 @@ export default function Header() {
             >
               Campaigns
             </Link>
+            <Link
+              href="/success-stories"
+              className="text-gray-700 hover:text-primary-600 transition-colors"
+            >
+              Success Stories
+            </Link>
             {!isAdminRoute && (
               <Link
                 href="/how-it-works"
@@ -384,6 +390,7 @@ export default function Header() {
             <nav className="flex flex-col gap-1">
               <Link href="/" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Home</Link>
               <Link href="/campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Campaigns</Link>
+              <Link href="/success-stories" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>Success Stories</Link>
               {!isAdminRoute && (
                 <Link href="/how-it-works" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>How It Works</Link>
               )}

@@ -4,8 +4,10 @@
  * PDFs and unsupported formats (e.g. HEIC in some browsers) are returned unchanged.
  */
 
-const MAX_DIMENSION = 1600;
-const JPEG_QUALITY = 0.82;
+const DEFAULT_MAX_DIMENSION = 1600;
+const DEFAULT_JPEG_QUALITY = 0.82;
+
+export type CompressOptions = { maxDimension?: number; quality?: number };
 
 function isCompressibleImage(file: File): boolean {
   if (file.type === "application/pdf") return false;
@@ -30,11 +32,11 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-function scaleDimensions(width: number, height: number): { width: number; height: number } {
-  if (width <= MAX_DIMENSION && height <= MAX_DIMENSION) {
+function scaleDimensions(width: number, height: number, maxDim: number): { width: number; height: number } {
+  if (width <= maxDim && height <= maxDim) {
     return { width, height };
   }
-  const scale = MAX_DIMENSION / Math.max(width, height);
+  const scale = maxDim / Math.max(width, height);
   return {
     width: Math.round(width * scale),
     height: Math.round(height * scale),
@@ -44,21 +46,24 @@ function scaleDimensions(width: number, height: number): { width: number; height
 /**
  * Compress an image file for upload. Returns a new File (JPEG) or the original if not compressible.
  * Runs in the browser (uses Canvas).
+ * Use options.maxDimension and options.quality for tighter compression (e.g. campaign images: 1200, 0.75).
  */
-export async function compressImageForUpload(file: File): Promise<File> {
+export async function compressImageForUpload(file: File, options?: CompressOptions): Promise<File> {
   if (typeof document === "undefined" || typeof window === "undefined") {
     return file;
   }
   if (!isCompressibleImage(file)) {
     return file;
   }
-  if (file.size <= 300 * 1024) {
+  const maxDim = options?.maxDimension ?? DEFAULT_MAX_DIMENSION;
+  const quality = options?.quality ?? DEFAULT_JPEG_QUALITY;
+  if (file.size <= 300 * 1024 && maxDim >= DEFAULT_MAX_DIMENSION) {
     return file;
   }
 
   try {
     const img = await loadImage(file);
-    const { width, height } = scaleDimensions(img.naturalWidth, img.naturalHeight);
+    const { width, height } = scaleDimensions(img.naturalWidth, img.naturalHeight, maxDim);
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -81,7 +86,7 @@ export async function compressImageForUpload(file: File): Promise<File> {
           resolve(new File([blob], outputName, { type: "image/jpeg" }));
         },
         "image/jpeg",
-        JPEG_QUALITY
+        quality
       );
     });
   } catch {

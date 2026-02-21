@@ -147,16 +147,13 @@ export function isAdminConfigured(): boolean {
 }
 
 /**
- * Get the Storage bucket name for Admin SDK. Many Firebase projects use the default
- * bucket as projectId.appspot.com; the client config often shows projectId.firebasestorage.app
- * which can 404 for Admin. We use .appspot.com when env has .firebasestorage.app so uploads work.
+ * Get the Storage bucket name for Admin SDK.
+ * Uses NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET as-is (e.g. projectId.firebasestorage.app).
+ * If that's not set, falls back to projectId.appspot.com.
  */
 function getStorageBucketNameForAdmin(app: admin.app.App): string {
   const envBucket = (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim();
   const projectId = app.options.projectId || (loadServiceAccountKey()?.project_id as string | undefined);
-  if (envBucket.endsWith(".firebasestorage.app") && projectId) {
-    return `${projectId}.appspot.com`;
-  }
   if (envBucket) return envBucket;
   if (projectId) return `${projectId}.appspot.com`;
   return "";

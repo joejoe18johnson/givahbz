@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic"];
 const ALLOWED_EXT = ["jpg", "jpeg", "png", "gif", "webp", "heic"];
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB per image
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB per image - keeps server upload to Storage within retry limits
 
 function getAdminAuth(): admin.auth.Auth | null {
   const app = admin.apps[0];
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   }
   if (file.size > MAX_SIZE) {
     return NextResponse.json(
-      { error: "Image must be less than 5MB." },
+      { error: "Image must be under 2MB. Use smaller or more compressed images." },
       { status: 400 }
     );
   }
@@ -116,8 +116,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed.";
+    const isRetryExceeded = typeof message === "string" && (message.includes("retry-limit-exceeded") || message.includes("Max retry time"));
+    const error = isRetryExceeded
+      ? "Upload timed out. Try images under 2MB each (crop or compress before uploading)."
+      : message;
     return NextResponse.json(
-      { error: message },
+      { error },
       { status: 500 }
     );
   }
