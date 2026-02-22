@@ -227,12 +227,13 @@ export default function AdminLayout({
         <nav className="p-4 space-y-1 flex-1 pb-24">
           <div className="flex flex-col items-center gap-3 py-4 border-b border-gray-100">
             <Image src="/givah-logo.png" alt="GivahBz" width={120} height={36} className="h-8 w-auto" priority />
-            <Link
-              href="/"
+            <button
+              type="button"
+              onClick={() => router.push("/")}
               className="w-full text-center inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50 hover:border-gray-400 transition-colors"
             >
               Back to site
-            </Link>
+            </button>
           </div>
           <div className="pt-4">
             {/* Notification bell - next to sidebar sections */}

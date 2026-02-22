@@ -264,10 +264,10 @@ export default function Home() {
 
         {isLoading && (
           <div className="flex gap-4 md:gap-6 py-2 justify-center md:justify-start min-h-[340px] items-center">
-            <div className="animate-pulse flex-shrink-0 w-[85vw] max-w-[340px] md:w-[280px] h-[420px] rounded-lg bg-gray-100" />
-            <div className="animate-pulse flex-shrink-0 w-[85vw] max-w-[340px] md:w-[280px] h-[420px] rounded-lg bg-gray-100 hidden sm:block" />
-            <div className="animate-pulse flex-shrink-0 w-[280px] h-[420px] rounded-lg bg-gray-100 hidden md:block" />
-            <div className="animate-pulse flex-shrink-0 w-[280px] h-[420px] rounded-lg bg-gray-100 hidden lg:block" />
+            <div className="animate-pulse flex-shrink-0 w-[85vw] max-w-[340px] md:w-[280px] h-[500px] rounded-lg bg-gray-100" />
+            <div className="animate-pulse flex-shrink-0 w-[85vw] max-w-[340px] md:w-[280px] h-[500px] rounded-lg bg-gray-100 hidden sm:block" />
+            <div className="animate-pulse flex-shrink-0 w-[280px] h-[500px] rounded-lg bg-gray-100 hidden md:block" />
+            <div className="animate-pulse flex-shrink-0 w-[280px] h-[500px] rounded-lg bg-gray-100 hidden lg:block" />
           </div>
         )}
 
@@ -289,7 +289,7 @@ export default function Home() {
               {allTrendingCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="flex-shrink-0 w-[85vw] max-w-[340px] h-[420px] snap-center snap-always"
+                  className="flex-shrink-0 w-[85vw] max-w-[340px] h-[500px] snap-center snap-always"
                 >
                   <div className="h-full rounded-lg border border-gray-200 hover:border-verified-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white">
                     <CampaignCard campaign={campaign} />
@@ -334,7 +334,7 @@ export default function Home() {
               {allTrendingCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="flex-shrink-0 w-[280px] h-[420px] snap-start rounded-lg border border-gray-200 hover:border-verified-500 hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 overflow-hidden bg-white"
+                  className="flex-shrink-0 w-[280px] h-[500px] snap-start rounded-lg border border-gray-200 hover:border-verified-500 hover:shadow-[rgba(17,12,46,0.15)_0px_48px_100px_0px] hover:scale-[1.02] transition-all duration-300 overflow-hidden bg-white"
                 >
                   <CampaignCard campaign={campaign} />
                 </div>
