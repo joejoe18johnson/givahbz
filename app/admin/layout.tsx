@@ -167,6 +167,7 @@ export default function AdminLayout({
           phonePending: 0,
           pendingDonations: 0,
           addressPending: 0,
+          idPending: 0,
         });
       }
     }
