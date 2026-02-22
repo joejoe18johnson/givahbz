@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
 import MainWithPadding from "@/components/MainWithPadding";
+import ConditionalFooter from "@/components/ConditionalFooter";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -30,7 +30,7 @@ export default function RootLayout({
         <Providers>
           <Header />
           <MainWithPadding>{children}</MainWithPadding>
-          <Footer />
+          <ConditionalFooter />
         </Providers>
       </body>
     </html>
