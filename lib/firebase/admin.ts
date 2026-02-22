@@ -342,7 +342,7 @@ export interface AdminCreateCampaignPayload {
   creatorId: string | null;
 }
 
-/** Create a live campaign as admin (shows "Admin Backed" badge). Call from API only after verifying admin. */
+/** Create a live campaign as admin (shows "Givah Approved Campaign" badge). Call from API only after verifying admin. */
 export async function adminCreateCampaign(payload: AdminCreateCampaignPayload): Promise<string> {
   const app = getAdminApp();
   if (!app) throw new Error("Server is not configured for admin operations.");

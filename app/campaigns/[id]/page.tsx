@@ -5,7 +5,7 @@ import { Campaign } from "@/lib/data";
 import { fetchCampaign } from "@/lib/services/campaignService";
 import { notFound } from "next/navigation";
 import SafeImage from "@/components/SafeImage";
-import { Calendar, Users, Heart, CheckCircle2 } from "lucide-react";
+import { Calendar, Users, Heart, CheckCircle2, ShieldCheck } from "lucide-react";
 import CampaignDonateSection from "@/components/CampaignDonateSection";
 import CampaignUpdates from "@/components/CampaignUpdates";
 import RewardsSection from "@/components/RewardsSection";
@@ -365,6 +365,12 @@ export default function CampaignPage({ params }: PageProps) {
             <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium">
               {campaign.category}
             </span>
+            {campaign.adminBacked && (
+              <div className="bg-verified-100 text-verified-800 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 border border-verified-300 shadow-sm ring-1 ring-verified-200/50">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0 text-verified-600" />
+                Givah Approved Campaign
+              </div>
+            )}
             {campaign.verified && (
               <div className="bg-verified-100 text-verified-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />

@@ -16,7 +16,7 @@ export interface Campaign {
   location?: string;
   createdAt: string;
   verified: boolean;
-  /** True when the campaign was created by an admin (shows "Admin Backed" badge). */
+  /** True when the campaign was created/approved by Givah (shows "Givah Approved Campaign" badge). */
   adminBacked?: boolean;
   proofDocuments?: ProofDocument[];
   updates?: CampaignUpdate[];

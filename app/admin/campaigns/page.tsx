@@ -6,7 +6,7 @@ import { getCampaignsForAdmin, deleteCampaign, setCampaignOnHold } from "@/lib/f
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle, Pencil } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle, Pencil, PlusCircle } from "lucide-react";
 import { auth } from "@/lib/firebase/config";
 
 type CampaignWithStatus = Campaign & { status?: string };
@@ -156,12 +156,21 @@ export default function AdminCampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Campaigns</h1>
-        <p className="text-gray-600 mt-1">{campaigns.length} campaigns total</p>
-        <p className="text-gray-500 text-sm mt-1">
-          Put a campaign on hold to hide it from the public site, or delete it. Use <strong>Release</strong> to make an on-hold campaign live again.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Campaigns</h1>
+          <p className="text-gray-600 mt-1">{campaigns.length} campaigns total</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Put a campaign on hold to hide it from the public site, or delete it. Use <strong>Release</strong> to make an on-hold campaign live again.
+          </p>
+        </div>
+        <Link
+          href="/admin/campaigns/create"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors shrink-0"
+        >
+          <PlusCircle className="w-5 h-5" />
+          Create campaign
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

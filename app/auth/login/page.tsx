@@ -14,17 +14,21 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { user, login, loginWithGoogle } = useAuth();
+  const { user, isAdmin, login, loginWithGoogle } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/my-campaigns";
 
   useEffect(() => {
     if (user) {
-      const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
-      router.replace(url);
+      if (isAdmin) {
+        router.replace("/admin");
+      } else {
+        const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
+        router.replace(url);
+      }
     }
-  }, [user, callbackUrl, router]);
+  }, [user, isAdmin, callbackUrl, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +36,7 @@ function LoginForm() {
     setIsLoading(true);
     const success = await login(email, password);
     if (success) {
-      const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
-      router.replace(url);
+      // Redirect is handled by useEffect when user/isAdmin updates
       return;
     }
     setError("Invalid email or password. Please try again.");
@@ -45,8 +48,7 @@ function LoginForm() {
     setGoogleLoading(true);
     try {
       await loginWithGoogle();
-      const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
-      router.replace(url);
+      // Redirect is handled by useEffect when user/isAdmin updates
     } catch (err: unknown) {
       const message = err && typeof err === "object" && "code" in err
         ? (err as { code: string }).code === "auth/popup-closed-by-user"

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import SafeImage from "./SafeImage";
 import ShareCampaign from "./ShareCampaign";
-import { Calendar, Users, CheckCircle2, Heart, Trophy } from "lucide-react";
+import { Calendar, Users, CheckCircle2, Heart, Trophy, ShieldCheck } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toggleHeartCampaign, isCampaignHearted } from "./HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,7 @@ interface Campaign {
   image: string;
   location?: string;
   verified?: boolean;
+  adminBacked?: boolean;
 }
 
 interface CampaignCardProps {
@@ -121,14 +122,20 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
 
         {/* Content */}
         <div className="p-6 flex flex-col flex-1">
-          {campaign.verified && (
-            <div className="-mt-3 mb-1.5">
+          <div className="-mt-3 mb-1.5 flex flex-wrap items-center gap-1.5">
+            {campaign.adminBacked && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-verified-100 text-verified-800 text-[10px] font-semibold border border-verified-300 shadow-sm">
+                <ShieldCheck className="w-3 h-3 flex-shrink-0" />
+                Givah Approved Campaign
+              </span>
+            )}
+            {campaign.verified && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-verified-100 text-verified-700 text-[10px] font-medium">
                 <CheckCircle2 className="w-2.5 h-2.5" />
                 Verified
               </span>
-            </div>
-          )}
+            )}
+          </div>
           <h3 className={`text-xl font-medium mb-2 line-clamp-2 ${goalReached ? "text-gray-600" : "text-gray-900"}`}>{campaign.title}</h3>
           <p className="text-gray-600 text-sm mb-4 line-clamp-2">{campaign.description}</p>
 
