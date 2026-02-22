@@ -249,7 +249,8 @@ export default function CreateCampaignPage() {
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
             const msg = typeof data.error === "string" ? data.error : "Upload failed";
-            throw new Error(msg);
+            const hint = typeof data.hint === "string" ? data.hint : "";
+            throw new Error(hint ? `${msg} ${hint}` : msg);
           }
           if (typeof data.url !== "string") throw new Error("No URL returned");
           return data.url;

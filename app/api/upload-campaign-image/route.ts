@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
-import { adminUploadCampaignUnderReviewImage, isAdminConfigured } from "@/lib/firebase/admin";
+import { adminUploadCampaignUnderReviewImage, isAdminConfigured, getConfigDiagnostic } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,9 +24,11 @@ function isAllowedImage(file: File): boolean {
 
 export async function POST(request: NextRequest) {
   if (!isAdminConfigured()) {
+    const hint = getConfigDiagnostic();
     return NextResponse.json(
       {
-        error: "Server is not configured for uploads. Set FIREBASE_SERVICE_ACCOUNT_JSON in .env.",
+        error: "Server is not configured for uploads.",
+        hint: hint ?? "Set FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json in .env (with the key file in project root) or FIREBASE_SERVICE_ACCOUNT_JSON with the full JSON, then restart.",
       },
       { status: 503 }
     );
