@@ -283,15 +283,15 @@ export default function Home() {
 
         {/* Mobile: horizontal carousel, equal-height cards */}
         {!isLoading && allTrendingCampaigns.length > 0 && (
-        <div className="md:hidden -mx-4 px-4 mb-6">
-          <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide">
-            <div className="flex gap-4 pb-2">
+        <div className="md:hidden -mx-4 px-4 mb-8">
+          <div className="overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory scrollbar-hide pb-4">
+            <div className="flex gap-4">
               {allTrendingCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="flex-shrink-0 w-[85vw] max-w-[340px] h-[500px] snap-center snap-always"
+                  className="flex-shrink-0 w-[85vw] max-w-[340px] min-h-[580px] snap-center snap-always"
                 >
-                  <div className="h-full rounded-lg border border-gray-200 hover:border-verified-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white">
+                  <div className="min-h-[580px] h-full rounded-lg border border-gray-200 hover:border-verified-500 active:scale-[0.98] transition-all duration-200 overflow-hidden bg-white flex flex-col">
                     <CampaignCard campaign={campaign} />
                   </div>
                 </div>
