@@ -10,6 +10,7 @@ import { TrendingUp, FileText, Share2, ArrowUpRight, Shield, DollarSign, Calenda
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const permanentMarker = Permanent_Marker({ weight: "400", subsets: ["latin"] });
 
