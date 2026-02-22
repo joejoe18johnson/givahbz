@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  const index = indexRaw === "0" || indexRaw === 0 ? 0 : indexRaw === "1" || indexRaw === 1 ? 1 : null;
+  const index = indexRaw === "0" ? 0 : indexRaw === "1" ? 1 : null;
   if (index !== 0 && index !== 1) {
     return NextResponse.json(
       { error: "index must be 0 or 1." },
