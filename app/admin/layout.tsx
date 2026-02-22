@@ -230,7 +230,7 @@ export default function AdminLayout({
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="w-full text-center inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50 hover:border-gray-400 transition-colors"
+              className="w-full text-center inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-accent-600 text-white font-medium text-sm hover:bg-accent-700 transition-colors shadow-sm"
             >
               Back to site
             </button>
