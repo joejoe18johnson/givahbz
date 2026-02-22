@@ -355,33 +355,55 @@ export default function AdminLayout({
 
             <Link
               href="/admin"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                pathname === "/admin"
+                  ? "bg-primary-50 text-primary-700 font-medium"
+                  : newNotificationTotal > 0
+                    ? "bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100"
+                    : "text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <LayoutDashboard className="w-4 h-4" />
-              Dashboard
+              <span className="flex-1">Dashboard</span>
+              {newNotificationTotal > 0 && (
+                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  {newNotificationTotal > 99 ? "99+" : newNotificationTotal}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/campaigns"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/campaigns" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                pathname === "/admin/campaigns"
+                  ? "bg-primary-50 text-primary-700 font-medium"
+                  : sectionCounts.campaigns > 0
+                    ? "bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100"
+                    : "text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <Megaphone className="w-4 h-4" />
               <span className="flex-1">Campaigns</span>
+              {sectionCounts.campaigns > 0 && (
+                <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                  {sectionCounts.campaigns > 99 ? "99+" : sectionCounts.campaigns}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/users"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
                 pathname === "/admin/users"
                   ? "bg-primary-50 text-primary-700 font-medium"
-                  : newPhonePending > 0
+                  : newPhonePending + newAddressPending > 0
                     ? "bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100"
                     : "text-gray-600 hover:bg-gray-100"
               }`}
             >
               <Users className="w-4 h-4" />
               <span className="flex-1">Users</span>
-              {newPhonePending > 0 && (
+              {(newPhonePending + newAddressPending) > 0 && (
                 <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {newPhonePending > 99 ? "99+" : newPhonePending}
+                  {newPhonePending + newAddressPending > 99 ? "99+" : newPhonePending + newAddressPending}
                 </span>
               )}
             </Link>
