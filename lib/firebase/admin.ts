@@ -17,9 +17,25 @@ const donationsCollection = "donations";
 const campaignsCollection = "campaigns";
 
 let cachedKey: Record<string, string> | null | undefined = undefined;
+let dotenvLoaded = false;
+
+function ensureEnvLoaded(): void {
+  if (dotenvLoaded) return;
+  dotenvLoaded = true;
+  try {
+    const cwd = process.cwd();
+    const path = require("path");
+    const dotenv = require("dotenv");
+    dotenv.config({ path: path.join(cwd, ".env.local") });
+    dotenv.config({ path: path.join(cwd, ".env") });
+  } catch {
+    // ignore
+  }
+}
 
 function loadServiceAccountKey(): Record<string, string> | null {
   if (cachedKey !== undefined) return cachedKey;
+  ensureEnvLoaded();
   const raw = (typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON === "string" ? process.env.FIREBASE_SERVICE_ACCOUNT_JSON : "").trim();
   if (raw.length > 0) {
     try {
