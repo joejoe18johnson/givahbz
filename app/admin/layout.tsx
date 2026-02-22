@@ -35,12 +35,14 @@ export default function AdminLayout({
     phonePending: 0,
     pendingDonations: 0,
     addressPending: 0,
+    idPending: 0,
   });
   const [lastSeen, setLastSeen] = useState({
     underReview: 0,
     phonePending: 0,
     pendingDonations: 0,
     addressPending: 0,
+    idPending: 0,
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -55,12 +57,14 @@ export default function AdminLayout({
           phonePending?: number;
           pendingDonations?: number;
           addressPending?: number;
+          idPending?: number;
         };
         setLastSeen({
           underReview: typeof parsed.underReview === "number" ? parsed.underReview : 0,
           phonePending: typeof parsed.phonePending === "number" ? parsed.phonePending : 0,
           pendingDonations: typeof parsed.pendingDonations === "number" ? parsed.pendingDonations : 0,
           addressPending: typeof parsed.addressPending === "number" ? parsed.addressPending : 0,
+          idPending: typeof parsed.idPending === "number" ? parsed.idPending : 0,
         });
       }
     } catch {
@@ -76,6 +80,7 @@ export default function AdminLayout({
       phonePending: sectionCounts.phonePending,
       pendingDonations: sectionCounts.pendingDonations,
       addressPending: sectionCounts.addressPending,
+      idPending: sectionCounts.idPending,
     };
     setLastSeen(seen);
     try {
@@ -89,14 +94,16 @@ export default function AdminLayout({
     sectionCounts.phonePending,
     sectionCounts.pendingDonations,
     sectionCounts.addressPending,
+    sectionCounts.idPending,
   ]);
 
   const newUnderReview = Math.max(0, sectionCounts.underReview - lastSeen.underReview);
   const newPhonePending = Math.max(0, sectionCounts.phonePending - lastSeen.phonePending);
   const newPendingDonations = Math.max(0, sectionCounts.pendingDonations - lastSeen.pendingDonations);
   const newAddressPending = Math.max(0, sectionCounts.addressPending - lastSeen.addressPending);
+  const newIdPending = Math.max(0, sectionCounts.idPending - lastSeen.idPending);
   const newNotificationTotal =
-    newUnderReview + newPhonePending + newPendingDonations + newAddressPending;
+    newUnderReview + newPhonePending + newPendingDonations + newAddressPending + newIdPending;
 
   const sevenDaysAgo = () => {
     const d = new Date();
@@ -122,6 +129,7 @@ export default function AdminLayout({
         const since = sevenDaysAgo();
         const phonePending = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
         const addressPending = users.filter((u) => u.addressDocument && !u.addressVerified).length;
+        const idPending = users.filter((u) => u.idDocument && u.idPending).length;
         const pendingDonations = donations.filter((d) => d.status === "pending").length;
         setSectionCounts({
           underReview: underReviewCount,
@@ -131,6 +139,7 @@ export default function AdminLayout({
           phonePending,
           pendingDonations,
           addressPending,
+          idPending,
         });
         // First visit or cleared storage: treat current counts as already seen so no bubble until new items arrive
         try {
@@ -140,6 +149,7 @@ export default function AdminLayout({
               phonePending,
               pendingDonations,
               addressPending,
+              idPending,
             };
             localStorage.setItem(NOTIFICATIONS_SEEN_KEY, JSON.stringify(seen));
             setLastSeen(seen);

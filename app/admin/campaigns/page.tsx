@@ -6,7 +6,8 @@ import { getCampaignsForAdmin, deleteCampaign, setCampaignOnHold } from "@/lib/f
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle, Pencil } from "lucide-react";
+import { auth } from "@/lib/firebase/config";
 
 type CampaignWithStatus = Campaign & { status?: string };
 
@@ -16,6 +17,9 @@ export default function AdminCampaignsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [onHoldId, setOnHoldId] = useState<string | null>(null);
+  const [editingCampaign, setEditingCampaign] = useState<CampaignWithStatus | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", fullDescription: "" });
+  const [savingText, setSavingText] = useState(false);
   const { confirm, alert } = useThemedModal();
 
   async function loadCampaigns() {
@@ -69,6 +73,54 @@ export default function AdminCampaignsPage() {
       alert("Could not update campaign status. Please try again.", { variant: "error" });
     } finally {
       setOnHoldId(null);
+    }
+  };
+
+  const openEditText = (c: CampaignWithStatus) => {
+    setEditingCampaign(c);
+    setEditForm({
+      title: c.title ?? "",
+      description: c.description ?? "",
+      fullDescription: c.fullDescription ?? "",
+    });
+  };
+
+  const handleSaveText = async () => {
+    if (!editingCampaign) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      alert("You must be signed in to edit.", { variant: "error" });
+      return;
+    }
+    setSavingText(true);
+    try {
+      const token = await currentUser.getIdToken();
+      const res = await fetch(`/api/admin/campaigns/${editingCampaign.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data?.error ?? "Failed to update campaign text.", { variant: "error" });
+        return;
+      }
+      setCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === editingCampaign.id
+            ? { ...c, title: editForm.title, description: editForm.description, fullDescription: editForm.fullDescription }
+            : c
+        )
+      );
+      alert("Campaign text updated.", { variant: "success" });
+      setEditingCampaign(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update.", { variant: "error" });
+    } finally {
+      setSavingText(false);
     }
   };
 
@@ -186,6 +238,14 @@ export default function AdminCampaignsPage() {
                     )}
                     <button
                       type="button"
+                      onClick={() => openEditText(c)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-100 text-primary-700 hover:bg-primary-200 text-xs font-medium"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit text
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDelete(c.id, c.title)}
                       disabled={deletingId === c.id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium disabled:opacity-50"
@@ -224,6 +284,68 @@ export default function AdminCampaignsPage() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Edit campaign text modal */}
+      {editingCampaign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !savingText && setEditingCampaign(null)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Edit campaign text</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Fix grammar or spelling. Changes appear on the live campaign page.</p>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto flex-1 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Campaign title"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Short description</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Brief description (shown on cards)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full description</label>
+                <textarea
+                  value={editForm.fullDescription}
+                  onChange={(e) => setEditForm((f) => ({ ...f, fullDescription: e.target.value }))}
+                  rows={8}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Full story (campaign detail page)"
+                />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => !savingText && setEditingCampaign(null)}
+                disabled={savingText}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveText}
+                disabled={savingText}
+                className="px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 disabled:opacity-50"
+              >
+                {savingText ? "Saving…" : "Save changes"}
+              </button>
+            </div>
           </div>
         </div>
       )}

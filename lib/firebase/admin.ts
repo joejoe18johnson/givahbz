@@ -305,3 +305,23 @@ export async function adminSetSiteContent(data: Record<string, string>): Promise
   const ref = firestore.collection(siteConfigCollection).doc(siteContentDocId);
   await ref.set(data, { merge: true });
 }
+
+/** Update campaign text (title, description, fullDescription). Admin only. */
+export async function adminUpdateCampaignText(
+  campaignId: string,
+  updates: { title?: string; description?: string; fullDescription?: string }
+): Promise<void> {
+  const app = getAdminApp();
+  if (!app) throw new Error("Server is not configured for admin operations.");
+  const firestore = admin.firestore();
+  const ref = firestore.collection(campaignsCollection).doc(campaignId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new Error("Campaign not found");
+  const data: Record<string, unknown> = {};
+  if (typeof updates.title === "string") data.title = updates.title.trim();
+  if (typeof updates.description === "string") data.description = updates.description.trim();
+  if (typeof updates.fullDescription === "string") data.fullDescription = updates.fullDescription.trim();
+  if (Object.keys(data).length === 0) return;
+  data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+  await ref.update(data);
+}
