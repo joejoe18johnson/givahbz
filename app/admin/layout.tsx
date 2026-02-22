@@ -223,16 +223,13 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <aside className="fixed left-0 top-16 bottom-0 w-56 bg-white border-r border-gray-200 shadow-sm z-40 overflow-y-auto flex flex-col">
+      <aside className="fixed left-0 top-0 bottom-0 w-56 bg-white border-r border-gray-200 shadow-sm z-40 overflow-y-auto flex flex-col">
         <nav className="p-4 space-y-1 flex-1 pb-24">
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to site
+          <Link href="/" className="flex flex-col items-center gap-1 py-4 border-b border-gray-100">
+            <Image src="/givah-logo.png" alt="GivahBz" width={120} height={36} className="h-8 w-auto" priority />
+            <span className="text-xs text-gray-500">Back to site</span>
           </Link>
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-4">
             {/* Notification bell - next to sidebar sections */}
             <div className="relative mb-2" ref={dropdownRef}>
               <button
@@ -461,12 +458,7 @@ export default function AdminLayout({
         </nav>
       </aside>
 
-      {/* Admin top bar */}
-      <header className="fixed left-56 right-0 top-16 h-14 z-30 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-        <span className="text-sm font-medium text-gray-700">Admin</span>
-      </header>
-
-      <main className="pl-56 pt-[7.5rem] min-h-screen">
+      <main className="pl-56 pt-6 min-h-screen">
         <div className="p-6 md:p-8">{children}</div>
       </main>
     </div>

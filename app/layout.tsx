@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
+import MainWithPadding from "@/components/MainWithPadding";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -28,7 +29,7 @@ export default function RootLayout({
       <body className={`${outfit.className} bg-white`}>
         <Providers>
           <Header />
-          <main className="min-h-screen pt-16">{children}</main>
+          <MainWithPadding>{children}</MainWithPadding>
           <Footer />
         </Providers>
       </body>

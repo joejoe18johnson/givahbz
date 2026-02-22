@@ -172,6 +172,23 @@ function getStorageBucketNameForAdmin(app: admin.app.App): string {
   return "";
 }
 
+/** Return the other common bucket name for this project (for 404 fallback). */
+function getAlternateBucketName(app: admin.app.App, currentBucket: string): string | null {
+  const projectId = app.options.projectId || (loadServiceAccountKey()?.project_id as string | undefined);
+  if (!projectId) return null;
+  if (currentBucket.endsWith(".firebasestorage.app")) return `${projectId}.appspot.com`;
+  if (currentBucket.endsWith(".appspot.com")) return `${projectId}.firebasestorage.app`;
+  return null;
+}
+
+function isBucketNotFoundError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (msg.includes("bucket does not exist") || msg.includes("The specified bucket does not exist")) return true;
+  const code = err && typeof err === "object" && "code" in err ? (err as { code: number }).code : undefined;
+  const nestedCode = err && typeof err === "object" && "error" in err && typeof (err as { error: unknown }).error === "object" && (err as { error: { code?: number } }).error?.code;
+  return code === 404 || nestedCode === 404;
+}
+
 /** Sanitize for Storage path (no path separators or problematic chars). */
 function sanitizeFileName(name: string): string {
   const base = name.replace(/\.[^/.]+$/, "").trim() || "document";
@@ -198,17 +215,25 @@ export async function adminUploadVerificationDocument(
   if (!bucketName) {
     throw new Error("Storage bucket not configured. Set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env.");
   }
-  const bucket = storage.bucket(bucketName);
   const ext = (originalFileName.split(".").pop() || "").toLowerCase() || (mimeType === "application/pdf" ? "pdf" : "jpg");
   const safeName = sanitizeFileName(originalFileName);
   const path = `verification-docs/${userId}/${documentType}/${Date.now()}_${safeName}.${ext}`;
-  const file = bucket.file(path);
-  await file.save(buffer, {
-    contentType: mimeType || "application/octet-stream",
-    metadata: { cacheControl: "private, max-age=31536000" },
-  });
-  const url = await getDownloadURL(file);
-  return url;
+  let lastErr: unknown;
+  for (const name of [bucketName, getAlternateBucketName(app, bucketName)].filter(Boolean) as string[]) {
+    try {
+      const bucket = storage.bucket(name);
+      const file = bucket.file(path);
+      await file.save(buffer, {
+        contentType: mimeType || "application/octet-stream",
+        metadata: { cacheControl: "private, max-age=31536000" },
+      });
+      return await getDownloadURL(file);
+    } catch (err) {
+      lastErr = err;
+      if (!isBucketNotFoundError(err)) throw err;
+    }
+  }
+  throw lastErr;
 }
 
 /**
@@ -231,14 +256,22 @@ export async function adminUploadCampaignUnderReviewImage(
   if (!bucketName) {
     throw new Error("Storage bucket not configured. Set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env.");
   }
-  const bucket = storage.bucket(bucketName);
   const ext = (originalFileName.split(".").pop() || "").toLowerCase() || "jpg";
   const path = `campaigns-under-review/${pendingId}/image${index + 1}.${ext}`;
-  const file = bucket.file(path);
-  await file.save(buffer, {
-    contentType: mimeType || "image/jpeg",
-    metadata: { cacheControl: "private, max-age=31536000" },
-  });
-  const url = await getDownloadURL(file);
-  return url;
+  let lastErr: unknown;
+  for (const name of [bucketName, getAlternateBucketName(app, bucketName)].filter(Boolean) as string[]) {
+    try {
+      const bucket = storage.bucket(name);
+      const file = bucket.file(path);
+      await file.save(buffer, {
+        contentType: mimeType || "image/jpeg",
+        metadata: { cacheControl: "private, max-age=31536000" },
+      });
+      return await getDownloadURL(file);
+    } catch (err) {
+      lastErr = err;
+      if (!isBucketNotFoundError(err)) throw err;
+    }
+  }
+  throw lastErr;
 }
