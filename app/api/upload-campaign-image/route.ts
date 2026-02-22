@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
   const file = formData.get("file") as File | null;
   const pendingId = (formData.get("pendingId") as string)?.trim() || "";
   const indexRaw = formData.get("index");
+  const indexStr = indexRaw != null ? String(indexRaw) : "";
 
   if (!file || typeof file.arrayBuffer !== "function") {
     return NextResponse.json(
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  const index = indexRaw === "0" ? 0 : indexRaw === "1" ? 1 : null;
+  const index = indexStr === "0" ? 0 : indexStr === "1" ? 1 : null;
   if (index !== 0 && index !== 1) {
     return NextResponse.json(
       { error: "index must be 0 or 1." },
