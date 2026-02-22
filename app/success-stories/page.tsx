@@ -1,11 +1,12 @@
 "use client";
 
-import CampaignCard from "@/components/CampaignCard";
+import SafeImage from "@/components/SafeImage";
 import { Campaign } from "@/lib/data";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Trophy, Users } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export default function SuccessStoriesPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -75,13 +76,60 @@ export default function SuccessStoriesPage() {
       )}
 
       {!isLoading && !error && campaigns.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {campaigns.map((campaign) => (
-            <div key={campaign.id}>
-              <CampaignCard campaign={campaign} />
-            </div>
-          ))}
-        </div>
+        <ul className="flex flex-col gap-4 list-none p-0 m-0">
+          {campaigns.map((campaign) => {
+            const goal = Number(campaign.goal) || 1;
+            const raised = Number(campaign.raised) || 0;
+            const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 100;
+            return (
+              <li key={campaign.id}>
+                <Link
+                  href={`/campaigns/${campaign.id}`}
+                  className="flex flex-row rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:border-verified-500 hover:shadow-md transition-all"
+                >
+                  <div className="relative w-32 sm:w-40 flex-shrink-0 aspect-square bg-gray-200">
+                    {campaign.image ? (
+                      <SafeImage
+                        src={campaign.image}
+                        alt={campaign.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 128px, 160px"
+                        fallback={
+                          <div className="absolute inset-0 flex items-center justify-center bg-primary-100 text-primary-600 text-2xl font-semibold">
+                            {campaign.title.charAt(0)}
+                          </div>
+                        }
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-primary-100 text-primary-600 text-2xl font-semibold">
+                        {campaign.title.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0 p-4 justify-center">
+                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" />
+                      {(campaign.backers ?? 0).toLocaleString()} donations
+                    </p>
+                    <h3 className="font-semibold text-gray-900 line-clamp-2 mt-1">
+                      {campaign.title}
+                    </h3>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
+                      <div
+                        className="bg-verified-500 h-2.5 rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 mt-2">
+                      {formatCurrency(raised)} raised
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
