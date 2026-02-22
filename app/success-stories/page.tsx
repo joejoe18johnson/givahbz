@@ -1,11 +1,13 @@
 "use client";
 
 import CampaignCard from "@/components/CampaignCard";
+import SafeImage from "@/components/SafeImage";
 import { Campaign } from "@/lib/data";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Trophy, Users } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export default function SuccessStoriesPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -75,13 +77,76 @@ export default function SuccessStoriesPage() {
       )}
 
       {!isLoading && !error && campaigns.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {campaigns.map((campaign) => (
-            <div key={campaign.id}>
-              <CampaignCard campaign={campaign} />
+        <>
+          {/* Mobile: horizontal scroll, horizontal cards (image left, details right) */}
+          <div
+            className="md:hidden -mx-4 px-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+            style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            <div className="flex gap-4">
+              {campaigns.map((campaign) => {
+                const goal = Number(campaign.goal) || 1;
+                const raised = Number(campaign.raised) || 0;
+                const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
+                return (
+                  <Link
+                    key={campaign.id}
+                    href={`/campaigns/${campaign.id}`}
+                    className="flex-shrink-0 w-[85vw] max-w-[340px] snap-start rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:border-primary-300 transition-colors flex flex-row"
+                  >
+                    <div className="relative w-[44%] min-w-[120px] aspect-square bg-gray-200 shrink-0">
+                      {campaign.image ? (
+                        <SafeImage
+                          src={campaign.image}
+                          alt={campaign.title}
+                          fill
+                          className="object-cover"
+                          sizes="160px"
+                          fallback={
+                            <div className="absolute inset-0 flex items-center justify-center bg-primary-100 text-primary-600 text-2xl font-semibold">
+                              {campaign.title.charAt(0)}
+                            </div>
+                          }
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary-100 text-primary-600 text-2xl font-semibold">
+                          {campaign.title.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0 p-3 justify-center">
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {campaign.backers ?? 0} donations
+                      </p>
+                      <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm mt-0.5">
+                        {campaign.title}
+                      </h3>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div
+                          className="bg-success-500 h-2 rounded-full transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 mt-1.5">
+                        {formatCurrency(raised)} raised
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          </div>
+
+          {/* Desktop: grid of standard cards */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {campaigns.map((campaign) => (
+              <div key={campaign.id}>
+                <CampaignCard campaign={campaign} />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
