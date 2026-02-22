@@ -1,8 +1,12 @@
+"use client";
+
 import SafeImage from "@/components/SafeImage";
 import Link from "next/link";
 import { Heart, Shield, Users, CheckCircle2 } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 export default function AboutPage() {
+  const { content } = useSiteContent();
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -11,10 +15,10 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto text-center">
             <Heart className="w-16 h-16 mx-auto mb-6" />
             <h1 className="text-5xl md:text-6xl font-medium mb-6">
-              About GivahBz
+              {content.aboutTitle}
             </h1>
             <p className="text-xl md:text-2xl text-primary-100">
-              Empowering Belizean communities through transparent, verified crowdfunding
+              {content.aboutSubtitle}
             </p>
           </div>
         </div>
@@ -28,7 +32,7 @@ export default function AboutPage() {
               <div>
                 <h2 className="text-4xl font-medium mb-6">Our Mission</h2>
                 <p className="text-lg text-gray-700 leading-relaxed mb-4">
-                  GivahBz was created to provide a trusted, transparent platform for Belizean communities to support each other. We believe that when people come together, incredible things happen.
+                  {content.aboutMission}
                 </p>
                 <p className="text-lg text-gray-700 leading-relaxed">
                   Our mission is to make it easy for individuals, organizations, and charities to raise funds for causes that matter, while ensuring transparency and trust through our verification process.

@@ -55,6 +55,7 @@ const HOME_FAQS = [
 ];
 
 export default function Home() {
+  const { content: siteContent } = useSiteContent();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [campaignsError, setCampaignsError] = useState<string | null>(null);
@@ -152,12 +153,10 @@ export default function Home() {
           {/* Left: Content */}
           <div className="order-2 lg:order-1 mt-14 sm:mt-16 lg:mt-0">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-900 mb-4">
-              Supporting{" "}
-              <span className={`text-success-600 ${permanentMarker.className}`}>Belizean</span>{" "}
-              Communities
+              {siteContent.heroTitle}
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-xl">
-              Life is either a daring adventure or nothing. Help real people and causes across Belize—verified, transparent, and community-driven.
+              {siteContent.heroSubtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <Link
@@ -222,8 +221,8 @@ export default function Home() {
         <section id="community-shares-burdens" className="flex-shrink-0 -mt-[40px] pt-4 pb-8 md:pb-12">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-center break-words max-w-full px-2">
-              <span className="text-primary-600">Community Shares </span>
-              <span className={`text-success-600 ${permanentMarker.className}`}>Burdens</span>
+              <span className="text-primary-600">{siteContent.communityHeadingPart1}</span>
+              <span className={`text-success-600 ${permanentMarker.className}`}>{siteContent.communityHeadingPart2}</span>
             </h2>
           </div>
         </section>

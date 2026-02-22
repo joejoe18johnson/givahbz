@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 export default function Footer() {
+  const { content } = useSiteContent();
   return (
     <footer className="bg-gray-900 text-white mt-16">
       <div className="container mx-auto px-4 py-12">
@@ -10,7 +14,7 @@ export default function Footer() {
             <Link href="/" className="inline-block mb-4">
               <Image
                 src="/givah-logo.png"
-                alt="GivahBz"
+                alt={content.siteName}
                 width={140}
                 height={40}
                 className="h-10 w-auto"
@@ -18,7 +22,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-gray-400">
-              Supporting organizations, charities, and individuals in need across Belize. All campaigns are verified with proof of need.
+              {content.footerTagline}
             </p>
           </div>
           <div>
@@ -41,12 +45,12 @@ export default function Footer() {
             <h4 className="font-medium mb-4">About</h4>
             <ul className="space-y-2 text-gray-400">
               <li><Link href="/about" className="hover:text-white">About Us</Link></li>
-              <li><Link href="/how-it-works" className="hover:text-white">How GivahBz Works</Link></li>
+              <li><Link href="/how-it-works" className="hover:text-white">How {content.siteName} Works</Link></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2026 GivahBz. All rights reserved. | Serving Belize</p>
+          <p>{content.footerCopyright}</p>
         </div>
       </div>
     </footer>
