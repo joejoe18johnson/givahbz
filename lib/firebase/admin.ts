@@ -20,12 +20,14 @@ let cachedKey: Record<string, string> | null | undefined = undefined;
 
 function loadServiceAccountKey(): Record<string, string> | null {
   if (cachedKey !== undefined) return cachedKey;
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (raw && typeof raw === "string" && raw.trim() !== "") {
+  const raw = (typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON === "string" ? process.env.FIREBASE_SERVICE_ACCOUNT_JSON : "").trim();
+  if (raw.length > 0) {
     try {
-      const parsed = JSON.parse(raw) as Record<string, string>;
-      if (parsed.private_key && parsed.client_email) {
-        cachedKey = parsed;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const privateKey = typeof parsed.private_key === "string" ? parsed.private_key : "";
+      const clientEmail = typeof parsed.client_email === "string" ? parsed.client_email : "";
+      if (privateKey && clientEmail) {
+        cachedKey = { ...parsed, private_key: privateKey, client_email: clientEmail } as Record<string, string>;
         return cachedKey;
       }
     } catch {
