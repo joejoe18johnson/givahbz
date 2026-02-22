@@ -275,3 +275,33 @@ export async function adminUploadCampaignUnderReviewImage(
   }
   throw lastErr;
 }
+
+// ---------------------------------------------------------------------------
+// Site content (admin-editable copy)
+// ---------------------------------------------------------------------------
+const siteConfigCollection = "siteConfig";
+const siteContentDocId = "content";
+
+export async function adminGetSiteContent(): Promise<Record<string, string> | null> {
+  const app = getAdminApp();
+  if (!app) return null;
+  const firestore = admin.firestore();
+  const ref = firestore.collection(siteConfigCollection).doc(siteContentDocId);
+  const snap = await ref.get();
+  if (!snap.exists) return null;
+  const data = snap.data() as Record<string, unknown> | undefined;
+  if (!data) return null;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
+}
+
+export async function adminSetSiteContent(data: Record<string, string>): Promise<void> {
+  const app = getAdminApp();
+  if (!app) throw new Error("Server is not configured for admin operations.");
+  const firestore = admin.firestore();
+  const ref = firestore.collection(siteConfigCollection).doc(siteContentDocId);
+  await ref.set(data, { merge: true });
+}
