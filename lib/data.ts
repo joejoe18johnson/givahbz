@@ -16,6 +16,8 @@ export interface Campaign {
   location?: string;
   createdAt: string;
   verified: boolean;
+  /** True when the campaign was created by an admin (shows "Admin Backed" badge). */
+  adminBacked?: boolean;
   proofDocuments?: ProofDocument[];
   updates?: CampaignUpdate[];
   rewards?: Reward[];

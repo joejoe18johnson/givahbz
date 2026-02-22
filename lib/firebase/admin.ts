@@ -325,3 +325,50 @@ export async function adminUpdateCampaignText(
   data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
   await ref.update(data);
 }
+
+/** Payload for creating an admin-backed campaign (API body). */
+export interface AdminCreateCampaignPayload {
+  title: string;
+  description: string;
+  fullDescription?: string;
+  goal: number;
+  category: string;
+  location?: string;
+  daysLeft?: number;
+  creatorType?: "individual" | "organization" | "charity";
+  image: string;
+  image2?: string;
+  creatorName: string;
+  creatorId: string | null;
+}
+
+/** Create a live campaign as admin (shows "Admin Backed" badge). Call from API only after verifying admin. */
+export async function adminCreateCampaign(payload: AdminCreateCampaignPayload): Promise<string> {
+  const app = getAdminApp();
+  if (!app) throw new Error("Server is not configured for admin operations.");
+  const firestore = admin.firestore();
+  const ref = firestore.collection(campaignsCollection).doc();
+  const doc: Record<string, unknown> = {
+    title: payload.title.trim(),
+    description: payload.description.trim(),
+    fullDescription: (payload.fullDescription ?? payload.description).trim(),
+    creator: payload.creatorName.trim(),
+    creatorType: payload.creatorType ?? "organization",
+    goal: Number(payload.goal) || 0,
+    raised: 0,
+    backers: 0,
+    daysLeft: Number(payload.daysLeft) ?? 30,
+    category: (payload.category || "Other").trim(),
+    image: payload.image,
+    image2: payload.image2 ?? payload.image,
+    location: (payload.location ?? "").trim(),
+    verified: true,
+    adminBacked: true,
+    status: "live",
+    creatorId: payload.creatorId ?? null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  await ref.set(doc);
+  return ref.id;
+}
