@@ -373,6 +373,13 @@ export default function AdminLayout({
               )}
             </Link>
             <Link
+              href="/admin/site-info"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/site-info" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
+            >
+              <FileText className="w-4 h-4" />
+              <span className="flex-1">Edit site info</span>
+            </Link>
+            <Link
               href="/admin/campaigns"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
                 pathname === "/admin/campaigns"
@@ -450,13 +457,6 @@ export default function AdminLayout({
             >
               <Trophy className="w-4 h-4" />
               <span className="flex-1">Completed campaigns</span>
-            </Link>
-            <Link
-              href="/admin/site-info"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pathname === "/admin/site-info" ? "bg-primary-50 text-primary-700 font-medium" : "text-gray-600 hover:bg-gray-100"}`}
-            >
-              <FileText className="w-4 h-4" />
-              <span className="flex-1">Edit site info</span>
             </Link>
           </div>
           
