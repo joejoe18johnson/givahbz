@@ -146,6 +146,7 @@ export default function AdminDashboardPage() {
 
   const phonePendingCount = users.filter((u) => u.phoneNumber && !u.phoneVerified).length;
   const addressPendingCount = users.filter((u) => u.addressDocument && !u.addressVerified).length;
+  const idPendingCount = users.filter((u) => u.idDocument && u.idPending).length;
 
   if (isLoading) {
     return (
@@ -213,8 +214,8 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Quick links - 3 cards in one row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Quick links - 4 cards in one row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           href="/admin/under-review"
           className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm block hover:border-primary-200 transition-colors"
@@ -254,6 +255,20 @@ export default function AdminDashboardPage() {
             <div>
               <p className="text-sm text-gray-500">Address documents to review</p>
               <p className="text-xl font-semibold text-gray-900">{addressPendingCount}</p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href="/admin/users"
+          className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm block hover:border-primary-200 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-violet-700" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Identity documents to review</p>
+              <p className="text-xl font-semibold text-gray-900">{idPendingCount}</p>
             </div>
           </div>
         </Link>

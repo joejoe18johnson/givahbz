@@ -334,6 +334,21 @@ export default function AdminLayout({
                         <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newAddressPending}</span>
                       )}
                     </Link>
+                    <Link
+                      href="/admin/users"
+                      onClick={() => setShowNotificationDropdown(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                        newIdPending > 0 ? "bg-amber-50 border border-amber-200 hover:bg-amber-100" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className={`text-sm ${newIdPending > 0 ? "text-amber-900 font-medium" : "text-gray-700"}`}>
+                        Identity documents to review
+                        {newIdPending > 0 && <span className="ml-1.5 text-amber-600 text-xs">(new)</span>}
+                      </span>
+                      {newIdPending > 0 && (
+                        <span className="rounded-full bg-red-500 text-white text-xs font-medium min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">{newIdPending}</span>
+                      )}
+                    </Link>
                     <div className="border-t border-gray-100 pt-2 mt-1">
                       <p className="px-3 py-1 text-xs text-gray-500">Quick links</p>
                       <Link href="/admin/campaigns" onClick={() => setShowNotificationDropdown(false)} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700">
@@ -413,16 +428,16 @@ export default function AdminLayout({
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
                 pathname === "/admin/users"
                   ? "bg-primary-50 text-primary-700 font-medium"
-                  : newPhonePending + newAddressPending > 0
+                  : newPhonePending + newAddressPending + newIdPending > 0
                     ? "bg-amber-50/80 border border-amber-200 text-amber-900 hover:bg-amber-100"
                     : "text-gray-600 hover:bg-gray-100"
               }`}
             >
               <Users className="w-4 h-4" />
               <span className="flex-1">Users</span>
-              {(newPhonePending + newAddressPending) > 0 && (
+              {(newPhonePending + newAddressPending + newIdPending) > 0 && (
                 <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-                  {newPhonePending + newAddressPending > 99 ? "99+" : newPhonePending + newAddressPending}
+                  {newPhonePending + newAddressPending + newIdPending > 99 ? "99+" : newPhonePending + newAddressPending + newIdPending}
                 </span>
               )}
             </Link>
