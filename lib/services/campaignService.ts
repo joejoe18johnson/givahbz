@@ -27,8 +27,10 @@ export async function fetchCampaignsFromAPI(filters?: {
   const url = `/api/campaigns${campaignsApiQuery(filters)}`;
   const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error ?? "Failed to load campaigns");
+    const err = await res.json().catch(() => ({})) as { error?: string; hint?: string; missing?: string[] };
+    const msg = err?.error ?? "Failed to load campaigns";
+    const hint = err?.hint;
+    throw new Error(hint ? `${msg} ${hint}` : msg);
   }
   return res.json();
 }

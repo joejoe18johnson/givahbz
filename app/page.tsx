@@ -87,7 +87,8 @@ export default function Home() {
         setCampaigns(fetchedCampaigns);
       } catch (error) {
         console.error("Error loading campaigns:", error);
-        setCampaignsError("Campaigns could not be loaded. Check Firebase is connected.");
+        const message = error instanceof Error ? error.message : "Campaigns could not be loaded. Check Firebase is connected.";
+        setCampaignsError(message);
       } finally {
         setIsLoading(false);
       }
