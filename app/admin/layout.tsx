@@ -225,10 +225,15 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-50">
       <aside className="fixed left-0 top-0 bottom-0 w-56 bg-white border-r border-gray-200 shadow-sm z-40 overflow-y-auto flex flex-col">
         <nav className="p-4 space-y-1 flex-1 pb-24">
-          <Link href="/" className="flex flex-col items-center gap-1 py-4 border-b border-gray-100">
+          <div className="flex flex-col items-center gap-3 py-4 border-b border-gray-100">
             <Image src="/givah-logo.png" alt="GivahBz" width={120} height={36} className="h-8 w-auto" priority />
-            <span className="text-xs text-gray-500">Back to site</span>
-          </Link>
+            <Link
+              href="/"
+              className="w-full text-center inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50 hover:border-gray-400 transition-colors"
+            >
+              Back to site
+            </Link>
+          </div>
           <div className="pt-4">
             {/* Notification bell - next to sidebar sections */}
             <div className="relative mb-2" ref={dropdownRef}>
