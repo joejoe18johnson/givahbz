@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Heart, Building2, Wallet, Smartphone, CheckCircle2, Copy } from "lucide-react";
+import { X, Heart, Building2, CheckCircle2, Copy } from "lucide-react";
 import { formatCurrency, generateShortRef } from "@/lib/utils";
 import { recordDonationAndUpdateCampaign, createDonation } from "@/lib/firebase/firestore";
 import { useThemedModal } from "@/components/ThemedModal";
@@ -55,7 +55,7 @@ export default function DonationModal({
 
   const ekyashDetails = {
     phoneNumber: "+501 123-4567",
-    appName: "Ekyash",
+    appName: "E-Kyash",
   };
 
   const handlePayment = async () => {
@@ -286,7 +286,11 @@ export default function DonationModal({
                         : "border-gray-200 hover:border-primary-300"
                     }`}
                   >
-                    <Wallet className="w-8 h-8 mx-auto mb-2 text-primary-600" />
+                    <img
+                      src="https://www.digiwallet.bz/wp-content/uploads/2021/11/DWL-web-logo.png"
+                      alt="Digi Wallet"
+                      className="w-10 h-10 mx-auto mb-2 object-contain"
+                    />
                     <p className="font-medium">Digi Wallet</p>
                     <p className="text-xs text-gray-600 mt-1">Mobile wallet</p>
                   </button>
@@ -300,8 +304,12 @@ export default function DonationModal({
                         : "border-gray-200 hover:border-primary-300"
                     }`}
                   >
-                    <Smartphone className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                    <p className="font-medium">Ekyash</p>
+                    <img
+                      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTvpM-CtfXjjUgsq68dcfYkTzk88ke86G-5A&s"
+                      alt="E-Kyash"
+                      className="w-10 h-10 mx-auto mb-2 object-contain"
+                    />
+                    <p className="font-medium">E-Kyash</p>
                     <p className="text-xs text-gray-600 mt-1">Mobile payments</p>
                   </button>
                 </div>
@@ -379,7 +387,14 @@ export default function DonationModal({
 
               {selectedMethod === "digiwallet" && (
                 <div className="mb-6 bg-white rounded-lg p-6">
-                  <h4 className="font-medium mb-4">Digi Wallet Payment</h4>
+                  <div className="flex items-center gap-3 mb-4">
+                    <img
+                      src="https://www.digiwallet.bz/wp-content/uploads/2021/11/DWL-web-logo.png"
+                      alt="Digi Wallet"
+                      className="w-12 h-12 object-contain"
+                    />
+                    <h4 className="font-medium">Digi Wallet Payment</h4>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">
@@ -416,11 +431,18 @@ export default function DonationModal({
 
               {selectedMethod === "ekyash" && (
                 <div className="mb-6 bg-white rounded-lg p-6">
-                  <h4 className="font-medium mb-4">Ekyash Payment</h4>
+                  <div className="flex items-center gap-3 mb-4">
+                    <img
+                      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTvpM-CtfXjjUgsq68dcfYkTzk88ke86G-5A&s"
+                      alt="E-Kyash"
+                      className="w-12 h-12 object-contain"
+                    />
+                    <h4 className="font-medium">E-Kyash Payment</h4>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">
-                        Ekyash Phone Number *
+                        E-Kyash Phone Number *
                       </label>
                       <input
                         type="tel"
@@ -434,7 +456,7 @@ export default function DonationModal({
                         <strong>Payment Instructions:</strong>
                       </p>
                       <ol className="text-sm text-primary-700 list-decimal list-inside space-y-1">
-                        <li>Open your Ekyash app</li>
+                        <li>Open your E-Kyash app</li>
                         <li>Select &quot;Send Money&quot; or &quot;Pay&quot;</li>
                         <li>Enter phone number: <strong>{ekyashDetails.phoneNumber}</strong></li>
                         <li>Enter amount: <strong>{formatCurrency(amount)}</strong></li>
@@ -444,7 +466,7 @@ export default function DonationModal({
                     </div>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-xs text-blue-800">
-                        💡 Ekyash payments are instant and secure.
+                        💡 E-Kyash payments are instant and secure.
                       </p>
                     </div>
                   </div>

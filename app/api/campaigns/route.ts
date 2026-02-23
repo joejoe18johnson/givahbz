@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCampaigns } from "@/lib/firebase/firestore";
-import { adminListCampaigns, isAdminConfigured } from "@/lib/firebase/admin";
+import { adminListCampaigns, isAdminConfigured, type AdminCampaignListItem } from "@/lib/firebase/admin";
+import type { Campaign } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const CAMPAIGNS_TIMEOUT_MS = 15000;
+
+const CREATOR_TYPES: Campaign["creatorType"][] = ["individual", "organization", "charity"];
+
+function toCampaign(c: AdminCampaignListItem): Campaign {
+  const creatorType =
+    c.creatorType && CREATOR_TYPES.includes(c.creatorType as Campaign["creatorType"])
+      ? (c.creatorType as Campaign["creatorType"])
+      : "individual";
+  return { ...c, creatorType };
+}
 
 /**
  * GET /api/campaigns
@@ -68,11 +79,12 @@ export async function GET(request: NextRequest) {
     let campaigns: Awaited<ReturnType<typeof getCampaigns>>;
     if (isAdminConfigured()) {
       try {
-        campaigns = await withTimeout(
+        const adminList = await withTimeout(
           adminListCampaigns(filters),
           CAMPAIGNS_TIMEOUT_MS,
           "Campaigns request timed out."
         );
+        campaigns = adminList.map(toCampaign);
       } catch (adminErr) {
         const adminMsg = String(adminErr && typeof adminErr === "object" && "message" in adminErr ? (adminErr as { message: string }).message : adminErr);
         const isPermissionDenied = adminMsg.includes("PERMISSION_DENIED") || adminMsg.includes("Permission denied");

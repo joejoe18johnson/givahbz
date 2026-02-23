@@ -486,7 +486,7 @@ export default function AdminDashboardPage() {
                   <td className="px-5 py-3 text-gray-900 max-w-[200px] truncate">{d.campaignTitle}</td>
                   <td className="px-5 py-3 text-gray-600">{d.anonymous ? "Anonymous" : d.donorName}</td>
                   <td className="px-5 py-3 font-medium">{formatCurrency(d.amount)}</td>
-                  <td className="px-5 py-3 text-gray-600 capitalize">{d.method.replace("-", " ")}</td>
+                  <td className="px-5 py-3 text-gray-600 capitalize">{d.method === "ekyash" ? "E-Kyash" : d.method.replace("-", " ")}</td>
                   <td className="px-5 py-3">
                     <span className={d.status === "completed" ? "text-success-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
                   </td>
