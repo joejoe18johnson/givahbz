@@ -215,7 +215,13 @@ async function seedFiftyCampaigns() {
   try {
     const key = loadServiceAccountKey();
     if (!key?.private_key || !key?.client_email) {
-      console.error("❌ Set FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json (or FIREBASE_SERVICE_ACCOUNT_JSON) in .env so the script can write to Firestore.");
+      console.error("❌ No service account key found. Set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_SERVICE_ACCOUNT_JSON in .env.");
+      process.exit(1);
+    }
+    if (APP_PROJECT_ID && key.project_id !== APP_PROJECT_ID) {
+      console.error(`❌ Service account is for project "${key.project_id}" but your app uses "${APP_PROJECT_ID}".`);
+      console.error(`   To seed ${APP_PROJECT_ID}: Firebase Console → ${APP_PROJECT_ID} → Project settings → Service accounts → Generate new private key.`);
+      console.error(`   Save the file as firebase-service-account-${APP_PROJECT_ID}.json in the project root (or set FIREBASE_SERVICE_ACCOUNT_PATH to it).`);
       process.exit(1);
     }
     if (admin.apps.length === 0) {
