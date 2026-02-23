@@ -101,7 +101,10 @@ export default function AdminDonationsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Donations</h1>
           <p className="text-gray-600 mt-1">
-            {donations.length} donations total · Showing {donations.length === 0 ? 0 : start + 1}–{Math.min(start + PAGE_SIZE, donations.length)} per page
+            {donations.length} donations total
+            {donations.length > 0 && (
+              <> · Showing {start + 1}–{Math.min(start + PAGE_SIZE, donations.length)}</>
+            )}
           </p>
         </div>
         <div className="flex gap-4 text-sm">
@@ -168,6 +171,31 @@ export default function AdminDonationsPage() {
             </tbody>
           </table>
         </div>
+        {donations.length > PAGE_SIZE && (
+          <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-sm text-gray-600">
+              Page {page} of {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" /> Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
