@@ -75,7 +75,7 @@ export default function AdminSiteInfoPage() {
       if (!res.ok) {
         const msg = data?.error || "Failed to save.";
         const hint = data?.hint;
-        alert(hint ? `${msg}\n\n${hint}` : msg, { variant: "error" });
+        alert(hint && !msg.includes(hint) ? `${msg}\n\n${hint}` : msg, { variant: "error" });
         return;
       }
       alert("Site content saved. Changes will appear on the site shortly.", { variant: "success" });

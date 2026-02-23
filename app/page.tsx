@@ -497,79 +497,63 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Campaigns Needing Support */}
+        {/* Campaigns Needing Support - horizontal cards (same layout as Success Stories) */}
         <div className="bg-gradient-to-br from-success-500 to-success-600 rounded-2xl border border-gray-200 p-6 md:p-8 shadow-lg flex flex-col">
           <h2 className="text-3xl md:text-4xl font-medium mb-6 text-white">Campaigns Needing Support</h2>
-          <div className="flex flex-col flex-1 gap-4">
+          <ul className="flex flex-col gap-4 list-none p-0 m-0">
             {campaigns.slice(0, 4).map((campaign) => {
-              const progress = (campaign.raised / campaign.goal) * 100;
-              const progressPercentage = Math.min(progress, 100);
+              const goal = Number(campaign.goal) || 1;
+              const raised = Number(campaign.raised) || 0;
+              const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
               return (
-                <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="flex-1 block overflow-visible">
-                  <div className="bg-white/90 rounded-lg overflow-visible hover:scale-[1.02] transition-all duration-300 cursor-pointer border border-white/30 h-full">
-                    <div className="flex h-full overflow-hidden rounded-lg">
-                      {/* Compact Image */}
-                      <div className="relative w-24 flex-shrink-0 bg-gray-200 overflow-hidden h-full rounded-l-lg">
-                        {campaign.image ? (
-                          <div className="absolute inset-0">
-                            <SafeImage
-                              src={campaign.image}
-                              alt={campaign.title}
-                              fill
-                              className="object-cover"
-                              sizes="96px"
-                            />
-                          </div>
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-200 to-primary-400">
-                            <div className="text-primary-600 text-xl font-medium">
+                <li key={campaign.id}>
+                  <Link
+                    href={`/campaigns/${campaign.id}`}
+                    className="flex flex-row rounded-xl border border-white/30 bg-white/95 overflow-hidden shadow-sm hover:border-white/50 hover:shadow-md transition-all"
+                  >
+                    <div className="relative w-32 sm:w-40 flex-shrink-0 aspect-square bg-gray-200">
+                      {campaign.image ? (
+                        <SafeImage
+                          src={campaign.image}
+                          alt={campaign.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 128px, 160px"
+                          fallback={
+                            <div className="absolute inset-0 flex items-center justify-center bg-primary-100 text-primary-600 text-2xl font-semibold">
                               {campaign.title.charAt(0)}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                      {/* Compact Content */}
-                      <div className="flex-1 p-3">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h3 className="text-sm font-medium text-gray-900 line-clamp-1 flex-1">{campaign.title}</h3>
-                          {campaign.verified && (
-                            <div className="bg-success-500 text-white w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
-                              <CheckCircle2 className="w-3 h-3" />
-                            </div>
-                          )}
+                          }
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary-100 text-primary-600 text-2xl font-semibold">
+                          {campaign.title.charAt(0)}
                         </div>
-                        <p className="text-xs text-gray-600 line-clamp-1 mb-2">{campaign.description}</p>
-                        {/* Compact Progress */}
-                        <div className="mb-2">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="font-medium text-primary-600">{formatCurrency(campaign.raised)}</span>
-                            <span className="text-gray-500">{formatCurrency(campaign.goal)}</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5">
-                            <div
-                              className="bg-primary-600 h-1.5 rounded-full transition-all"
-                              style={{ width: `${progressPercentage}%` }}
-                            />
-                          </div>
-                        </div>
-                        {/* Compact Stats */}
-                        <div className="flex items-center gap-3 text-xs text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            <span>{campaign.backers}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{campaign.daysLeft}d</span>
-                          </div>
-                        </div>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                </Link>
+                    <div className="flex flex-col flex-1 min-w-0 p-4 justify-center">
+                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" />
+                        {(campaign.backers ?? 0).toLocaleString()} donations
+                      </p>
+                      <h3 className="font-semibold text-gray-900 line-clamp-2 mt-1">
+                        {campaign.title}
+                      </h3>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
+                        <div
+                          className="bg-verified-500 h-2.5 rounded-full transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 mt-2">
+                        {formatCurrency(raised)} raised
+                      </p>
+                    </div>
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
           <div className="text-center mt-6">
             <Link
               href="/campaigns"

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Outputs firebase-service-account.json as a single line for pasting into
- * Vercel → Settings → Environment Variables → FIREBASE_SERVICE_ACCOUNT_JSON.
+ * Outputs firebase-service-account.json for pasting into Vercel or .env:
+ * - FIREBASE_SERVICE_ACCOUNT_JSON (one-line JSON)
+ * - FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 (recommended: no quoting issues)
  *
  * Run from project root: node scripts/vercel-service-account-one-line.js
- * Then copy the printed line (no quotes) into Vercel's value field.
  */
 
 const fs = require("fs");
@@ -30,7 +30,12 @@ if (!parsed.private_key || !parsed.client_email) {
   process.exit(1);
 }
 
-// One-line JSON (no newlines; private_key keeps escaped \n)
 const oneLine = JSON.stringify(parsed);
-console.log("Copy the line below into Vercel → FIREBASE_SERVICE_ACCOUNT_JSON (no extra quotes):\n");
+const base64 = Buffer.from(oneLine, "utf8").toString("base64");
+
+console.log("--- Option A: FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 (recommended for .env / Vercel) ---");
+console.log("Paste this as the value for FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 (no quoting issues):\n");
+console.log(base64);
+console.log("\n--- Option B: FIREBASE_SERVICE_ACCOUNT_JSON (one line) ---");
+console.log("Copy the line below into FIREBASE_SERVICE_ACCOUNT_JSON (no extra quotes):\n");
 console.log(oneLine);
