@@ -149,7 +149,7 @@ export default function Header() {
             </div>
           </form>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation — no Admin link in public nav */}
           <nav className="hidden lg:flex items-center gap-4 xl:gap-6 shrink-0">
             <Link
               href="/"

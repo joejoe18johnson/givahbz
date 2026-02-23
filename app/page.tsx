@@ -267,7 +267,7 @@ export default function Home() {
               Browse all campaigns →
             </Link>
             <p className="text-xs mt-4 text-gray-400">
-              Admin: create a campaign from the dashboard or run a seed script to add test data.
+              Create a campaign or run a seed script to add test data.
             </p>
           </div>
         )}
