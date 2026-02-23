@@ -354,6 +354,89 @@ export async function adminUploadCampaignUnderReviewImage(
 }
 
 // ---------------------------------------------------------------------------
+// Public campaign list (for API route; bypasses client SDK in Node)
+// ---------------------------------------------------------------------------
+export interface AdminCampaignListItem {
+  id: string;
+  title: string;
+  description: string;
+  fullDescription: string;
+  creator: string;
+  creatorType?: string;
+  goal: number;
+  raised: number;
+  backers: number;
+  daysLeft: number;
+  category: string;
+  image: string;
+  image2?: string;
+  location?: string;
+  createdAt: string;
+  verified: boolean;
+  adminBacked?: boolean;
+  [key: string]: unknown;
+}
+
+function normalizeCreatedAtFromDoc(data: admin.firestore.DocumentData): string {
+  const raw = data.createdAt;
+  if (!raw) return new Date().toISOString().split("T")[0];
+  if (typeof raw === "string") return raw.split("T")[0];
+  if (raw && typeof raw === "object" && "toDate" in raw && typeof (raw as { toDate: () => Date }).toDate === "function") {
+    return (raw as { toDate: () => Date }).toDate().toISOString().split("T")[0];
+  }
+  return new Date().toISOString().split("T")[0];
+}
+
+/** List live campaigns (same logic as getCampaigns). Use from API route when Admin SDK is configured. */
+export async function adminListCampaigns(filters?: {
+  trending?: boolean;
+  category?: string;
+  limitCount?: number;
+  onlyFullyFunded?: boolean;
+  forStats?: boolean;
+}): Promise<AdminCampaignListItem[]> {
+  const app = getAdminApp();
+  if (!app) throw new Error("Server is not configured for admin operations.");
+  const firestore = admin.firestore();
+  const snap = await firestore.collection(campaignsCollection).get();
+  let campaigns: AdminCampaignListItem[] = snap.docs
+    .filter((d) => {
+      const status = (d.data() as Record<string, unknown>).status as string | undefined;
+      return status !== "pending" && status !== "on_hold";
+    })
+    .map((d) => {
+      const data = d.data() as Record<string, unknown>;
+      const createdAt = normalizeCreatedAtFromDoc(d.data());
+      const creator = (data.creator as string) ?? (data.creatorName as string) ?? "";
+      return { ...data, id: d.id, createdAt, creator } as AdminCampaignListItem;
+    });
+  const goal = (c: AdminCampaignListItem) => Number(c.goal) || 1;
+  const raised = (c: AdminCampaignListItem) => Number(c.raised) || 0;
+  if (!filters?.forStats) {
+    if (filters?.onlyFullyFunded === true) {
+      campaigns = campaigns.filter((c) => goal(c) > 0 && raised(c) >= goal(c));
+    } else {
+      campaigns = campaigns.filter((c) => goal(c) <= 0 || raised(c) < goal(c));
+    }
+  }
+  if (filters?.trending) {
+    campaigns = campaigns.filter((c) => goal(c) > 0 && raised(c) / goal(c) >= 0.6);
+  }
+  if (filters?.category && filters.category !== "All") {
+    campaigns = campaigns.filter((c) => c.category === filters.category);
+  }
+  if (filters?.trending) {
+    campaigns.sort((a, b) => (b.backers ?? 0) - (a.backers ?? 0));
+  } else {
+    campaigns.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  if (filters?.limitCount && filters.limitCount > 0) {
+    campaigns = campaigns.slice(0, filters.limitCount);
+  }
+  return campaigns;
+}
+
+// ---------------------------------------------------------------------------
 // Site content (admin-editable copy)
 // ---------------------------------------------------------------------------
 const siteConfigCollection = "siteConfig";
