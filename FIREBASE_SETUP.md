@@ -234,6 +234,28 @@ service firebase.storage {
 - Check Storage security rules
 - Verify user is authenticated
 
+### Sign in with Google not working
+
+Google sign-in uses **Firebase Authentication** (not NextAuth). If it fails:
+
+1. **Enable Google in Firebase**
+   - Firebase Console → **Authentication** → **Sign-in method**
+   - Click **Google** → turn **Enable** on → set support email → **Save**
+
+2. **Add your app domain to Authorized domains**
+   - In the same **Authentication** section, open the **Settings** tab (or scroll to **Authorized domains**).
+   - Click **Add domain** and add:
+     - `localhost` (for local development)
+     - Your production domain exactly as used in the browser (e.g. `givahbz.vercel.app` for Vercel, no `https://`).
+   - If the domain is missing, you’ll see errors like **auth/unauthorized-domain** or "This domain is not authorized".
+
+3. **Check environment variables**
+   - Ensure `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` matches your project (e.g. `your-project-id.firebaseapp.com`).
+   - All other `NEXT_PUBLIC_FIREBASE_*` vars must be set and correct for the same project.
+
+4. **Popup vs redirect**
+   - If the popup is blocked, the app falls back to a full-page redirect to Google. After signing in there, you’re sent back to the app; that’s expected.
+
 ### Verification document upload (ID / Address) not working
 1. **Enable Storage**: In Firebase Console go to **Build > Storage** and click **Get started** if you haven’t already.
 2. **Set storage bucket**: In `.env`, set `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com` (same as in your Firebase project settings). If missing, the app will try the default bucket from your project ID.

@@ -128,9 +128,12 @@ export default function SignupPage() {
                     isRedirecting = true;
                     return;
                   }
-                  const errMsg = err && typeof err === "object" && "code" in err && (err as { code: string }).code === "auth/popup-closed-by-user"
+                  const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
+                  const errMsg = code === "auth/popup-closed-by-user"
                     ? "Sign-in was cancelled."
-                    : "Google sign-in failed. Please try again.";
+                    : code === "auth/unauthorized-domain"
+                      ? "This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains (e.g. localhost or your Vercel domain)."
+                      : "Google sign-in failed. Please try again.";
                   setError(errMsg);
                 } finally {
                   if (!isRedirecting) setGoogleLoading(false);

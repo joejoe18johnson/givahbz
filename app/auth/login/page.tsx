@@ -56,11 +56,15 @@ function LoginForm() {
         isRedirecting = true;
         return;
       }
-      const message = err && typeof err === "object" && "code" in err
-        ? (err as { code: string }).code === "auth/popup-closed-by-user"
-          ? "Sign-in was cancelled."
-          : (err as { message?: string }).message ?? "Google sign-in failed. Please try again."
-        : "Google sign-in failed. Please try again.";
+      const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
+      let message = "Google sign-in failed. Please try again.";
+      if (code === "auth/popup-closed-by-user") {
+        message = "Sign-in was cancelled.";
+      } else if (code === "auth/unauthorized-domain") {
+        message = "This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains (e.g. localhost or your Vercel domain).";
+      } else if (err && typeof err === "object" && "message" in err && typeof (err as { message: string }).message === "string") {
+        message = (err as { message: string }).message;
+      }
       setError(message);
     } finally {
       if (!isRedirecting) setGoogleLoading(false);
