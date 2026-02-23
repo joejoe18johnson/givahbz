@@ -135,7 +135,7 @@ export default function AdminDonationsPage() {
                   </td>
                 </tr>
               ) : (
-                donations.map((d) => (
+                paginatedDonations.map((d) => (
                   <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
                     <td className="px-5 py-3 text-gray-500 font-mono">{d.id}</td>
                     <td className="px-5 py-3 text-gray-600">{new Date(d.createdAt).toLocaleString()}</td>
