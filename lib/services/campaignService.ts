@@ -17,6 +17,8 @@ function campaignsApiQuery(filters?: {
   return q ? `?${q}` : "";
 }
 
+const CAMPAIGNS_FETCH_TIMEOUT_MS = 20000;
+
 /**
  * Fetch campaigns from the server API (Firestore on Vercel uses runtime env vars).
  * Use this for the campaigns list and home so data is never static/cached.
@@ -29,14 +31,29 @@ export async function fetchCampaignsFromAPI(filters?: {
   onlyFullyFunded?: boolean;
 }): Promise<Campaign[]> {
   const url = `/api/campaigns${campaignsApiQuery(filters)}`;
-  const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { error?: string; hint?: string; missing?: string[] };
-    const msg = err?.error ?? "Failed to load campaigns";
-    const hint = err?.hint;
-    throw new Error(hint ? `${msg} ${hint}` : msg);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CAMPAIGNS_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { error?: string; hint?: string; missing?: string[] };
+      const msg = err?.error ?? "Failed to load campaigns";
+      const hint = err?.hint;
+      throw new Error(hint ? `${msg} ${hint}` : msg);
+    }
+    return res.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("Campaigns are taking too long to load. Check your connection and that Firebase (givah-mvp) is set up correctly.");
+    }
+    throw err;
   }
-  return res.json();
 }
 
 // Always fetch from Firestore - no fallback to mock data

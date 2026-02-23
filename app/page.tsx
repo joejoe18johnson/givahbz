@@ -260,10 +260,15 @@ export default function Home() {
         {!isLoading && allTrendingCampaigns.length === 0 && !campaignsError && (
           <div className="py-12 text-center text-gray-500">
             <p className="font-medium text-gray-700">No trending campaigns yet</p>
-            <p className="text-sm mt-1">Check back soon or browse all campaigns.</p>
+            <p className="text-sm mt-1 max-w-md mx-auto">
+              This can happen if the project is new and has no campaigns, or no campaign has reached 60% funding yet.
+            </p>
             <Link href="/campaigns" className="inline-block mt-4 text-primary-600 hover:text-primary-700 font-medium underline">
               Browse all campaigns →
             </Link>
+            <p className="text-xs mt-4 text-gray-400">
+              Admin: create a campaign from the dashboard or run a seed script to add test data.
+            </p>
           </div>
         )}
 
