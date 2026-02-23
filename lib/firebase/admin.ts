@@ -234,6 +234,22 @@ function isBucketNotFoundError(err: unknown): boolean {
   return code === 404 || nestedCode === 404;
 }
 
+/** Detect Firebase free-tier / billing message so we can show a friendly error. */
+function isStorageFreeTierOrDisabledError(err: unknown): boolean {
+  const msg = String(err && typeof err === "object" && "message" in err ? (err as { message: string }).message : err).toLowerCase();
+  return (
+    msg.includes("upgrade") ||
+    msg.includes("pricing plan") ||
+    msg.includes("billing") ||
+    msg.includes("storage has not been used") ||
+    msg.includes("not been enabled") ||
+    msg.includes("disabled")
+  );
+}
+
+const STORAGE_FREE_TIER_MESSAGE =
+  "File uploads are not available on the free Firebase plan. Upgrade to the Blaze plan in Firebase Console (Usage and billing) to enable Storage, or continue testing without uploads.";
+
 /** Sanitize for Storage path (no path separators or problematic chars). */
 function sanitizeFileName(name: string): string {
   const base = name.replace(/\.[^/.]+$/, "").trim() || "document";
@@ -275,8 +291,14 @@ export async function adminUploadVerificationDocument(
       return await getDownloadURL(file);
     } catch (err) {
       lastErr = err;
+      if (isStorageFreeTierOrDisabledError(err)) {
+        throw new Error(STORAGE_FREE_TIER_MESSAGE);
+      }
       if (!isBucketNotFoundError(err)) throw err;
     }
+  }
+  if (lastErr && isStorageFreeTierOrDisabledError(lastErr)) {
+    throw new Error(STORAGE_FREE_TIER_MESSAGE);
   }
   throw new Error(
     "Storage bucket not found. Enable Firebase Storage: Firebase Console → Build → Storage → Get started. Then set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env to your bucket name (e.g. givah-1655f.firebasestorage.app or givah-1655f.appspot.com)."
@@ -317,8 +339,14 @@ export async function adminUploadCampaignUnderReviewImage(
       return await getDownloadURL(file);
     } catch (err) {
       lastErr = err;
+      if (isStorageFreeTierOrDisabledError(err)) {
+        throw new Error(STORAGE_FREE_TIER_MESSAGE);
+      }
       if (!isBucketNotFoundError(err)) throw err;
     }
+  }
+  if (lastErr && isStorageFreeTierOrDisabledError(lastErr)) {
+    throw new Error(STORAGE_FREE_TIER_MESSAGE);
   }
   throw new Error(
     "Storage bucket not found. Enable Firebase Storage: Firebase Console → Build → Storage → Get started. Then set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env to your bucket name (e.g. givah-1655f.firebasestorage.app or givah-1655f.appspot.com)."

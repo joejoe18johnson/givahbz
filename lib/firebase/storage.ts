@@ -2,6 +2,28 @@ import { ref, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } 
 import { storage, auth } from "./config";
 import { compressImageForUpload } from "@/lib/compressImage";
 
+/** Message shown when project is on Spark (free) plan and Storage is unavailable. */
+export const STORAGE_FREE_TIER_MESSAGE =
+  "File uploads are not available on the free Firebase plan. Upgrade to the Blaze plan in Firebase Console (Usage and billing) to enable Storage, or continue testing without uploads.";
+
+function isStorageUnavailableError(error: unknown): boolean {
+  const msg = String(error && typeof error === "object" && "message" in error ? (error as { message: string }).message : error).toLowerCase();
+  return (
+    msg.includes("upgrade") ||
+    msg.includes("pricing plan") ||
+    msg.includes("billing") ||
+    msg.includes("spark") ||
+    msg.includes("storage is not enabled")
+  );
+}
+
+function normalizeStorageError(error: unknown): Error {
+  if (isStorageUnavailableError(error)) {
+    return new Error(STORAGE_FREE_TIER_MESSAGE);
+  }
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 // Helper function to add timeout to promises
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
   return Promise.race([
@@ -14,16 +36,24 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: st
 
 // Upload profile photo
 export async function uploadProfilePhoto(userId: string, file: File): Promise<string> {
-  const fileRef = ref(storage, `profile-photos/${userId}/${Date.now()}_${file.name}`);
-  await uploadBytes(fileRef, file);
-  return await getDownloadURL(fileRef);
+  try {
+    const fileRef = ref(storage, `profile-photos/${userId}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    return await getDownloadURL(fileRef);
+  } catch (error) {
+    throw normalizeStorageError(error);
+  }
 }
 
 // Upload campaign image (for live campaigns)
 export async function uploadCampaignImage(campaignId: string, file: File): Promise<string> {
-  const fileRef = ref(storage, `campaigns/${campaignId}/${Date.now()}_${file.name}`);
-  await uploadBytes(fileRef, file);
-  return await getDownloadURL(fileRef);
+  try {
+    const fileRef = ref(storage, `campaigns/${campaignId}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    return await getDownloadURL(fileRef);
+  } catch (error) {
+    throw normalizeStorageError(error);
+  }
 }
 
 const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "heic"]);
@@ -154,10 +184,13 @@ export async function uploadVerificationDocument(
     const totalTime = Date.now() - startTime;
     console.log(`Verification document URL obtained in ${totalTime}ms:`, url);
     return url;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error uploading verification document:", error);
-    const code = error?.code || "";
-    const errorMessage = error?.message || String(error);
+    if (isStorageUnavailableError(error)) {
+      throw new Error(STORAGE_FREE_TIER_MESSAGE);
+    }
+    const code = error && typeof error === "object" && "code" in error ? (error as { code: string }).code : "";
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (code === "storage/unauthenticated" || errorMessage.includes("unauthenticated")) {
       throw new Error("You must be signed in to upload. Please sign in and try again.");
     }
@@ -185,8 +218,15 @@ export async function uploadVerificationDocument(
 
 // Delete file
 export async function deleteFile(fileUrl: string): Promise<void> {
-  const fileRef = ref(storage, fileUrl);
-  await deleteObject(fileRef);
+  try {
+    const fileRef = ref(storage, fileUrl);
+    await deleteObject(fileRef);
+  } catch (error) {
+    if (isStorageUnavailableError(error)) {
+      throw new Error(STORAGE_FREE_TIER_MESSAGE);
+    }
+    throw error;
+  }
 }
 
 // Delete profile photo
