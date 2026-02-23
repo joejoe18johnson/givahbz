@@ -127,7 +127,11 @@ export default function AdminCreateCampaignPage() {
           body: form,
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error((data.error as string) || "Upload failed");
+        if (!res.ok) {
+          const msg = (data.error as string) || "Upload failed";
+          const hint = data.hint as string | undefined;
+          throw new Error(hint ? `${msg}\n\n${hint}` : msg);
+        }
         if (typeof data.url !== "string") throw new Error("No URL returned");
         return data.url;
       };

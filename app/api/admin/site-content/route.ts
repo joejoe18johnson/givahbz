@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
-import { adminSetSiteContent, isAdminConfigured } from "@/lib/firebase/admin";
+import { adminSetSiteContent, isAdminConfigured, getConfigDiagnostic } from "@/lib/firebase/admin";
 import { type SiteContent } from "@/lib/siteContent";
 
 export const dynamic = "force-dynamic";
@@ -32,8 +32,12 @@ function getAdminEmails(): string[] {
 /** POST - update site content (admin only) */
 export async function POST(request: NextRequest) {
   if (!isAdminConfigured()) {
+    const hint = getConfigDiagnostic();
     return NextResponse.json(
-      { error: "Server is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." },
+      {
+        error: "Server is not configured for admin operations.",
+        hint: hint ?? "Set FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string) or FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json in .env. Get the key from Firebase Console → Project settings → Service accounts → Generate new private key.",
+      },
       { status: 503 }
     );
   }

@@ -73,7 +73,9 @@ export default function AdminSiteInfoPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data?.error || "Failed to save.", { variant: "error" });
+        const msg = data?.error || "Failed to save.";
+        const hint = data?.hint;
+        alert(hint ? `${msg}\n\n${hint}` : msg, { variant: "error" });
         return;
       }
       alert("Site content saved. Changes will appear on the site shortly.", { variant: "success" });

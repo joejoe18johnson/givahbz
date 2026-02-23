@@ -8,7 +8,7 @@ export const runtime = "nodejs";
  * GET /api/campaigns
  * QUARANTINE: Returns only live campaigns from the "campaigns" collection.
  * Campaigns under review are quarantined in a separate collection and are never returned here.
- * Query params: trending=true | category=Medical | limitCount=6
+ * Query params: trending=true (60%+ funded, excludes fully funded) | category=Medical | limitCount=6
  */
 const REQUIRED_FIREBASE_VARS = [
   "NEXT_PUBLIC_FIREBASE_API_KEY",
@@ -45,12 +45,14 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category") ?? undefined;
   const limitParam = searchParams.get("limitCount");
   const limitCount = limitParam ? Math.min(100, parseInt(limitParam, 10) || 0) : undefined;
+  const onlyFullyFunded = searchParams.get("onlyFullyFunded") === "true";
 
   try {
     const campaigns = await getCampaigns({
       ...(trending && { trending: true }),
       ...(category && category !== "All" && { category }),
       ...(limitCount && limitCount > 0 && { limitCount }),
+      ...(onlyFullyFunded && { onlyFullyFunded: true }),
     });
 
     const response = NextResponse.json(campaigns);

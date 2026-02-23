@@ -4,9 +4,8 @@ import Link from "next/link";
 import CampaignCard from "@/components/CampaignCard";
 import { Campaign } from "@/lib/data";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { getTrendingCampaigns } from "@/lib/campaignUtils";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { TrendingUp } from "lucide-react";
 
 function CampaignsContent() {
@@ -17,14 +16,26 @@ function CampaignsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const searchQuery = searchParams.get("q")?.trim() ?? "";
+  const filterParam = searchParams.get("filter");
+
+  useEffect(() => {
+    if (filterParam === "trending") {
+      setShowTrending(true);
+      setSelectedCategory("All");
+    } else {
+      setShowTrending(false);
+    }
+  }, [filterParam]);
 
   useEffect(() => {
     async function loadCampaigns() {
       try {
         setError(null);
-        const fetchedCampaigns = await fetchCampaignsFromAPI();
+        const trending = filterParam === "trending";
+        const fetchedCampaigns = await fetchCampaignsFromAPI(trending ? { trending: true } : undefined);
         setCampaigns(fetchedCampaigns);
       } catch (err) {
         console.error("Error loading campaigns:", err);
@@ -34,24 +45,12 @@ function CampaignsContent() {
       }
     }
     loadCampaigns();
-  }, []);
-
-  useEffect(() => {
-    const filter = searchParams.get("filter");
-    if (filter === "trending") {
-      setShowTrending(true);
-      setSelectedCategory("All");
-    }
-  }, [searchParams]);
+  }, [filterParam]);
 
   let filteredCampaigns =
     selectedCategory === "All"
       ? campaigns
       : campaigns.filter((c) => c.category === selectedCategory);
-
-  if (showTrending) {
-    filteredCampaigns = getTrendingCampaigns(filteredCampaigns, filteredCampaigns.length);
-  }
 
   // Apply search filter (title, description, creator, category)
   if (searchQuery) {
@@ -84,7 +83,7 @@ function CampaignsContent() {
         </h1>
         {showTrending && (
           <button
-            onClick={() => setShowTrending(false)}
+            onClick={() => router.push("/campaigns")}
             className="text-primary-600 hover:text-primary-700 font-medium"
           >
             View All Campaigns
@@ -113,7 +112,7 @@ function CampaignsContent() {
 
       {showTrending && (
         <p className="text-gray-600 mb-6">
-          Campaigns gaining momentum and support from the community, sorted by trending score.
+          Campaigns that are 60% or more funded and still gaining support. Fully funded campaigns are in Success Stories.
         </p>
       )}
 

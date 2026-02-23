@@ -68,6 +68,8 @@ export async function getCampaigns(filters?: {
   search?: string;
   trending?: boolean;
   limitCount?: number;
+  /** When true, return only fully funded campaigns (for Success Stories). When false/undefined, exclude them (main list shows only campaigns needing support). */
+  onlyFullyFunded?: boolean;
 }): Promise<Campaign[]> {
   const q = query(collection(db, campaignsCollection));
   const querySnapshot = await getDocsFromServer(q);
@@ -84,6 +86,20 @@ export async function getCampaigns(filters?: {
       return { ...data, id: docSnap.id, createdAt, creator } as Campaign;
     });
   // ^ Exclude pending (under-review) and on_hold so only live campaigns appear on the public list
+
+  // Fully funded: show only in Success Stories; main list shows only campaigns still needing support
+  const goal = (c: Campaign) => Number(c.goal) || 1;
+  const raised = (c: Campaign) => Number(c.raised) || 0;
+  if (filters?.onlyFullyFunded === true) {
+    campaigns = campaigns.filter((c) => goal(c) > 0 && raised(c) >= goal(c));
+  } else {
+    campaigns = campaigns.filter((c) => goal(c) <= 0 || raised(c) < goal(c));
+  }
+
+  // Trending = campaigns 60% or more completed (still needing support; fully funded are in Success Stories only)
+  if (filters?.trending) {
+    campaigns = campaigns.filter((c) => goal(c) > 0 && raised(c) / goal(c) >= 0.6);
+  }
 
   // Filter by category in memory (avoids composite index)
   if (filters?.category && filters.category !== "All") {

@@ -18,10 +18,7 @@ export default function SuccessStoriesPage() {
     async function load() {
       try {
         setError(null);
-        const all = await fetchCampaignsFromAPI();
-        const goal = (c: Campaign) => Number(c.goal) || 1;
-        const raised = (c: Campaign) => Number(c.raised) || 0;
-        const fullyFunded = all.filter((c) => goal(c) > 0 && raised(c) >= goal(c));
+        const fullyFunded = await fetchCampaignsFromAPI({ onlyFullyFunded: true });
         setCampaigns(fullyFunded);
       } catch (err) {
         console.error("Error loading success stories:", err);
