@@ -20,7 +20,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const METHODS: Array<"credit-card" | "bank" | "digiwallet" | "paypal"> = ["credit-card", "bank", "digiwallet", "paypal"];
+const METHODS: Array<"bank" | "digiwallet" | "ekyash"> = ["bank", "digiwallet", "ekyash"];
 const NAMED_DONORS: Array<{ name: string; email: string }> = [
   { name: "John Smith", email: "john.donor@email.com" },
   { name: "Patricia Martinez", email: "patricia.m@email.com" },

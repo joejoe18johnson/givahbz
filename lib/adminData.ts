@@ -22,7 +22,7 @@ export interface AdminDonation {
   donorEmail: string;
   donorName: string;
   anonymous: boolean;
-  method: "credit-card" | "bank" | "digiwallet" | "paypal";
+  method: "bank" | "digiwallet" | "ekyash";
   status: "completed" | "pending" | "failed";
   createdAt: string;
   /** Short reference for payment (e.g. A1234). One letter + 4 digits. */
@@ -55,7 +55,7 @@ const CAMPAIGNS = [
   { id: "8", title: "Youth Sports Equipment for Cayo District" },
 ] as const;
 
-const METHODS: Array<"credit-card" | "bank" | "digiwallet" | "paypal"> = ["credit-card", "bank", "digiwallet", "paypal"];
+const METHODS: Array<"bank" | "digiwallet" | "ekyash"> = ["bank", "digiwallet", "ekyash"];
 
 /** 7 named donors per campaign (fictitious). 3 anonymous are inserted per campaign. */
 const NAMED_DONORS_PER_CAMPAIGN: Array<{ name: string; email: string }> = [

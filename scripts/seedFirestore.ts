@@ -48,7 +48,7 @@ async function seedFirestore() {
     console.log(`Found ${firestoreCampaigns.length} campaigns in Firestore`);
 
     // Generate sample donations for each campaign
-    const METHODS: Array<"credit-card" | "bank" | "digiwallet" | "paypal"> = ["credit-card", "bank", "digiwallet", "paypal"];
+    const METHODS: Array<"bank" | "digiwallet" | "ekyash"> = ["bank", "digiwallet", "ekyash"];
     const NAMED_DONORS: Array<{ name: string; email: string }> = [
       { name: "John Smith", email: "john.donor@email.com" },
       { name: "Patricia Martinez", email: "patricia.m@email.com" },

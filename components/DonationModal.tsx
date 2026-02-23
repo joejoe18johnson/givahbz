@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Heart, CreditCard, Building2, Wallet, CheckCircle2, Copy } from "lucide-react";
+import { X, Heart, Building2, Wallet, Smartphone, CheckCircle2, Copy } from "lucide-react";
 import { formatCurrency, generateShortRef } from "@/lib/utils";
 import { recordDonationAndUpdateCampaign, createDonation } from "@/lib/firebase/firestore";
 import { useThemedModal } from "@/components/ThemedModal";
@@ -14,7 +14,7 @@ interface DonationModalProps {
   onClose: () => void;
 }
 
-type PaymentMethod = "credit-card" | "bank" | "digiwallet" | "paypal" | null;
+type PaymentMethod = "bank" | "digiwallet" | "ekyash" | null;
 
 export default function DonationModal({
   campaignId,
@@ -33,17 +33,11 @@ export default function DonationModal({
   });
   const [note, setNote] = useState("");
   const NOTE_MAX_LENGTH = 100;
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardholderName: "",
-  });
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [donationWasPending, setDonationWasPending] = useState(false);
-  /** Short reference for bank/digi transfer (e.g. A123). Set when user selects bank or digiwallet. */
+  /** Short reference for bank/digi/ekyash transfer (e.g. A1234). Set when user selects bank, digiwallet or ekyash. */
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
 
   const bankAccountDetails = {
@@ -59,6 +53,11 @@ export default function DonationModal({
     walletName: "DigiWallet",
   };
 
+  const ekyashDetails = {
+    phoneNumber: "+501 123-4567",
+    appName: "Ekyash",
+  };
+
   const handlePayment = async () => {
     if (!selectedMethod) return;
     setIsProcessing(true);
@@ -66,7 +65,7 @@ export default function DonationModal({
       // Simulate payment processing delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const isPendingMethod = selectedMethod === "bank" || selectedMethod === "digiwallet";
+      const isPendingMethod = selectedMethod === "bank" || selectedMethod === "digiwallet" || selectedMethod === "ekyash";
       const donation = {
         campaignId,
         campaignTitle,
@@ -74,11 +73,11 @@ export default function DonationModal({
         donorEmail: donorInfo.email.trim(),
         donorName: donorInfo.anonymous ? "Anonymous" : donorInfo.name.trim(),
         anonymous: donorInfo.anonymous,
-        method: selectedMethod as "credit-card" | "bank" | "digiwallet" | "paypal",
-        status: (isPendingMethod ? "pending" : "completed") as "pending" | "completed",
+        method: selectedMethod as "bank" | "digiwallet" | "ekyash",
+        status: "pending" as const,
         note: note.trim() || undefined,
         createdAt: new Date().toISOString(),
-        ...(isPendingMethod && paymentReference && { referenceNumber: paymentReference }),
+        ...(paymentReference && { referenceNumber: paymentReference }),
       };
 
       if (isPendingMethod) {
@@ -98,7 +97,6 @@ export default function DonationModal({
         setPaymentReference(null);
         setDonorInfo({ name: "", email: "", phone: "", anonymous: false });
         setNote("");
-        setCardDetails({ cardNumber: "", expiryDate: "", cvv: "", cardholderName: "" });
       }, 3000);
     } catch (error) {
       console.error("Error recording donation:", error);
@@ -264,21 +262,7 @@ export default function DonationModal({
               {/* Payment Method Selection - touch-friendly on mobile */}
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Select Payment Method</h3>
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMethod("credit-card")}
-                    className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
-                      selectedMethod === "credit-card"
-                        ? "border-primary-600 bg-primary-50"
-                        : "border-gray-200 hover:border-primary-300"
-                    }`}
-                  >
-                    <CreditCard className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                    <p className="font-medium">Credit Card</p>
-                    <p className="text-xs text-gray-600 mt-1">Visa, Mastercard</p>
-                  </button>
-
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <button
                     type="button"
                     onClick={() => { setSelectedMethod("bank"); setPaymentReference(generateShortRef()); }}
@@ -289,7 +273,7 @@ export default function DonationModal({
                     }`}
                   >
                     <Building2 className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                    <p className="font-medium">Bank Transfer</p>
+                    <p className="font-medium">Bank Deposit</p>
                     <p className="text-xs text-gray-600 mt-1">Direct bank transfer</p>
                   </button>
 
@@ -303,102 +287,30 @@ export default function DonationModal({
                     }`}
                   >
                     <Wallet className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                    <p className="font-medium">DigiWallet</p>
+                    <p className="font-medium">Digi Wallet</p>
                     <p className="text-xs text-gray-600 mt-1">Mobile wallet</p>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod("paypal")}
+                    onClick={() => { setSelectedMethod("ekyash"); setPaymentReference(generateShortRef()); }}
                     className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
-                      selectedMethod === "paypal"
+                      selectedMethod === "ekyash"
                         ? "border-primary-600 bg-primary-50"
                         : "border-gray-200 hover:border-primary-300"
                     }`}
                   >
-                    <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
-                      <span className="text-primary-600 font-medium text-lg">P</span>
-                    </div>
-                    <p className="font-medium">PayPal</p>
-                    <p className="text-xs text-gray-600 mt-1">PayPal account</p>
+                    <Smartphone className="w-8 h-8 mx-auto mb-2 text-primary-600" />
+                    <p className="font-medium">Ekyash</p>
+                    <p className="text-xs text-gray-600 mt-1">Mobile payments</p>
                   </button>
                 </div>
               </div>
 
               {/* Payment Method Forms */}
-              {selectedMethod === "credit-card" && (
-                <div className="mb-6 bg-white rounded-lg p-6">
-                  <h4 className="font-medium mb-4">Credit Card Details</h4>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Cardholder Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={cardDetails.cardholderName}
-                        onChange={(e) => setCardDetails({ ...cardDetails, cardholderName: e.target.value })}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="Name on card"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Card Number *
-                      </label>
-                      <input
-                        type="text"
-                        value={cardDetails.cardNumber}
-                        onChange={(e) => setCardDetails({ ...cardDetails, cardNumber: e.target.value })}
-                        required
-                        maxLength={19}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="1234 5678 9012 3456"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">
-                          Expiry Date *
-                        </label>
-                        <input
-                          type="text"
-                          value={cardDetails.expiryDate}
-                          onChange={(e) => setCardDetails({ ...cardDetails, expiryDate: e.target.value })}
-                          required
-                          maxLength={5}
-                          placeholder="MM/YY"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">
-                          CVV *
-                        </label>
-                        <input
-                          type="text"
-                          value={cardDetails.cvv}
-                          onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value })}
-                          required
-                          maxLength={4}
-                          placeholder="123"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                    </div>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-xs text-blue-800">
-                        🔒 Your payment information is encrypted and secure.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {selectedMethod === "bank" && (
                 <div className="mb-6 bg-white rounded-lg p-6">
-                  <h4 className="font-medium mb-4">Bank Transfer Details</h4>
+                  <h4 className="font-medium mb-4">Bank Deposit Details</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Bank Name:</span>
@@ -467,7 +379,7 @@ export default function DonationModal({
 
               {selectedMethod === "digiwallet" && (
                 <div className="mb-6 bg-white rounded-lg p-6">
-                  <h4 className="font-medium mb-4">DigiWallet Payment</h4>
+                  <h4 className="font-medium mb-4">Digi Wallet Payment</h4>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">
@@ -502,27 +414,37 @@ export default function DonationModal({
                 </div>
               )}
 
-              {selectedMethod === "paypal" && (
+              {selectedMethod === "ekyash" && (
                 <div className="mb-6 bg-white rounded-lg p-6">
-                  <h4 className="font-medium mb-4">PayPal Payment</h4>
+                  <h4 className="font-medium mb-4">Ekyash Payment</h4>
                   <div className="space-y-4">
-                    <div className="bg-white border-2 border-primary-200 rounded-lg p-6 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-blue-600 rounded-lg">
-                        <span className="text-white font-medium text-2xl">PayPal</span>
-                      </div>
-                      <p className="text-gray-700 mb-4">
-                        You will be redirected to PayPal to complete your donation of
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Ekyash Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        placeholder="e.g. 5011234567"
+                      />
+                    </div>
+                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                      <p className="text-sm text-primary-800 mb-2">
+                        <strong>Payment Instructions:</strong>
                       </p>
-                      <p className="text-2xl font-medium text-primary-600 mb-4">
-                        {formatCurrency(amount)}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        After payment, you&apos;ll be redirected back to this page.
-                      </p>
+                      <ol className="text-sm text-primary-700 list-decimal list-inside space-y-1">
+                        <li>Open your Ekyash app</li>
+                        <li>Select &quot;Send Money&quot; or &quot;Pay&quot;</li>
+                        <li>Enter phone number: <strong>{ekyashDetails.phoneNumber}</strong></li>
+                        <li>Enter amount: <strong>{formatCurrency(amount)}</strong></li>
+                        <li>Add reference: <strong>{paymentReference || "—"}</strong></li>
+                        <li>Confirm payment</li>
+                      </ol>
                     </div>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-xs text-blue-800">
-                        🔒 PayPal provides secure payment processing. You can use your PayPal account or credit card.
+                        💡 Ekyash payments are instant and secure.
                       </p>
                     </div>
                   </div>
@@ -545,12 +467,7 @@ export default function DonationModal({
                     !selectedMethod ||
                     !donorInfo.name ||
                     !donorInfo.email ||
-                    isProcessing ||
-                    (selectedMethod === "credit-card" &&
-                      (!cardDetails.cardNumber ||
-                        !cardDetails.expiryDate ||
-                        !cardDetails.cvv ||
-                        !cardDetails.cardholderName))
+                    isProcessing
                   }
                   className="flex-1 min-h-[48px] bg-success-500 text-white px-6 py-3 rounded-xl sm:rounded-full font-medium hover:bg-success-600 active:bg-success-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
@@ -559,14 +476,11 @@ export default function DonationModal({
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                       Processing...
                     </>
-                  ) : selectedMethod === "paypal" ? (
-                    <>
-                      <span className="font-medium">PayPal</span>
-                      Continue to PayPal
-                    </>
                   ) : selectedMethod === "bank" ? (
-                    "I've Made the Transfer"
+                    "I've Made the Deposit"
                   ) : selectedMethod === "digiwallet" ? (
+                    "I've Made the Payment"
+                  ) : selectedMethod === "ekyash" ? (
                     "I've Made the Payment"
                   ) : (
                     <>

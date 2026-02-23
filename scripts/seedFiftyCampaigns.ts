@@ -179,7 +179,7 @@ const DONOR_EMAILS = [
   "amanda.t@email.com", "daniel.a@email.com", "jessica.c@email.com", "matt.w@email.com", "steph.h@email.com",
   "donate@community.bz", "rotary@belize.bz", "anon1@donor.bz", "anon2@donor.bz", "anon3@donor.bz",
 ];
-const METHODS: Array<"credit-card" | "bank" | "digiwallet" | "paypal"> = ["credit-card", "bank", "digiwallet", "paypal"];
+const METHODS: Array<"bank" | "digiwallet" | "ekyash"> = ["bank", "digiwallet", "ekyash"];
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
