@@ -14,12 +14,13 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { user, isAdmin, login, loginWithGoogle } = useAuth();
+  const { user, isAdmin, isLoading: authLoading, login, loginWithGoogle } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/my-campaigns";
 
   useEffect(() => {
+    if (authLoading) return;
     if (user) {
       if (isAdmin) {
         // Send admins to admin section; keep callbackUrl if it's an admin path (e.g. /admin/donations)
@@ -31,7 +32,7 @@ function LoginForm() {
         router.replace(path || "/my-campaigns");
       }
     }
-  }, [user, isAdmin, callbackUrl, router]);
+  }, [user, isAdmin, authLoading, callbackUrl, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

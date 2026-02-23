@@ -75,6 +75,7 @@ function profileToUser(profile: UserProfile): User {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [serverAdminCheck, setServerAdminCheck] = useState<boolean | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -112,6 +113,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe();
     };
   }, []);
+
+  // Server-side admin check: use ADMIN_EMAILS so admin works even when NEXT_PUBLIC_ADMIN_EMAILS is missing from client bundle
+  useEffect(() => {
+    if (!user) {
+      setServerAdminCheck(null);
+      return;
+    }
+    let cancelled = false;
+    auth.currentUser
+      ?.getIdToken()
+      .then((token) =>
+        fetch("/api/check-admin", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      )
+      .then((res) => (res.ok ? res.json() : { isAdmin: false }))
+      .then((data) => {
+        if (!cancelled && typeof data.isAdmin === "boolean") {
+          setServerAdminCheck(data.isAdmin);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setServerAdminCheck(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -163,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = (user?.role === "admin") || serverAdminCheck === true;
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, login, loginWithGoogle, signup, updateUser, logout, isLoading }}>

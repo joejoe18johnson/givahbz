@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils";
 import { toggleHeartCampaign, isCampaignHearted } from "./HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "./ThemedModal";
+import { useToast } from "./Toast";
 
 interface Campaign {
   id: string;
@@ -35,6 +36,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
   const [isHearted, setIsHearted] = useState(false);
   const { user } = useAuth();
   const { alert } = useThemedModal();
+  const toast = useToast();
   const goal = Number(campaign.goal) || 1;
   const raised = Number(campaign.raised) || 0;
   const goalReached = goal > 0 && raised >= goal;
@@ -59,6 +61,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
     }
     const newState = await toggleHeartCampaign(campaign.id);
     setIsHearted(newState);
+    if (newState) toast.show("Campaign Saved to Favorites");
   };
 
   return (

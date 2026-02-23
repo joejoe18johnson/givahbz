@@ -23,7 +23,7 @@ export default function Header() {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
-  const { user, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin");
@@ -310,6 +310,15 @@ export default function Header() {
                       >
                         My Campaigns
                       </Link>
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          className="block px-4 py-2 text-sm text-primary-600 font-medium hover:bg-primary-50"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          Admin
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -417,6 +426,9 @@ export default function Header() {
                   </Link>
                   <Link href="/profile" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>My Profile</Link>
                   <Link href="/my-campaigns" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" onClick={closeMobileMenu}>My Campaigns</Link>
+                  {isAdmin && (
+                    <Link href="/admin" className="px-4 py-3 rounded-lg text-primary-600 font-medium hover:bg-primary-50" onClick={closeMobileMenu}>Admin</Link>
+                  )}
                   <Link href="/notifications" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 flex items-center gap-2" onClick={closeMobileMenu}>
                     <Bell className="w-4 h-4" />
                     Notifications

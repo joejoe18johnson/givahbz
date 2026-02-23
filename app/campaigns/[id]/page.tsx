@@ -16,6 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 import { toggleHeartCampaign, isCampaignHearted } from "@/components/HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
+import { useToast } from "@/components/Toast";
 
 interface PageProps {
   params: {
@@ -33,6 +34,7 @@ export default function CampaignPage({ params }: PageProps) {
   const scrollRAF = useRef<number | null>(null);
   const { user } = useAuth();
   const { alert } = useThemedModal();
+  const toast = useToast();
 
   useEffect(() => {
     async function loadCampaign() {
@@ -94,6 +96,7 @@ export default function CampaignPage({ params }: PageProps) {
     if (campaign) {
       const newState = await toggleHeartCampaign(campaign.id);
       setIsHearted(newState);
+      if (newState) toast.show("Campaign Saved to Favorites");
     }
   };
 
