@@ -38,7 +38,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   siteName: "GivahBz",
   heroTitle: "Supporting Belizean Communities",
   heroSubtitle: "Life is either a daring adventure or nothing. Help real people and causes across Belize—verified, transparent, and community-driven.",
-  communityHeadingPart1: "Community Shares ",
+  communityHeadingPart1: "Communities Share ",
   communityHeadingPart2: "Burdens",
   footerTagline: "Supporting organizations, charities, and individuals in need across Belize. All campaigns are verified with proof of need.",
   footerCopyright: "© 2026 GivahBz. All rights reserved. | Serving Belize",

@@ -14,7 +14,7 @@ const FIELDS: { key: StringSiteContentKey; label: string; placeholder: string; m
   { key: "siteName", label: "Site name", placeholder: "GivahBz" },
   { key: "heroTitle", label: "Home hero title", placeholder: "Supporting Belizean Communities" },
   { key: "heroSubtitle", label: "Home hero subtitle", placeholder: "Life is either a daring adventure..." },
-  { key: "communityHeadingPart1", label: "Community heading (part 1)", placeholder: "Community Shares " },
+  { key: "communityHeadingPart1", label: "Community heading (part 1)", placeholder: "Communities Share " },
   { key: "communityHeadingPart2", label: "Community heading (part 2)", placeholder: "Burdens" },
   { key: "footerTagline", label: "Footer tagline", placeholder: "Supporting organizations, charities..." },
   { key: "footerCopyright", label: "Footer copyright line", placeholder: "© 2026 GivahBz. All rights reserved." },
