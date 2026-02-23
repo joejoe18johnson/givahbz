@@ -65,14 +65,31 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    const campaignsPromise = isAdminConfigured()
-      ? adminListCampaigns(filters)
-      : getCampaigns(filters);
-    const campaigns = await withTimeout(
-      campaignsPromise,
-      CAMPAIGNS_TIMEOUT_MS,
-      "Campaigns request timed out. Check Firebase project (e.g. givah-mvp) and that the service account key matches this project."
-    );
+    let campaigns: Awaited<ReturnType<typeof getCampaigns>>;
+    if (isAdminConfigured()) {
+      try {
+        campaigns = await withTimeout(
+          adminListCampaigns(filters),
+          CAMPAIGNS_TIMEOUT_MS,
+          "Campaigns request timed out."
+        );
+      } catch (adminErr) {
+        const adminMsg = String(adminErr && typeof adminErr === "object" && "message" in adminErr ? (adminErr as { message: string }).message : adminErr);
+        const isPermissionDenied = adminMsg.includes("PERMISSION_DENIED") || adminMsg.includes("Permission denied");
+        if (isPermissionDenied) {
+          // Service account may be for wrong project (e.g. givah-1655f); use client SDK so we read from NEXT_PUBLIC_* project (givah-mvp)
+          campaigns = await withTimeout(getCampaigns(filters), CAMPAIGNS_TIMEOUT_MS, "Campaigns request timed out.");
+        } else {
+          throw adminErr;
+        }
+      }
+    } else {
+      campaigns = await withTimeout(
+        getCampaigns(filters),
+        CAMPAIGNS_TIMEOUT_MS,
+        "Campaigns request timed out."
+      );
+    }
     const response = NextResponse.json(campaigns);
     response.headers.set("Cache-Control", "no-store, max-age=0");
     return response;
@@ -82,7 +99,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: msg,
-        hint: "Ensure FIREBASE_SERVICE_ACCOUNT (for givah-mvp) is set so the API can read campaigns. Or add all 6 NEXT_PUBLIC_FIREBASE_* env vars.",
+        hint: "Ensure NEXT_PUBLIC_FIREBASE_* env vars point to your project (e.g. givah-mvp). For admin features, use a service account key from the same project.",
       },
       { status: 503 }
     );
