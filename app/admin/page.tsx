@@ -182,8 +182,8 @@ export default function AdminDashboardPage() {
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-success-600" />
+            <div className="w-10 h-10 rounded-lg bg-verified-100 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-verified-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Raised</p>
@@ -488,7 +488,7 @@ export default function AdminDashboardPage() {
                   <td className="px-5 py-3 font-medium">{formatCurrency(d.amount)}</td>
                   <td className="px-5 py-3 text-gray-600 capitalize">{d.method === "ekyash" ? "E-Kyash" : d.method.replace("-", " ")}</td>
                   <td className="px-5 py-3">
-                    <span className={d.status === "completed" ? "text-success-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
+                    <span className={d.status === "completed" ? "text-verified-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
                   </td>
                 </tr>
               ))}

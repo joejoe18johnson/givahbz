@@ -57,12 +57,20 @@ export default function AdminDonationsPage() {
       if (!user) {
         throw new Error("You must be signed in to approve donations.");
       }
-      const token = await user.getIdToken();
-      const res = await fetch("/api/admin/approve-donation", {
+      let token = await user.getIdToken(true);
+      let res = await fetch("/api/admin/approve-donation", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ donationId }),
       });
+      if (res.status === 401) {
+        token = await user.getIdToken(true);
+        res = await fetch("/api/admin/approve-donation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ donationId }),
+        });
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const msg = typeof data.error === "string" ? data.error : "Failed to approve donation.";
@@ -113,7 +121,7 @@ export default function AdminDonationsPage() {
           </p>
         </div>
         <div className="flex gap-4 text-sm">
-          <span className="text-gray-600">Completed: <strong className="text-success-600">{formatCurrency(totalCompleted)}</strong></span>
+          <span className="text-gray-600">Completed: <strong className="text-verified-600">{formatCurrency(totalCompleted)}</strong></span>
           <span className="text-gray-600">Pending: <strong className="text-amber-600">{formatCurrency(totalPending)}</strong></span>
         </div>
       </div>
@@ -164,7 +172,7 @@ export default function AdminDonationsPage() {
                     <td className="px-5 py-3 text-gray-600 capitalize">{d.method === "ekyash" ? "E-Kyash" : d.method.replace("-", " ")}</td>
                     <td className="px-5 py-3">{d.anonymous ? "Yes" : "No"}</td>
                     <td className="px-5 py-3">
-                      <span className={d.status === "completed" ? "text-success-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
+                      <span className={d.status === "completed" ? "text-verified-600" : d.status === "pending" ? "text-amber-600" : "text-red-600"}>{d.status}</span>
                     </td>
                     <td className="px-5 py-3">
                       {d.status === "pending" ? (

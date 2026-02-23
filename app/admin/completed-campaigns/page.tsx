@@ -97,7 +97,7 @@ export default function AdminCompletedCampaignsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 flex items-center gap-2">
-          <Trophy className="w-8 h-8 text-success-600" />
+          <Trophy className="w-8 h-8 text-verified-600" />
           Completed Campaigns
         </h1>
         <p className="text-gray-600 mt-1">{campaigns.length} fully funded campaign{campaigns.length !== 1 ? "s" : ""}</p>
@@ -141,7 +141,7 @@ export default function AdminCompletedCampaignsPage() {
                     </td>
                     <td className="px-5 py-3 text-gray-900">{c.creator}</td>
                     <td className="px-5 py-3 font-medium">{formatCurrency(c.goal)}</td>
-                    <td className="px-5 py-3 font-medium text-success-600">{formatCurrency(c.raised)}</td>
+                    <td className="px-5 py-3 font-medium text-verified-600">{formatCurrency(c.raised)}</td>
                     <td className="px-5 py-3">{c.backers}</td>
                     <td className="px-5 py-3 text-gray-600">{c.createdAt}</td>
                     <td className="px-5 py-3">

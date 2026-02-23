@@ -144,7 +144,7 @@ export default function AdminUnderReviewPage() {
                         <button
                           type="button"
                           onClick={() => handleApprove(c.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-success-100 text-success-700 hover:bg-success-200 text-xs font-medium"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-verified-100 text-verified-700 hover:bg-verified-200 text-xs font-medium"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Approve
