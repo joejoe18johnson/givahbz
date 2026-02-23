@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/lib/firebase/config";
-import { mergeWithDefaults, type SiteContent } from "@/lib/siteContent";
+import { mergeWithDefaults, type SiteContent, type HomeFaqItem } from "@/lib/siteContent";
 import { useThemedModal } from "@/components/ThemedModal";
-import { FileText, Save } from "lucide-react";
+import { FileText, Save, Plus, Trash2 } from "lucide-react";
 
 const FIELDS: { key: keyof SiteContent; label: string; placeholder: string; multiline?: boolean }[] = [
   { key: "siteName", label: "Site name", placeholder: "GivahBz" },
@@ -50,6 +50,26 @@ export default function AdminSiteInfoPage() {
 
   const handleChange = (key: keyof SiteContent, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateFaq = (index: number, field: "q" | "a", value: string) => {
+    setForm((prev) => {
+      const next = [...prev.homeFaqs];
+      if (!next[index]) return prev;
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, homeFaqs: next };
+    });
+  };
+
+  const addFaq = () => {
+    setForm((prev) => ({ ...prev, homeFaqs: [...prev.homeFaqs, { q: "", a: "" }] }));
+  };
+
+  const removeFaq = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      homeFaqs: prev.homeFaqs.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,6 +156,61 @@ export default function AdminSiteInfoPage() {
               )}
             </div>
           ))}
+
+          {/* Homepage FAQ section */}
+          <div className="border-t border-gray-200 pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">Homepage FAQ</label>
+              <button
+                type="button"
+                onClick={addFaq}
+                className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                Add FAQ
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              These questions appear in the &quot;Frequently Asked Questions&quot; section on the homepage.
+            </p>
+            <div className="space-y-4">
+              {form.homeFaqs.map((faq, index) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeFaq(index)}
+                      className="p-1.5 text-gray-400 hover:text-red-600 rounded"
+                      aria-label="Remove FAQ"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Question</label>
+                    <input
+                      type="text"
+                      value={faq.q}
+                      onChange={(e) => updateFaq(index, "q", e.target.value)}
+                      placeholder="Question"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Answer</label>
+                    <textarea
+                      value={faq.a}
+                      onChange={(e) => updateFaq(index, "a", e.target.value)}
+                      placeholder="Answer"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
           <button

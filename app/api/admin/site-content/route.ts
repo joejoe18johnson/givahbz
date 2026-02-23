@@ -17,6 +17,7 @@ const SITE_CONTENT_KEYS: (keyof SiteContent)[] = [
   "aboutTitle",
   "aboutSubtitle",
   "aboutMission",
+  "homeFaqs", // stored as JSON string; handled separately below
 ];
 
 function getAdminAuth(): admin.auth.Auth | null {
@@ -75,9 +76,19 @@ export async function POST(request: NextRequest) {
 
   const data: Record<string, string> = {};
   if (body && typeof body === "object") {
+    const b = body as Record<string, unknown>;
     for (const key of SITE_CONTENT_KEYS) {
-      const v = (body as Record<string, unknown>)[key];
+      const v = b[key];
       if (typeof v === "string") data[key] = v;
+    }
+    // homeFaqs is stored as JSON string
+    const homeFaqs = b.homeFaqs;
+    if (Array.isArray(homeFaqs)) {
+      data.homeFaqs = JSON.stringify(
+        homeFaqs
+          .filter((x): x is { q?: string; a?: string } => x != null && typeof x === "object")
+          .map((x) => ({ q: typeof x.q === "string" ? x.q.trim() : "", a: typeof x.a === "string" ? x.a : "" }))
+      );
     }
   }
 
