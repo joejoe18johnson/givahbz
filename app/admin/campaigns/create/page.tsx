@@ -9,7 +9,7 @@ import { compressImageForUpload } from "@/lib/compressImage";
 import { useThemedModal } from "@/components/ThemedModal";
 import { Upload, ArrowLeft, Shield } from "lucide-react";
 
-const CATEGORIES = ["Medical", "Education", "Disaster Relief", "Community", "Emergency", "Other"];
+const CATEGORIES = ["Medical expenses", "Educational support", "Disaster recovery", "Other"];
 const CREATOR_TYPES = [
   { value: "individual", label: "Individual" },
   { value: "organization", label: "Organization" },

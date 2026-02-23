@@ -465,11 +465,9 @@ export default function CreateCampaignPage() {
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900"
           >
             <option value="">Select a category</option>
-            <option value="Medical">Medical</option>
-            <option value="Education">Education</option>
-            <option value="Disaster Relief">Disaster Relief</option>
-            <option value="Community">Community</option>
-            <option value="Emergency">Emergency</option>
+            <option value="Medical expenses">Medical expenses</option>
+            <option value="Educational support">Educational support</option>
+            <option value="Disaster recovery">Disaster recovery</option>
             <option value="Other">Other</option>
           </select>
         </div>
