@@ -217,8 +217,15 @@ export default function Header() {
                                 onClick={() => handleNotificationClick(n)}
                                 className={`w-full text-left px-4 py-3 hover:bg-gray-50 ${!n.read ? "bg-primary-50/50" : ""}`}
                               >
-                                <p className="text-sm font-medium text-gray-900">{n.title}</p>
-                                <p className="text-xs text-gray-600 line-clamp-2">{n.body}</p>
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm font-medium text-gray-900 flex-1 min-w-0">{n.title}</p>
+                                  {!n.read && (
+                                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary-600 bg-primary-100 px-1.5 py-0.5 rounded">
+                                      New
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-600 line-clamp-2 mt-0.5">{n.body}</p>
                               </button>
                             </li>
                           ))}

@@ -97,6 +97,36 @@ export default function AdminLayout({
     sectionCounts.idPending,
   ]);
 
+  // When visiting a section page, mark that section as seen so it no longer shows as "new"
+  useEffect(() => {
+    if (!pathname || !isAdmin) return;
+    setLastSeen((prev) => {
+      let next = { ...prev };
+      if (pathname === "/admin/under-review") {
+        next = { ...next, underReview: sectionCounts.underReview };
+      } else if (pathname === "/admin/donations") {
+        next = { ...next, pendingDonations: sectionCounts.pendingDonations };
+      } else if (pathname === "/admin/users") {
+        next = {
+          ...next,
+          phonePending: sectionCounts.phonePending,
+          addressPending: sectionCounts.addressPending,
+          idPending: sectionCounts.idPending,
+        };
+      } else {
+        return prev;
+      }
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(NOTIFICATIONS_SEEN_KEY, JSON.stringify(next));
+        }
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, [pathname, isAdmin, sectionCounts.underReview, sectionCounts.pendingDonations, sectionCounts.phonePending, sectionCounts.addressPending, sectionCounts.idPending]);
+
   const newUnderReview = Math.max(0, sectionCounts.underReview - lastSeen.underReview);
   const newPhonePending = Math.max(0, sectionCounts.phonePending - lastSeen.phonePending);
   const newPendingDonations = Math.max(0, sectionCounts.pendingDonations - lastSeen.pendingDonations);
