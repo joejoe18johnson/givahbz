@@ -6,9 +6,10 @@ import { getCampaignsForAdmin, deleteCampaign, setCampaignOnHold } from "@/lib/f
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle, Pencil, PlusCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle, Pencil, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { auth } from "@/lib/firebase/config";
 
+const PAGE_SIZE = 50;
 type CampaignWithStatus = Campaign & { status?: string };
 
 export default function AdminCampaignsPage() {
@@ -20,6 +21,7 @@ export default function AdminCampaignsPage() {
   const [editingCampaign, setEditingCampaign] = useState<CampaignWithStatus | null>(null);
   const [editForm, setEditForm] = useState({ title: "", description: "", fullDescription: "" });
   const [savingText, setSavingText] = useState(false);
+  const [page, setPage] = useState(1);
   const { confirm, alert } = useThemedModal();
 
   async function loadCampaigns() {
@@ -42,6 +44,14 @@ export default function AdminCampaignsPage() {
   useEffect(() => {
     loadCampaigns();
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil(campaigns.length / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const paginatedCampaigns = campaigns.slice(start, start + PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [page, totalPages]);
 
   const handleDelete = async (campaignId: string, title: string) => {
     const ok = await confirm(
@@ -160,6 +170,9 @@ export default function AdminCampaignsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Campaigns</h1>
           <p className="text-gray-600 mt-1">{campaigns.length} campaigns total</p>
+          {campaigns.length > 0 && (
+            <p className="text-gray-500 text-sm mt-1">Showing {start + 1}–{Math.min(start + PAGE_SIZE, campaigns.length)}</p>
+          )}
           <p className="text-gray-500 text-sm mt-1">
             Put a campaign on hold to hide it from the public site, or delete it. Use <strong>Release</strong> to make an on-hold campaign live again.
           </p>
@@ -194,7 +207,12 @@ export default function AdminCampaignsPage() {
               </tr>
             </thead>
             <tbody>
-              {campaigns.map((c) => (
+              {campaigns.length === 0 ? (
+                <tr>
+                  <td colSpan={13} className="px-5 py-12 text-center text-gray-500">No campaigns yet</td>
+                </tr>
+              ) : (
+                paginatedCampaigns.map((c) => (
                 <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="px-5 py-3">
                     <Link href={`/campaigns/${c.id}`} className="text-primary-600 hover:underline max-w-[200px] truncate block" title={c.title}>
@@ -265,10 +283,34 @@ export default function AdminCampaignsPage() {
                   </td>
                   <td className="px-5 py-3 text-gray-500 font-mono text-xs">{c.id}</td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
+        {campaigns.length > PAGE_SIZE && (
+          <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-sm text-gray-600">Page {page} of {totalPages}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" /> Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {campaigns.some((c) => c.proofDocuments && c.proofDocuments.length > 0) && (

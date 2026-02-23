@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { getUsersFromFirestore, setUserPhoneVerified, setIdVerified, setAddressVerified, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
-import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle, UserX, UserCheck, FileText, ExternalLink } from "lucide-react";
+import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle, UserX, UserCheck, FileText, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 50;
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
@@ -12,6 +14,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const load = async () => {
     setLoading(true);
@@ -33,6 +36,14 @@ export default function AdminUsersPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const paginatedUsers = users.slice(start, start + PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [page, totalPages]);
 
   const handleApprovePhone = async (userId: string) => {
     setUpdatingId(userId);
@@ -172,6 +183,11 @@ export default function AdminUsersPage() {
         <p className="text-gray-600 mt-1">
           Review and approve phone numbers and ID verification. Users cannot create or edit campaigns until both their phone number and ID are approved by an admin.
         </p>
+        {users.length > 0 && (
+          <p className="text-gray-500 text-sm mt-1">
+            {users.length} users total · Showing {start + 1}–{Math.min(start + PAGE_SIZE, users.length)}
+          </p>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -192,7 +208,12 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => {
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="px-5 py-12 text-center text-gray-500">No users yet</td>
+                </tr>
+              ) : (
+                paginatedUsers.map((u) => {
                 const isSelf = u.id === currentUser?.id;
                 const status = u.status ?? "active";
                 const statusLabel = status === "active" ? "Active" : status === "on_hold" ? "On hold" : "Disabled";
@@ -375,10 +396,34 @@ export default function AdminUsersPage() {
                     </td>
                   </tr>
                 );
-              })}
+              })
+              )}
             </tbody>
           </table>
         </div>
+        {users.length > PAGE_SIZE && (
+          <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-sm text-gray-600">Page {page} of {totalPages}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" /> Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

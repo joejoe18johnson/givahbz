@@ -21,9 +21,13 @@ export default function AdminDonationsPage() {
     setIsLoading(true);
     try {
       const fetchedDonations = await getDonations();
-      const sorted = [...fetchedDonations].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      const sorted = [...fetchedDonations].sort((a, b) => {
+        // Pending first, then by newest date
+        const aPending = a.status === "pending" ? 1 : 0;
+        const bPending = b.status === "pending" ? 1 : 0;
+        if (bPending !== aPending) return bPending - aPending;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
       setDonations(sorted);
     } catch (error) {
       console.error("Error loading donations:", error);
