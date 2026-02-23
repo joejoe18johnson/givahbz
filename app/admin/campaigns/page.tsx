@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
-import { getCampaignsForAdmin, deleteCampaign, setCampaignOnHold } from "@/lib/firebase/firestore";
+import { getCampaignsForAdminCached, invalidateCampaignsCache } from "@/lib/firebase/adminCache";
+import { deleteCampaign, setCampaignOnHold } from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
@@ -62,6 +63,7 @@ export default function AdminCampaignsPage() {
     setDeletingId(campaignId);
     try {
       await deleteCampaign(campaignId);
+      invalidateCampaignsCache();
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
     } catch (err) {
       console.error("Error deleting campaign:", err);
@@ -75,6 +77,7 @@ export default function AdminCampaignsPage() {
     setOnHoldId(campaignId);
     try {
       await setCampaignOnHold(campaignId, onHold);
+      invalidateCampaignsCache();
       setCampaigns((prev) =>
         prev.map((c) => (c.id === campaignId ? { ...c, status: onHold ? "on_hold" : "live" } : c))
       );
@@ -118,6 +121,7 @@ export default function AdminCampaignsPage() {
         alert(data?.error ?? "Failed to update campaign text.", { variant: "error" });
         return;
       }
+      invalidateCampaignsCache();
       setCampaigns((prev) =>
         prev.map((c) =>
           c.id === editingCampaign.id

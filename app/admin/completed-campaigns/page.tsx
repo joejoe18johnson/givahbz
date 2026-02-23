@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
-import { getCampaignsForAdmin, deleteCampaign } from "@/lib/firebase/firestore";
+import { getCampaignsForAdminCached, invalidateCampaignsCache } from "@/lib/firebase/adminCache";
+import { deleteCampaign } from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
@@ -27,7 +28,7 @@ export default function AdminCompletedCampaignsPage() {
     setLoadError(null);
     setIsLoading(true);
     try {
-      const fetchedCampaigns = await getCampaignsForAdmin();
+      const fetchedCampaigns = await getCampaignsForAdminCached();
       const completed = fetchedCampaigns.filter(isCompleted);
       const sorted = [...completed].sort(
         (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
@@ -54,6 +55,7 @@ export default function AdminCompletedCampaignsPage() {
     setDeletingId(campaignId);
     try {
       await deleteCampaign(campaignId);
+      invalidateCampaignsCache();
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
     } catch (err) {
       console.error("Error removing campaign:", err);

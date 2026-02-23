@@ -1,12 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  getCampaignsUnderReviewFromFirestore,
-  approveAndPublishCampaign,
-  updateCampaignUnderReviewStatus,
-  type CampaignUnderReviewDoc,
-} from "@/lib/firebase/firestore";
+import { getCampaignsUnderReviewFromFirestoreCached, invalidateUnderReviewCache, invalidateCampaignsCache } from "@/lib/firebase/adminCache";
+import { approveAndPublishCampaign, updateCampaignUnderReviewStatus, type CampaignUnderReviewDoc } from "@/lib/firebase/firestore";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
@@ -19,7 +15,7 @@ export default function AdminUnderReviewPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await getCampaignsUnderReviewFromFirestore();
+      const data = await getCampaignsUnderReviewFromFirestoreCached();
       const sorted = [...data].sort((a, b) =>
         new Date(b.submittedAt ?? 0).getTime() - new Date(a.submittedAt ?? 0).getTime()
       );
@@ -33,7 +29,7 @@ export default function AdminUnderReviewPage() {
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 15000);
+    const interval = setInterval(load, 45000);
     return () => clearInterval(interval);
   }, []);
 
@@ -47,6 +43,8 @@ export default function AdminUnderReviewPage() {
     if (!ok) return;
     try {
       await approveAndPublishCampaign(id);
+      invalidateUnderReviewCache();
+      invalidateCampaignsCache();
       setList((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
       console.error("Error approving:", error);
@@ -64,6 +62,7 @@ export default function AdminUnderReviewPage() {
     if (!ok) return;
     try {
       await updateCampaignUnderReviewStatus(id, "rejected");
+      invalidateUnderReviewCache();
       setList((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
       console.error("Error rejecting:", error);

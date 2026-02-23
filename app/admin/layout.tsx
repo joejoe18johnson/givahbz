@@ -7,13 +7,13 @@ import { useEffect, useState, useRef } from "react";
 import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock, Bell, LogOut, Trophy, FileText } from "lucide-react";
 import Image from "next/image";
 import {
-  getCampaignsUnderReviewCount,
-  getCampaignsUnderReviewFromFirestore,
-  getCampaigns,
-  getUsersFromFirestore,
-  getDonations,
-  type CampaignUnderReviewDoc,
-} from "@/lib/firebase/firestore";
+  getCampaignsUnderReviewCountCached,
+  getCampaignsUnderReviewFromFirestoreCached,
+  getCampaignsCached,
+  getUsersFromFirestoreCached,
+  getDonationsCached,
+} from "@/lib/firebase/adminCache";
+import type { CampaignUnderReviewDoc } from "@/lib/firebase/firestore";
 
 export default function AdminLayout({
   children,
@@ -65,11 +65,11 @@ export default function AdminLayout({
     async function load() {
       try {
         const [underReviewCount, list, campaigns, users, donations] = await Promise.all([
-          getCampaignsUnderReviewCount(),
-          getCampaignsUnderReviewFromFirestore(),
-          getCampaigns(),
-          getUsersFromFirestore(),
-          getDonations(),
+          getCampaignsUnderReviewCountCached(),
+          getCampaignsUnderReviewFromFirestoreCached(),
+          getCampaignsCached(),
+          getUsersFromFirestoreCached(),
+          getDonationsCached(),
         ]);
         const underReviewNewestFirst = [...list].sort(
           (a, b) => new Date(b.submittedAt ?? 0).getTime() - new Date(a.submittedAt ?? 0).getTime()
@@ -105,7 +105,7 @@ export default function AdminLayout({
       }
     }
     load();
-    const interval = setInterval(load, 30000);
+    const interval = setInterval(load, 60000);
     return () => clearInterval(interval);
   }, [isAdmin]);
 

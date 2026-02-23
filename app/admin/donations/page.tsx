@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getDonations } from "@/lib/firebase/firestore";
+import { getDonationsCached, invalidateDonationsCache } from "@/lib/firebase/adminCache";
 import { auth } from "@/lib/firebase/config";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
@@ -21,7 +21,7 @@ export default function AdminDonationsPage() {
   async function loadDonations() {
     setIsLoading(true);
     try {
-      const fetchedDonations = await getDonations();
+      const fetchedDonations = await getDonationsCached();
       const sorted = [...fetchedDonations].sort((a, b) => {
         // Pending first, then by newest date
         const aPending = a.status === "pending" ? 1 : 0;
@@ -83,6 +83,7 @@ export default function AdminDonationsPage() {
             : "";
         throw new Error(hint ? `${msg} ${hint}${projectInfo}` : msg + projectInfo);
       }
+      invalidateDonationsCache();
       await loadDonations();
       alert("Donation approved. The campaign totals have been updated.", {
         title: "Approved",

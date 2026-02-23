@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getUsersFromFirestore, setUserPhoneVerified, setIdVerified, setAddressVerified, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { getUsersFromFirestoreCached, invalidateUsersCache } from "@/lib/firebase/adminCache";
+import { setUserPhoneVerified, setIdVerified, setAddressVerified, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle, UserX, UserCheck, FileText, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
@@ -19,7 +20,7 @@ export default function AdminUsersPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const list = await getUsersFromFirestore();
+      const list = await getUsersFromFirestoreCached();
       // Filter out disabled users (status === "deleted")
       const activeUsers = list.filter((u) => u.status !== "deleted");
       const sorted = [...activeUsers].sort((a, b) =>
@@ -49,6 +50,7 @@ export default function AdminUsersPage() {
     setUpdatingId(userId);
     try {
       await setUserPhoneVerified(userId, true);
+      invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, phoneVerified: true } : u)));
     } catch (error) {
       console.error("Error approving phone:", error);
@@ -62,6 +64,7 @@ export default function AdminUsersPage() {
     setUpdatingId(userId);
     try {
       await setIdVerified(userId, true);
+      invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, idVerified: true, idPending: false } : u)));
     } catch (error) {
       console.error("Error approving ID:", error);
@@ -75,6 +78,7 @@ export default function AdminUsersPage() {
     setUpdatingId(userId);
     try {
       await setAddressVerified(userId, true);
+      invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, addressVerified: true, addressPending: false } : u)));
     } catch (error) {
       console.error("Error approving address:", error);
@@ -92,6 +96,7 @@ export default function AdminUsersPage() {
     setUpdatingId(userId);
     try {
       await setUserStatus(userId, status);
+      invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status } : u)));
     } catch (error) {
       console.error("Error updating user status:", error);
@@ -154,6 +159,7 @@ export default function AdminUsersPage() {
       setUpdatingId(userId);
       try {
         await deleteUserFromFirestore(userId);
+        invalidateUsersCache();
         setUsers((prev) => prev.filter((u) => u.id !== userId));
         alert(`User "${name}" has been permanently deleted from the system.`, { variant: "success" });
       } catch (error) {

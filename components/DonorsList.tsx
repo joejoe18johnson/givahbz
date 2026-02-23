@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { getDonations } from "@/lib/firebase/firestore";
+import { getDonationsCached } from "@/lib/firebase/adminCache";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
@@ -24,7 +24,7 @@ export default function DonorsList({ campaignId }: DonorsListProps) {
   useEffect(() => {
     async function loadDonations() {
       try {
-        const fetchedDonations = await getDonations(campaignId);
+        const fetchedDonations = await getDonationsCached(campaignId);
         setDonations(fetchedDonations.filter((d) => d.status === "completed"));
       } catch (error) {
         console.error("Error loading donations:", error);

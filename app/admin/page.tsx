@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { getDonations, getCampaignsUnderReviewCount, getUsersFromFirestore, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { getDonationsCached, getCampaignsUnderReviewCountCached, getUsersFromFirestoreCached, invalidateUsersCache } from "@/lib/firebase/adminCache";
+import { setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { formatCurrency } from "@/lib/utils";
@@ -25,9 +26,9 @@ export default function AdminDashboardPage() {
     try {
       const [fetchedCampaigns, fetchedDonations, count, userList] = await Promise.all([
         fetchCampaignsFromAPI(),
-        getDonations(),
-        getCampaignsUnderReviewCount(),
-        getUsersFromFirestore(),
+        getDonationsCached(),
+        getCampaignsUnderReviewCountCached(),
+        getUsersFromFirestoreCached(),
       ]);
       // Sort all dashboard data by date (newest first)
       const campaignsNewestFirst = [...fetchedCampaigns].sort((a, b) =>
@@ -62,6 +63,7 @@ export default function AdminDashboardPage() {
     setUpdatingUserId(userId);
     try {
       await setUserStatus(userId, status);
+      invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status } : u)));
     } catch (error) {
       console.error("Error updating user status:", error);
@@ -124,6 +126,7 @@ export default function AdminDashboardPage() {
       setUpdatingUserId(userId);
       try {
         await deleteUserFromFirestore(userId);
+        invalidateUsersCache();
         setUsers((prev) => prev.filter((u) => u.id !== userId));
         alert(`User "${name}" has been permanently deleted from the system.`, { variant: "success" });
       } catch (error) {
