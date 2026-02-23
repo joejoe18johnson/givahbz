@@ -7,6 +7,7 @@ import { auth } from "@/lib/firebase/config";
 import {
   signInWithEmail,
   signInWithGoogle,
+  getGoogleRedirectResult,
   signUpWithEmail,
   signOutUser,
   updateUserProfile,
@@ -77,26 +78,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      // Handle return from Google sign-in redirect (getRedirectResult must be called on load)
+      const redirectProfile = await getGoogleRedirectResult();
+      if (mounted && redirectProfile) {
+        setUser(profileToUser(redirectProfile));
+      }
+    })();
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         try {
           const profile = await firebaseUserToProfile(firebaseUser);
-          if (profile) {
+          if (mounted && profile) {
             setUser(profileToUser(profile));
-          } else {
+          } else if (mounted) {
             setUser(null);
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
-          setUser(null);
+          if (mounted) setUser(null);
         }
-      } else {
+      } else if (mounted) {
         setUser(null);
       }
-      setIsLoading(false);
+      if (mounted) setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {

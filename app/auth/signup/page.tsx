@@ -112,27 +112,28 @@ export default function SignupPage() {
               onClick={async () => {
                 setGoogleLoading(true);
                 setError("");
+                let isRedirecting = false;
                 try {
                   await loginWithGoogle();
-                  // Check if this is a new user (first time signing in)
-                  // Show notification about verification
                   setTimeout(() => {
                     alert(
                       "Account created successfully! To create campaigns, please verify your identity in your profile settings. Your phone number and ID document need to be approved by an admin.",
-                      { 
-                        title: "Account Created", 
-                        variant: "info" 
-                      }
+                      { title: "Account Created", variant: "info" }
                     );
                   }, 500);
                   router.replace("/my-campaigns");
                 } catch (err: unknown) {
-                  const msg = err && typeof err === "object" && "code" in err && (err as { code: string }).code === "auth/popup-closed-by-user"
+                  const msg = err instanceof Error ? err.message : "";
+                  if (msg === "REDIRECTING") {
+                    isRedirecting = true;
+                    return;
+                  }
+                  const errMsg = err && typeof err === "object" && "code" in err && (err as { code: string }).code === "auth/popup-closed-by-user"
                     ? "Sign-in was cancelled."
                     : "Google sign-in failed. Please try again.";
-                  setError(msg);
+                  setError(errMsg);
                 } finally {
-                  setGoogleLoading(false);
+                  if (!isRedirecting) setGoogleLoading(false);
                 }
               }}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-300 rounded-full font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors disabled:opacity-70 disabled:cursor-wait"

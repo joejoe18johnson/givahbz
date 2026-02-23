@@ -6,6 +6,8 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateEmail,
   sendPasswordResetEmail,
 } from "firebase/auth";
@@ -138,16 +140,9 @@ export async function signInWithEmail(email: string, password: string): Promise<
   return await firebaseUserToProfile(userCredential.user) as UserProfile;
 }
 
-// Sign in with Google
-export async function signInWithGoogle(): Promise<UserProfile> {
-  const provider = new GoogleAuthProvider();
-  const userCredential = await signInWithPopup(auth, provider);
-  
-  const user = userCredential.user;
-  
-  // Check if user document exists, create if not
+/** After Google sign-in: ensure user doc exists and return profile. Shared by popup and redirect flows. */
+async function processGoogleUserToProfile(user: FirebaseUser): Promise<UserProfile> {
   const userDoc = await getDoc(doc(db, "users", user.uid));
-  
   const adminEmails = (typeof process.env.NEXT_PUBLIC_ADMIN_EMAILS !== "undefined"
     ? process.env.NEXT_PUBLIC_ADMIN_EMAILS
     : process.env.ADMIN_EMAILS ?? ""
@@ -159,33 +154,56 @@ export async function signInWithGoogle(): Promise<UserProfile> {
   const isAdmin = adminEmails.length > 0 && adminEmails.includes(emailLower);
 
   if (!userDoc.exists()) {
-    const userProfile: Partial<UserProfile> = {
+    await setDoc(doc(db, "users", user.uid), {
       id: user.uid,
       email: user.email || "",
       name: user.displayName || "User",
-      verified: true, // Google accounts are pre-verified
+      verified: true,
       idVerified: true,
       addressVerified: false,
       role: isAdmin ? "admin" : "user",
       profilePhoto: user.photoURL ?? undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await setDoc(doc(db, "users", user.uid), {
-      ...userProfile,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
   } else if (isAdmin) {
-    // Existing user: ensure admin role if email is in admin list
     await updateDoc(doc(db, "users", user.uid), {
       role: "admin",
       updatedAt: serverTimestamp(),
     });
   }
+  return (await firebaseUserToProfile(user)) as UserProfile;
+}
 
-  return await firebaseUserToProfile(user) as UserProfile;
+/**
+ * Sign in with Google. Tries popup first; if blocked, falls back to full-page redirect.
+ * When using redirect, the app will navigate away and process the result on return via getGoogleRedirectResult().
+ */
+export async function signInWithGoogle(): Promise<UserProfile> {
+  const provider = new GoogleAuthProvider();
+  try {
+    const userCredential = await signInWithPopup(auth, provider);
+    return await processGoogleUserToProfile(userCredential.user);
+  } catch (err: unknown) {
+    const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : "";
+    // Popup blocked or closed before completing → use redirect so the main window goes to Google
+    if (code === "auth/popup-blocked" || code === "auth/cancelled-popup-request" || code === "auth/popup-closed-by-user") {
+      await signInWithRedirect(auth, provider);
+      // Page is about to redirect; throw so UI can show "Redirecting..." until navigation happens
+      throw new Error("REDIRECTING");
+    }
+    throw err;
+  }
+}
+
+/**
+ * Call once on app load (e.g. in AuthContext) to handle the return from Google sign-in redirect.
+ * Returns the user profile if we just completed a redirect sign-in, otherwise null.
+ */
+export async function getGoogleRedirectResult(): Promise<UserProfile | null> {
+  const result = await getRedirectResult(auth);
+  if (!result?.user) return null;
+  return await processGoogleUserToProfile(result.user);
 }
 
 // Sign out

@@ -46,10 +46,16 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     setError("");
     setGoogleLoading(true);
+    let isRedirecting = false;
     try {
       await loginWithGoogle();
       // Redirect is handled by useEffect when user/isAdmin updates
     } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg === "REDIRECTING") {
+        isRedirecting = true;
+        return;
+      }
       const message = err && typeof err === "object" && "code" in err
         ? (err as { code: string }).code === "auth/popup-closed-by-user"
           ? "Sign-in was cancelled."
@@ -57,7 +63,7 @@ function LoginForm() {
         : "Google sign-in failed. Please try again.";
       setError(message);
     } finally {
-      setGoogleLoading(false);
+      if (!isRedirecting) setGoogleLoading(false);
     }
   };
 
