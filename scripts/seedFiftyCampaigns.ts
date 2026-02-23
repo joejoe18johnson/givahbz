@@ -12,34 +12,88 @@ import * as admin from "firebase-admin";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
+const APP_PROJECT_ID = (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "").trim();
+
+function parseKey(content: string): Record<string, string> | null {
+  try {
+    const parsed = JSON.parse(content) as Record<string, string>;
+    if (parsed.private_key && parsed.client_email) return parsed;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+/** Load service account key. Prefers a key whose project_id matches NEXT_PUBLIC_FIREBASE_PROJECT_ID. */
 function loadServiceAccountKey(): Record<string, string> | null {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (raw && typeof raw === "string" && raw.trim() !== "") {
-    try {
-      const parsed = JSON.parse(raw) as Record<string, string>;
-      if (parsed.private_key && parsed.client_email) return parsed;
-    } catch {
-      // fall through
+  const cwd = process.cwd();
+  const candidates: Array<{ key: Record<string, string>; projectId: string }> = [];
+
+  // 1) Try project-specific file first (e.g. firebase-service-account-givah-mvp.json)
+  if (APP_PROJECT_ID) {
+    const projectFile = resolve(cwd, `firebase-service-account-${APP_PROJECT_ID}.json`);
+    if (existsSync(projectFile)) {
+      const key = parseKey(readFileSync(projectFile, "utf8"));
+      if (key?.project_id) {
+        candidates.push({ key, projectId: key.project_id });
+        if (key.project_id === APP_PROJECT_ID) return key;
+      }
     }
   }
-  const cwd = process.cwd();
+
+  // 2) FIREBASE_SERVICE_ACCOUNT_PATH
   const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
-  const pathCandidates: string[] = [];
   if (pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "") {
     const trimmed = pathEnv.trim().replace(/^["']|["']$/g, "").replace(/\r/g, "");
-    if (trimmed) pathCandidates.push(resolve(cwd, trimmed), trimmed);
-  }
-  pathCandidates.push(resolve(cwd, "firebase-service-account.json"));
-  for (const filePath of pathCandidates) {
-    try {
-      if (!existsSync(filePath)) continue;
-      const content = readFileSync(filePath, "utf8");
-      const parsed = JSON.parse(content) as Record<string, string>;
-      if (parsed.private_key && parsed.client_email) return parsed;
-    } catch {
-      continue;
+    for (const p of [resolve(cwd, trimmed), trimmed]) {
+      if (existsSync(p)) {
+        const key = parseKey(readFileSync(p, "utf8"));
+        if (key?.project_id) {
+          candidates.push({ key, projectId: key.project_id });
+          if (APP_PROJECT_ID && key.project_id === APP_PROJECT_ID) return key;
+        }
+        break;
+      }
     }
   }
+
+  // 3) firebase-service-account.json
+  const defaultPath = resolve(cwd, "firebase-service-account.json");
+  if (existsSync(defaultPath)) {
+    const key = parseKey(readFileSync(defaultPath, "utf8"));
+    if (key?.project_id) {
+      candidates.push({ key, projectId: key.project_id });
+      if (APP_PROJECT_ID && key.project_id === APP_PROJECT_ID) return key;
+    }
+  }
+
+  // 4) FIREBASE_SERVICE_ACCOUNT_JSON (raw)
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (raw && typeof raw === "string" && raw.trim() !== "") {
+    const key = parseKey(raw);
+    if (key?.project_id) {
+      candidates.push({ key, projectId: key.project_id });
+      if (APP_PROJECT_ID && key.project_id === APP_PROJECT_ID) return key;
+    }
+  }
+
+  // 5) FIREBASE_SERVICE_ACCOUNT_JSON_BASE64
+  const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64;
+  if (base64 && typeof base64 === "string" && base64.trim() !== "") {
+    try {
+      const content = Buffer.from(base64.trim(), "base64").toString("utf8");
+      const key = parseKey(content);
+      if (key?.project_id) {
+        candidates.push({ key, projectId: key.project_id });
+        if (APP_PROJECT_ID && key.project_id === APP_PROJECT_ID) return key;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Return first available key if we have any
+  if (candidates.length > 0) return candidates[0].key;
   return null;
 }
 
