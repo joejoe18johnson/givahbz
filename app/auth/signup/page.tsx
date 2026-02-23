@@ -19,14 +19,14 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   
-  const { signup, loginWithGoogle, user } = useAuth();
+  const { signup, loginWithGoogle, user, isAdmin } = useAuth();
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const { alert } = useThemedModal();
 
   useEffect(() => {
-    if (user) router.replace("/my-campaigns");
-  }, [user, router]);
+    if (user) router.replace(isAdmin ? "/admin" : "/my-campaigns");
+  }, [user, isAdmin, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -74,7 +74,7 @@ export default function SignupPage() {
     );
     
     if (success) {
-      // Show subtle notification about verification
+      // Redirect is handled by useEffect when user (and isAdmin) updates
       setTimeout(() => {
         alert(
           "Account created successfully! To create campaigns, please verify your identity in your profile settings. Your phone number, ID document, and address document need to be approved by an admin.",
@@ -84,8 +84,6 @@ export default function SignupPage() {
           }
         );
       }, 500);
-      
-      router.push("/my-campaigns");
     } else {
       setError("Account creation failed. Please try again.");
     }

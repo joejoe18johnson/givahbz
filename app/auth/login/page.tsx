@@ -22,10 +22,13 @@ function LoginForm() {
   useEffect(() => {
     if (user) {
       if (isAdmin) {
-        router.replace("/admin");
+        // Send admins to admin section; keep callbackUrl if it's an admin path (e.g. /admin/donations)
+        const adminPath = callbackUrl.startsWith("/admin") ? callbackUrl : "/admin";
+        router.replace(adminPath);
       } else {
-        const url = callbackUrl.startsWith("http") ? callbackUrl : `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
-        router.replace(url);
+        // Send regular users to my-campaigns (or the requested callback path)
+        const path = callbackUrl.startsWith("http") ? new URL(callbackUrl).pathname : (callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`);
+        router.replace(path || "/my-campaigns");
       }
     }
   }, [user, isAdmin, callbackUrl, router]);
