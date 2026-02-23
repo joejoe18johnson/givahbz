@@ -64,10 +64,12 @@ function loadServiceAccountKey(): Record<string, string> | null {
   }
 
   // 2) Try FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 (avoids quoting/newline issues in .env and Vercel)
-  const base64 = (typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 === "string" ? process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 : "").trim();
+  let base64 = (typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 === "string" ? process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 : "").trim();
+  // Strip any spaces/newlines so pasting with line wraps in Vercel still works
+  if (base64.length > 0) base64 = base64.replace(/\s/g, "");
   if (base64.length > 0) {
     try {
-      const decoded = Buffer.from(base64, "base64").toString("utf8");
+      const decoded = Buffer.from(base64, "base64").toString("utf8").trim();
       const key = tryParseKeyFromJson(decoded);
       if (key) {
         cachedKey = key;
@@ -118,8 +120,8 @@ export function getConfigDiagnostic(): string | null {
     const hasJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON && typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON === "string" && process.env.FIREBASE_SERVICE_ACCOUNT_JSON.trim() !== "";
     const hasBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 && typeof process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 === "string" && process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64.trim() !== "";
     if (hasJson || hasBase64)
-      return "FIREBASE_SERVICE_ACCOUNT_JSON (or FIREBASE_SERVICE_ACCOUNT_JSON_BASE64) is set but invalid or incomplete. Use the full key: Firebase Console → Service accounts → Generate new private key. For .env/Vercel, base64 avoids quoting: run 'node scripts/vercel-service-account-one-line.js' and use FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 with the base64 output.";
-    return "On Vercel set FIREBASE_SERVICE_ACCOUNT_JSON (full JSON, one line) or FIREBASE_SERVICE_ACCOUNT_JSON_BASE64. Run 'node scripts/vercel-service-account-one-line.js' to print base64 for the key file.";
+      return "FIREBASE_SERVICE_ACCOUNT_JSON (or FIREBASE_SERVICE_ACCOUNT_JSON_BASE64) is set but invalid or incomplete. Use base64: put your key file in the project root and run 'node scripts/vercel-service-account-one-line.js your-key-file.json' (e.g. firebase-service-account-givah-mvp.json), then in Vercel set FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 to the printed value (no quotes). Redeploy.";
+    return "On Vercel set FIREBASE_SERVICE_ACCOUNT_JSON_BASE64. Run 'node scripts/vercel-service-account-one-line.js your-key-file.json' from project root and paste the output into Vercel env. Redeploy.";
   }
   const pathEnv = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
   const hasPath = pathEnv && typeof pathEnv === "string" && pathEnv.trim() !== "";
@@ -208,6 +210,13 @@ export function isAdminConfigured(): boolean {
 export function getAdminAuth(): admin.auth.Auth | null {
   const app = getAdminApp();
   return app ? admin.auth(app) : null;
+}
+
+/** Server's Firebase project ID (from service account). Used to detect client/server project mismatch. */
+export function getAdminProjectId(): string | null {
+  const app = getAdminApp();
+  if (!app) return null;
+  return (app.options.projectId as string) || (loadServiceAccountKey()?.project_id as string) || null;
 }
 
 /**

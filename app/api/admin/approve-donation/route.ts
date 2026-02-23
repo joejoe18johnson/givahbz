@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminApproveDonation, isAdminConfigured, getConfigDiagnostic, getAdminAuth } from "@/lib/firebase/admin";
+import { adminApproveDonation, isAdminConfigured, getConfigDiagnostic, getAdminAuth, getAdminProjectId } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -62,22 +62,36 @@ export async function POST(request: NextRequest) {
     email = (decoded.email ?? "").toLowerCase();
   } catch (err: unknown) {
     const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
-    const isExpired = code === "auth/id-token-expired" || code === "auth/argument-error";
-    const hint =
-      code === "auth/id-token-expired"
-        ? "Your token expired. Sign out and sign in again, then try approving."
-        : code === "auth/argument-error" || code === "auth/invalid-id-token"
-          ? "The sign-in token was invalid. Sign out and sign in again. If it persists, ensure your app uses the same Firebase project as the server (same projectId in service account and NEXT_PUBLIC_FIREBASE_*)."
-          : "Sign out and sign in again, then try approving.";
-    return NextResponse.json(
-      {
-        error: isExpired
-          ? "Your session may have expired. Sign out and sign in again, then try approving."
-          : "Sign-in could not be verified. Sign out and sign in again, then try approving.",
-        hint: hint,
-      },
-      { status: 401 }
-    );
+    const isExpired = code === "auth/id-token-expired";
+    const serverProjectId = getAdminProjectId()?.trim() ?? "";
+    const clientProjectId = (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "").trim();
+    const projectMismatch =
+      serverProjectId &&
+      clientProjectId &&
+      serverProjectId !== clientProjectId;
+
+    const payload: { error: string; hint: string; serverProjectId?: string; clientProjectId?: string } = {
+      error: "",
+      hint: "",
+    };
+    if (isExpired) {
+      payload.error = "Your session may have expired. Sign out and sign in again, then try approving.";
+      payload.hint = "Your token expired. Sign out and sign in again, then try approving.";
+    } else if (projectMismatch) {
+      payload.error = "Firebase project mismatch: the server and your app are using different projects.";
+      payload.hint = `Server is using project "${serverProjectId}" but your app is configured for "${clientProjectId}". Download the service account key for "${clientProjectId}" (Firebase Console → Project settings → Service accounts → Generate new private key) and set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 to that key. Keep NEXT_PUBLIC_FIREBASE_* as they are.`;
+    } else {
+      payload.error = "Sign-in could not be verified. Sign out and sign in again, then try approving.";
+      payload.hint =
+        code === "auth/id-token-expired"
+          ? "Your token expired. Sign out and sign in again, then try approving."
+          : code === "auth/argument-error" || code === "auth/invalid-id-token"
+            ? "The sign-in token was invalid. Ensure your app uses the same Firebase project as the server (service account must be from the same project as NEXT_PUBLIC_FIREBASE_PROJECT_ID)."
+            : "Sign out and sign in again, then try approving.";
+    }
+    if (serverProjectId) payload.serverProjectId = serverProjectId;
+    if (clientProjectId) payload.clientProjectId = clientProjectId;
+    return NextResponse.json(payload, { status: 401 });
   }
 
   const adminEmails = getAdminEmails();

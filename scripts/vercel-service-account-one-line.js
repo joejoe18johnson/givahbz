@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 /**
- * Outputs firebase-service-account.json for pasting into Vercel or .env:
+ * Outputs firebase-service-account JSON for pasting into Vercel or .env:
  * - FIREBASE_SERVICE_ACCOUNT_JSON (one-line JSON)
  * - FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 (recommended: no quoting issues)
  *
- * Run from project root: node scripts/vercel-service-account-one-line.js
+ * Run from project root:
+ *   node scripts/vercel-service-account-one-line.js
+ *   node scripts/vercel-service-account-one-line.js firebase-service-account-givah-mvp.json
  */
 
 const fs = require("fs");
 const path = require("path");
 
-const filePath = path.join(process.cwd(), "firebase-service-account.json");
+const fileName = process.argv[2] || "firebase-service-account.json";
+const filePath = path.isAbsolute(fileName) ? fileName : path.join(process.cwd(), fileName);
 if (!fs.existsSync(filePath)) {
-  console.error("File not found: firebase-service-account.json");
+  console.error("File not found:", filePath);
+  console.error("Usage: node scripts/vercel-service-account-one-line.js [path-to-key.json]");
   process.exit(1);
 }
 

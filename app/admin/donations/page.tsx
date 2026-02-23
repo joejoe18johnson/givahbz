@@ -75,7 +75,13 @@ export default function AdminDonationsPage() {
       if (!res.ok) {
         const msg = typeof data.error === "string" ? data.error : "Failed to approve donation.";
         const hint = typeof data.hint === "string" ? data.hint : "";
-        throw new Error(hint ? `${msg} ${hint}` : msg);
+        const serverProj = data.serverProjectId;
+        const clientProj = data.clientProjectId;
+        const projectInfo =
+          serverProj !== undefined || clientProj !== undefined
+            ? ` Server project: ${serverProj ?? "(not set)"}. App project: ${clientProj ?? "(not set)"}.`
+            : "";
+        throw new Error(hint ? `${msg} ${hint}${projectInfo}` : msg + projectInfo);
       }
       await loadDonations();
       alert("Donation approved. The campaign totals have been updated.", {
