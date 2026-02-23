@@ -115,13 +115,7 @@ export default function SignupPage() {
                 let isRedirecting = false;
                 try {
                   await loginWithGoogle();
-                  setTimeout(() => {
-                    alert(
-                      "Account created successfully! To create campaigns, please verify your identity in your profile settings. Your phone number and ID document need to be approved by an admin.",
-                      { title: "Account Created", variant: "info" }
-                    );
-                  }, 500);
-                  router.replace("/my-campaigns");
+                  // Redirect is handled by useEffect when user and adminCheckDone update (admins → /admin, others → /my-campaigns)
                 } catch (err: unknown) {
                   const msg = err instanceof Error ? err.message : "";
                   if (msg === "REDIRECTING") {
@@ -133,7 +127,9 @@ export default function SignupPage() {
                     ? "Sign-in was cancelled."
                     : code === "auth/unauthorized-domain"
                       ? "This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains (e.g. localhost or your Vercel domain)."
-                      : "Google sign-in failed. Please try again.";
+                      : (err && typeof err === "object" && "message" in err && typeof (err as { message: string }).message === "string")
+                        ? (err as { message: string }).message
+                        : "Google sign-in failed. Please try again.";
                   setError(errMsg);
                 } finally {
                   if (!isRedirecting) setGoogleLoading(false);
