@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-import { adminApproveDonation, isAdminConfigured, getConfigDiagnostic } from "@/lib/firebase/admin";
+import { adminApproveDonation, isAdminConfigured, getConfigDiagnostic, getAdminAuth } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-function getAdminAuth(): admin.auth.Auth | null {
-  const app = admin.apps[0];
-  return app ? admin.auth(app as admin.app.App) : null;
-}
 
 function getAdminEmails(): string[] {
   let raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
@@ -66,9 +60,22 @@ export async function POST(request: NextRequest) {
   try {
     const decoded = await auth.verifyIdToken(token);
     email = (decoded.email ?? "").toLowerCase();
-  } catch {
+  } catch (err: unknown) {
+    const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
+    const isExpired = code === "auth/id-token-expired" || code === "auth/argument-error";
+    const hint =
+      code === "auth/id-token-expired"
+        ? "Your token expired. Sign out and sign in again, then try approving."
+        : code === "auth/argument-error" || code === "auth/invalid-id-token"
+          ? "The sign-in token was invalid. Sign out and sign in again. If it persists, ensure your app uses the same Firebase project as the server (same projectId in service account and NEXT_PUBLIC_FIREBASE_*)."
+          : "Sign out and sign in again, then try approving.";
     return NextResponse.json(
-      { error: "Your session may have expired. Sign out and sign in again, then try approving." },
+      {
+        error: isExpired
+          ? "Your session may have expired. Sign out and sign in again, then try approving."
+          : "Sign-in could not be verified. Sign out and sign in again, then try approving.",
+        hint: hint,
+      },
       { status: 401 }
     );
   }

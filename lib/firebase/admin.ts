@@ -204,6 +204,12 @@ export function isAdminConfigured(): boolean {
   return getAdminApp() != null;
 }
 
+/** Auth instance for verifying ID tokens. Use this in API routes so the same Firebase project is used. */
+export function getAdminAuth(): admin.auth.Auth | null {
+  const app = getAdminApp();
+  return app ? admin.auth(app) : null;
+}
+
 /**
  * Get the Storage bucket name for Admin SDK.
  * Uses NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET as-is (e.g. projectId.firebasestorage.app).
