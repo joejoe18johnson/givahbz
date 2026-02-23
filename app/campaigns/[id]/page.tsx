@@ -77,7 +77,10 @@ export default function CampaignPage({ params }: PageProps) {
     notFound();
   }
 
-  const progress = (campaign.raised / campaign.goal) * 100;
+  const goalNum = Number(campaign.goal) || 1;
+  const raisedNum = Number(campaign.raised) || 0;
+  const isFullyFunded = goalNum > 0 && raisedNum >= goalNum;
+  const progress = (raisedNum / goalNum) * 100;
   const progressPercentage = Math.min(progress, 100);
 
   const handleToggleHeart = async () => {
@@ -349,6 +352,8 @@ export default function CampaignPage({ params }: PageProps) {
               <CampaignDonateSection
                 campaignId={campaign.id}
                 campaignTitle={campaign.title}
+                goal={campaign.goal}
+                raised={campaign.raised}
                 onDonationModalChange={setIsDonationModalOpen}
               />
             </div>
@@ -405,8 +410,8 @@ export default function CampaignPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Mobile-only sticky Donate bar - hidden once donation modal is open */}
-      {!isDonationModalOpen && (
+      {/* Mobile-only sticky Donate bar - hidden when modal open or campaign fully funded */}
+      {!isDonationModalOpen && !isFullyFunded && (
         <>
           <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
             <button

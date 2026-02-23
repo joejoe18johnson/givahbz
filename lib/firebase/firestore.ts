@@ -248,13 +248,25 @@ export async function createDonation(donation: Omit<AdminDonation, "id">): Promi
 /**
  * Record a donation in Firestore and increment the campaign's raised amount and backers.
  * Call this when a donation is completed (after payment processing).
+ * Rejects if the campaign has already reached or exceeded its goal (fully funded).
  */
 export async function recordDonationAndUpdateCampaign(
   donation: Omit<AdminDonation, "id">,
   campaignId: string
 ): Promise<string> {
-  const donationId = await createDonation(donation);
   const campaignRef = doc(db, campaignsCollection, campaignId);
+  const campaignSnap = await getDoc(campaignRef);
+  if (!campaignSnap.exists()) {
+    throw new Error("Campaign not found");
+  }
+  const campaignData = campaignSnap.data() as { goal?: number; raised?: number };
+  const goal = Number(campaignData?.goal) || 0;
+  const raised = Number(campaignData?.raised) || 0;
+  if (goal > 0 && raised >= goal) {
+    throw new Error("Campaign has been fully funded. No further donations are accepted.");
+  }
+
+  const donationId = await createDonation(donation);
   await updateDoc(campaignRef, {
     raised: increment(donation.amount),
     backers: increment(1),
@@ -266,6 +278,7 @@ export async function recordDonationAndUpdateCampaign(
 /**
  * Approve a pending donation (e.g. bank transfer or DigiWallet). Updates donation status to
  * "completed" and adds the amount to the campaign's raised total and backers count.
+ * Rejects if the campaign has already reached or exceeded its goal (fully funded).
  */
 export async function approveDonation(donationId: string): Promise<void> {
   const donationRef = doc(db, donationsCollection, donationId);
@@ -283,11 +296,22 @@ export async function approveDonation(donationId: string): Promise<void> {
   if (!campaignId || !Number.isFinite(amount) || amount <= 0) {
     throw new Error("Invalid donation data");
   }
+
+  const campaignRef = doc(db, campaignsCollection, campaignId);
+  const campaignSnap = await getDoc(campaignRef);
+  if (campaignSnap.exists()) {
+    const campaignData = campaignSnap.data() as { goal?: number; raised?: number };
+    const goal = Number(campaignData?.goal) || 0;
+    const raised = Number(campaignData?.raised) || 0;
+    if (goal > 0 && raised >= goal) {
+      throw new Error("Campaign has been fully funded. No further donations are accepted.");
+    }
+  }
+
   await updateDoc(donationRef, {
     status: "completed",
     updatedAt: serverTimestamp(),
   });
-  const campaignRef = doc(db, campaignsCollection, campaignId);
   await updateDoc(campaignRef, {
     raised: increment(amount),
     backers: increment(1),

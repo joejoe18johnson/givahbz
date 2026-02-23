@@ -99,10 +99,14 @@ export default function DonationModal({
     } catch (error) {
       console.error("Error recording donation:", error);
       setIsProcessing(false);
-      alert("There was a problem recording your donation. Please try again or contact support.", {
-        title: "Donation failed",
-        variant: "error",
-      });
+      const message = error instanceof Error ? error.message : "";
+      const isFullyFunded = message.toLowerCase().includes("fully funded");
+      alert(
+        isFullyFunded
+          ? "This campaign has been fully funded. No further donations are being accepted."
+          : "There was a problem recording your donation. Please try again or contact support.",
+        { title: "Donation failed", variant: "error" }
+      );
     }
   };
 

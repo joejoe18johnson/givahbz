@@ -7,7 +7,10 @@ import { mergeWithDefaults, type SiteContent, type HomeFaqItem } from "@/lib/sit
 import { useThemedModal } from "@/components/ThemedModal";
 import { FileText, Save, Plus, Trash2 } from "lucide-react";
 
-const FIELDS: { key: keyof SiteContent; label: string; placeholder: string; multiline?: boolean }[] = [
+/** Keys of SiteContent that are string fields (excludes homeFaqs which is edited separately). */
+type StringSiteContentKey = Exclude<keyof SiteContent, "homeFaqs">;
+
+const FIELDS: { key: StringSiteContentKey; label: string; placeholder: string; multiline?: boolean }[] = [
   { key: "siteName", label: "Site name", placeholder: "GivahBz" },
   { key: "heroTitle", label: "Home hero title", placeholder: "Supporting Belizean Communities" },
   { key: "heroSubtitle", label: "Home hero subtitle", placeholder: "Life is either a daring adventure..." },
@@ -48,7 +51,7 @@ export default function AdminSiteInfoPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const handleChange = (key: keyof SiteContent, value: string) => {
+  const handleChange = (key: StringSiteContentKey, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
