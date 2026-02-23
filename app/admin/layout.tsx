@@ -246,10 +246,10 @@ export default function AdminLayout({
         <div className="max-w-md text-center bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Access denied</h1>
           <p className="text-gray-600 mb-4">
-            Your account does not have admin access. Add your email to <code className="text-sm bg-gray-100 px-1 rounded">NEXT_PUBLIC_ADMIN_EMAILS</code> (or <code className="text-sm bg-gray-100 px-1 rounded">ADMIN_EMAILS</code>) in your .env and on Vercel, then sign out and sign in again.
+            Your account does not have admin access. You must set <code className="text-sm bg-gray-100 px-1 rounded">NEXT_PUBLIC_ADMIN_EMAILS</code> (comma-separated) in your <code className="text-sm bg-gray-100 px-1 rounded">.env</code> and in Vercel Environment Variables, then <strong>redeploy</strong> so the client gets the list. After that, sign out and sign in again.
           </p>
           <p className="text-sm text-gray-500 mb-6">
-            Signed in as <strong>{user.email}</strong>. Use this exact email in the admin list (comma-separated, no spaces).
+            Signed in as <strong>{user.email}</strong>. Add this exact email to <code className="text-sm bg-gray-100 px-1 rounded">NEXT_PUBLIC_ADMIN_EMAILS</code> (e.g. <code className="text-sm bg-gray-100 px-1 rounded">NEXT_PUBLIC_ADMIN_EMAILS=you@example.com</code>). Note: <code className="text-sm bg-gray-100 px-1 rounded">ADMIN_EMAILS</code> alone does not work for the dashboard—the browser needs <code className="text-sm bg-gray-100 px-1 rounded">NEXT_PUBLIC_ADMIN_EMAILS</code>.
           </p>
           <Link
             href="/"
