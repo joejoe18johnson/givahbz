@@ -33,11 +33,11 @@ function getAdminEmails(): string[] {
 export async function POST(request: NextRequest) {
   if (!isAdminConfigured()) {
     const hint = getConfigDiagnostic();
+    const message = hint
+      ? `Server is not configured for admin operations. ${hint}`
+      : "Set FIREBASE_SERVICE_ACCOUNT_JSON (full JSON) or FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json in .env. Get the key from Firebase Console → Project settings → Service accounts → Generate new private key.";
     return NextResponse.json(
-      {
-        error: "Server is not configured for admin operations.",
-        hint: hint ?? "Set FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string) or FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json in .env. Get the key from Firebase Console → Project settings → Service accounts → Generate new private key.",
-      },
+      { error: message, hint: hint ?? undefined },
       { status: 503 }
     );
   }
