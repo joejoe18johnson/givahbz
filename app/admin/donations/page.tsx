@@ -6,12 +6,16 @@ import { auth } from "@/lib/firebase/config";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 50;
 
 export default function AdminDonationsPage() {
   const { alert } = useThemedModal();
   const [donations, setDonations] = useState<AdminDonation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   async function loadDonations() {
     setIsLoading(true);
@@ -32,6 +36,14 @@ export default function AdminDonationsPage() {
   useEffect(() => {
     loadDonations();
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil(donations.length / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const paginatedDonations = donations.slice(start, start + PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [page, totalPages]);
 
   async function handleApprove(donationId: string) {
     setApprovingId(donationId);
@@ -88,7 +100,9 @@ export default function AdminDonationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">All Donations</h1>
-          <p className="text-gray-600 mt-1">{donations.length} donations total</p>
+          <p className="text-gray-600 mt-1">
+            {donations.length} donations total · Showing {donations.length === 0 ? 0 : start + 1}–{Math.min(start + PAGE_SIZE, donations.length)} per page
+          </p>
         </div>
         <div className="flex gap-4 text-sm">
           <span className="text-gray-600">Completed: <strong className="text-success-600">{formatCurrency(totalCompleted)}</strong></span>

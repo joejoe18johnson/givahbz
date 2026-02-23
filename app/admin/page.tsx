@@ -29,6 +29,7 @@ export default function AdminDashboardPage() {
         getCampaignsUnderReviewCount(),
         getUsersFromFirestore(),
       ]);
+      // Sort all dashboard data by date (newest first)
       const campaignsNewestFirst = [...fetchedCampaigns].sort((a, b) =>
         new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
       );
