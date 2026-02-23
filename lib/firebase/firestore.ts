@@ -70,6 +70,8 @@ export async function getCampaigns(filters?: {
   limitCount?: number;
   /** When true, return only fully funded campaigns (for Success Stories). When false/undefined, exclude them (main list shows only campaigns needing support). */
   onlyFullyFunded?: boolean;
+  /** When true, return all live campaigns (no funding filter). Used for site-wide stats (total raised, campaign count, supporters). */
+  forStats?: boolean;
 }): Promise<Campaign[]> {
   const q = query(collection(db, campaignsCollection));
   const querySnapshot = await getDocsFromServer(q);
@@ -87,13 +89,15 @@ export async function getCampaigns(filters?: {
     });
   // ^ Exclude pending (under-review) and on_hold so only live campaigns appear on the public list
 
-  // Fully funded: show only in Success Stories; main list shows only campaigns still needing support
   const goal = (c: Campaign) => Number(c.goal) || 1;
   const raised = (c: Campaign) => Number(c.raised) || 0;
-  if (filters?.onlyFullyFunded === true) {
-    campaigns = campaigns.filter((c) => goal(c) > 0 && raised(c) >= goal(c));
-  } else {
-    campaigns = campaigns.filter((c) => goal(c) <= 0 || raised(c) < goal(c));
+  if (!filters?.forStats) {
+    // Fully funded: show only in Success Stories; main list shows only campaigns still needing support
+    if (filters?.onlyFullyFunded === true) {
+      campaigns = campaigns.filter((c) => goal(c) > 0 && raised(c) >= goal(c));
+    } else {
+      campaigns = campaigns.filter((c) => goal(c) <= 0 || raised(c) < goal(c));
+    }
   }
 
   // Trending = campaigns 60% or more completed (still needing support; fully funded are in Success Stories only)

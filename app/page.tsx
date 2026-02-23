@@ -24,6 +24,7 @@ export default function Home() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [campaignsError, setCampaignsError] = useState<string | null>(null);
+  const [siteStats, setSiteStats] = useState<{ totalRaisedFormatted: string; campaignCount: number; totalSupporters: number } | null>(null);
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(null);
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const trendingScrollRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,26 @@ export default function Home() {
       }
     }
     loadCampaigns();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadStats() {
+      try {
+        const res = await fetch("/api/site-stats", { cache: "no-store" });
+        const data = await res.json();
+        if (!cancelled && res.ok && data)
+          setSiteStats({
+            totalRaisedFormatted: data.totalRaisedFormatted ?? "BZ$0",
+            campaignCount: typeof data.campaignCount === "number" ? data.campaignCount : 0,
+            totalSupporters: typeof data.totalSupporters === "number" ? data.totalSupporters : 0,
+          });
+      } catch {
+        if (!cancelled) setSiteStats({ totalRaisedFormatted: "BZ$0", campaignCount: 0, totalSupporters: 0 });
+      }
+    }
+    loadStats();
+    return () => { cancelled = true; };
   }, []);
 
   const allTrendingCampaigns = getTopCampaignsByFunding(campaigns, 12);
@@ -578,19 +599,25 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <section className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-2xl border border-gray-200 p-8 mb-12">
+        <section className="bg-gradient-to-r from-verified-50 to-verified-100 rounded-2xl border border-verified-200 p-8 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-4xl font-medium text-primary-600 mb-2">BZ$2.5M+</div>
-              <div className="text-gray-600">Raised</div>
+              <div className="text-4xl font-medium text-verified-700 mb-2">
+                {siteStats ? siteStats.totalRaisedFormatted : "—"}
+              </div>
+              <div className="text-verified-800">Raised</div>
             </div>
             <div>
-              <div className="text-4xl font-medium text-primary-600 mb-2">1,200+</div>
-              <div className="text-gray-600">Campaigns</div>
+              <div className="text-4xl font-medium text-verified-700 mb-2">
+                {siteStats != null ? siteStats.campaignCount.toLocaleString() : "—"}
+              </div>
+              <div className="text-verified-800">Campaigns</div>
             </div>
             <div>
-              <div className="text-4xl font-medium text-primary-600 mb-2">15K+</div>
-              <div className="text-gray-600">Supporters</div>
+              <div className="text-4xl font-medium text-verified-700 mb-2">
+                {siteStats != null ? siteStats.totalSupporters.toLocaleString() : "—"}
+              </div>
+              <div className="text-verified-800">Supporters</div>
             </div>
           </div>
         </section>
