@@ -85,7 +85,7 @@ export default function AdminSiteInfoPage() {
     }
     setSaving(true);
     try {
-      const token = await firebaseUser.getIdToken();
+      const token = await firebaseUser.getIdToken(true);
       const res = await fetch("/api/admin/site-content", {
         method: "POST",
         headers: {
