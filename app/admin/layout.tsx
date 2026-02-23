@@ -20,7 +20,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isAdmin, isLoading, logout } = useAuth();
+  const { user, isAdmin, isLoading, adminCheckDone, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const NOTIFICATIONS_SEEN_KEY = "crowdfund_admin_notifications_seen";
@@ -222,11 +222,12 @@ export default function AdminLayout({
       router.replace(`/auth/login?callbackUrl=${encodeURIComponent(pathname || "/admin")}`);
       return;
     }
+    if (!adminCheckDone) return; // wait for server admin check before redirecting
     if (!isAdmin) {
       router.replace("/");
       return;
     }
-  }, [user, isAdmin, isLoading, router, pathname]);
+  }, [user, isAdmin, isLoading, adminCheckDone, router, pathname]);
 
   if (isLoading) {
     return (
@@ -238,6 +239,15 @@ export default function AdminLayout({
 
   if (!user) {
     return null; // middleware or auth will redirect to login
+  }
+
+  // Wait for server admin check so we don't redirect admins away before isAdmin is set
+  if (!adminCheckDone) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500">Checking access...</div>
+      </div>
+    );
   }
 
   if (!isAdmin) {

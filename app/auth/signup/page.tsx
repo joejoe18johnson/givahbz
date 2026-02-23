@@ -19,14 +19,16 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   
-  const { signup, loginWithGoogle, user, isAdmin } = useAuth();
+  const { signup, loginWithGoogle, user, isAdmin, adminCheckDone } = useAuth();
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const { alert } = useThemedModal();
 
   useEffect(() => {
-    if (user) router.replace(isAdmin ? "/admin" : "/my-campaigns");
-  }, [user, isAdmin, router]);
+    if (!user) return;
+    if (!adminCheckDone) return;
+    router.replace(isAdmin ? "/admin" : "/my-campaigns");
+  }, [user, isAdmin, adminCheckDone, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

@@ -14,25 +14,24 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { user, isAdmin, isLoading: authLoading, login, loginWithGoogle } = useAuth();
+  const { user, isAdmin, isLoading: authLoading, adminCheckDone, login, loginWithGoogle } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/my-campaigns";
 
   useEffect(() => {
     if (authLoading) return;
-    if (user) {
-      if (isAdmin) {
-        // Send admins to admin section; keep callbackUrl if it's an admin path (e.g. /admin/donations)
-        const adminPath = callbackUrl.startsWith("/admin") ? callbackUrl : "/admin";
-        router.replace(adminPath);
-      } else {
-        // Send regular users to my-campaigns (or the requested callback path)
-        const path = callbackUrl.startsWith("http") ? new URL(callbackUrl).pathname : (callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`);
-        router.replace(path || "/my-campaigns");
-      }
+    if (!user) return;
+    // Wait for server admin check so we know final isAdmin before redirecting
+    if (!adminCheckDone) return;
+    if (isAdmin) {
+      const adminPath = callbackUrl.startsWith("/admin") ? callbackUrl : "/admin";
+      router.replace(adminPath);
+    } else {
+      const path = callbackUrl.startsWith("http") ? new URL(callbackUrl).pathname : (callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`);
+      router.replace(path || "/my-campaigns");
     }
-  }, [user, isAdmin, authLoading, callbackUrl, router]);
+  }, [user, isAdmin, authLoading, adminCheckDone, callbackUrl, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

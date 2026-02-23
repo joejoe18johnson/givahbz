@@ -39,6 +39,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
+  /** True once we know admin status (from profile or server check). Wait for this before redirecting after login. */
+  adminCheckDone: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<void>;
   signup: (email: string, password: string, name: string, phoneNumber?: string) => Promise<boolean>;
@@ -121,6 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     let cancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) setServerAdminCheck(false);
+    }, 5000);
     auth.currentUser
       ?.getIdToken()
       .then((token) =>
@@ -136,9 +141,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (!cancelled) setServerAdminCheck(false);
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
       });
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
   }, [user?.id]);
 
@@ -193,9 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isAdmin = (user?.role === "admin") || serverAdminCheck === true;
+  const adminCheckDone = user === null || serverAdminCheck !== null;
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, login, loginWithGoogle, signup, updateUser, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, isAdmin, adminCheckDone, login, loginWithGoogle, signup, updateUser, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
