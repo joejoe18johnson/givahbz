@@ -61,6 +61,20 @@ export async function POST(request: NextRequest) {
     const decoded = await auth.verifyIdToken(token);
     email = (decoded.email ?? "").toLowerCase();
   } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isQuotaError =
+      msg.includes("RESOURCE_EXHAUSTED") ||
+      msg.includes("Quota exceeded") ||
+      (err && typeof err === "object" && "code" in err && (err as { code?: number }).code === 8);
+    if (isQuotaError) {
+      return NextResponse.json(
+        {
+          error: "Firebase quota exceeded. Please try again in a few minutes.",
+          hint: "Your Firebase project has hit its usage limit. Check Firebase Console → Usage and billing, or wait and retry.",
+        },
+        { status: 429 }
+      );
+    }
     const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
     const isExpired = code === "auth/id-token-expired";
     const serverProjectId = getAdminProjectId()?.trim() ?? "";
@@ -141,6 +155,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to approve donation.";
+    const isQuotaError =
+      message.includes("RESOURCE_EXHAUSTED") ||
+      message.includes("Quota exceeded") ||
+      (err && typeof err === "object" && "code" in err && (err as { code?: number }).code === 8);
+    if (isQuotaError) {
+      return NextResponse.json(
+        {
+          error: "Firebase quota exceeded. Please try again in a few minutes.",
+          hint: "Your Firebase project has hit its usage limit (Firestore or Auth). Check Firebase Console → Usage and billing, or wait and retry.",
+        },
+        { status: 429 }
+      );
+    }
     return NextResponse.json(
       { error: message },
       { status: 400 }
