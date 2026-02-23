@@ -136,8 +136,8 @@ export default function Home() {
           <div className="absolute bottom-32 right-20 w-32 h-32 rounded-full bg-primary-100/50 -z-10" aria-hidden />
           <div className="absolute top-1/3 right-1/4 w-16 h-16 rounded-full bg-accent-100/40 -z-10" aria-hidden />
 
-          {/* Left: Content */}
-          <div className="order-2 lg:order-1 mt-14 sm:mt-16 lg:mt-0">
+          {/* Left: Content - vertically centered */}
+          <div className="order-2 lg:order-1 flex flex-col justify-center mt-14 sm:mt-16 lg:mt-0 min-h-[320px] lg:min-h-[400px]">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-900 mb-4">
               {siteContent.heroTitle}
             </h1>
@@ -165,16 +165,6 @@ export default function Home() {
               >
                 Learn how it works →
               </Link>
-            </div>
-            <div className="mt-16 pt-8 border-t border-gray-200">
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Trusted by Belizeans</p>
-              <div className="flex items-center gap-6 text-gray-400 text-sm">
-                <span className="font-medium text-gray-600">Communities</span>
-                <span className="text-gray-300">|</span>
-                <span className="font-medium text-gray-600">Charities</span>
-                <span className="text-gray-300">|</span>
-                <span className="font-medium text-gray-600">Individuals</span>
-              </div>
             </div>
             <div className="mt-8 flex justify-start">
               <a href="#community-wins" className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Scroll down">
