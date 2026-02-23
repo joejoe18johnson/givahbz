@@ -23,7 +23,7 @@ export default function Header() {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin");
@@ -177,14 +177,6 @@ export default function Header() {
                 How It Works
               </Link>
             )}
-            {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="text-gray-700 hover:text-primary-600 transition-colors"
-                >
-                  Admin
-                </Link>
-              )}
             {user ? (
               <>
                 {!isAdminRoute && (
@@ -297,15 +289,6 @@ export default function Header() {
                           <p className="text-xs text-gray-600 truncate">{user.email}</p>
                         </div>
                       </div>
-                      {isAdmin && (
-                        <Link
-                          href="/admin"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 font-medium"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          Admin
-                        </Link>
-                      )}
                       <Link
                         href="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -407,9 +390,6 @@ export default function Header() {
               )}
               {user ? (
                 <>
-                  {isAdmin && (
-                    <Link href="/admin" className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium" onClick={closeMobileMenu}>Admin</Link>
-                  )}
                   {!isAdminRoute && (
                     <Link
                       href="/campaigns/create"

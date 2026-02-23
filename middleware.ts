@@ -10,9 +10,10 @@ export async function middleware(request: NextRequest) {
   const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(p + "/"));
   if (!isProtected) return NextResponse.next();
 
-  const secret = process.env.NEXTAUTH_SECRET;
+  const rawSecret = process.env.NEXTAUTH_SECRET?.trim() ?? "";
+  const isPlaceholder = !rawSecret || rawSecret === "your-secret-key-generate-with-openssl-rand-base64-32";
+  const secret = rawSecret && !isPlaceholder ? rawSecret : "dev-fallback-secret-change-in-production-use-openssl-rand-base64-32";
   if (!secret) {
-    // No secret: let request through; admin layout will redirect to login if needed
     return NextResponse.next();
   }
 

@@ -11,7 +11,7 @@ const TEST_ACCOUNTS = [
   { email: "admin@givahbz.com", password: "Admin123!", name: "Admin User" },
 ];
 
-// Parse Google OAuth env vars (strip quotes and whitespace so .env values load reliably)
+// Parse env (strip quotes and whitespace)
 function readEnv(name: string): string {
   const raw = process.env[name];
   if (raw == null || typeof raw !== "string") return "";
@@ -20,7 +20,18 @@ function readEnv(name: string): string {
 }
 const googleClientId = readEnv("GOOGLE_CLIENT_ID");
 const googleClientSecret = readEnv("GOOGLE_CLIENT_SECRET");
-const hasGoogle = Boolean(googleClientId.length > 0 && googleClientSecret.length > 0);
+const hasGoogle = Boolean(
+  googleClientId.length > 0 &&
+  googleClientSecret.length > 0 &&
+  !googleClientId.startsWith("123456789") &&
+  !googleClientSecret.startsWith("GOCSPX-xxxxxxxx")
+);
+// NEXTAUTH_SECRET is required; use a dev fallback if still the placeholder so the app doesn't 500
+const rawSecret = readEnv("NEXTAUTH_SECRET");
+const isPlaceholder = !rawSecret || rawSecret === "your-secret-key-generate-with-openssl-rand-base64-32";
+const NEXTAUTH_SECRET = rawSecret && !isPlaceholder
+  ? rawSecret
+  : "dev-fallback-secret-change-in-production-use-openssl-rand-base64-32";
 
 const authOptions = {
   providers: [
@@ -99,7 +110,7 @@ const authOptions = {
     signIn: "/auth/login",
   },
   session: { strategy: "jwt" as const, maxAge: 30 * 24 * 60 * 60 },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET,
   trustHost: true,
 };
 
