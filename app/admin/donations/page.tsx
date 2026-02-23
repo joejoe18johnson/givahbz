@@ -7,6 +7,7 @@ import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 const PAGE_SIZE = 50;
 
@@ -122,6 +123,7 @@ export default function AdminDonationsPage() {
           <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-gray-50 text-left text-gray-500">
+                <th className="px-5 py-3 font-medium">Ref</th>
                 <th className="px-5 py-3 font-medium">ID</th>
                 <th className="px-5 py-3 font-medium">Date</th>
                 <th className="px-5 py-3 font-medium">Campaign</th>
@@ -137,13 +139,22 @@ export default function AdminDonationsPage() {
             <tbody>
               {donations.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={11} className="px-5 py-12 text-center text-gray-500">
                     No donations yet
                   </td>
                 </tr>
               ) : (
                 paginatedDonations.map((d) => (
                   <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <td className="px-5 py-3">
+                      {d.referenceNumber ? (
+                        <Link href={`/campaigns/${d.campaignId}`} className="font-mono font-medium text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                          {d.referenceNumber}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-gray-500 font-mono">{d.id}</td>
                     <td className="px-5 py-3 text-gray-600">{new Date(d.createdAt).toLocaleString()}</td>
                     <td className="px-5 py-3 text-gray-900 max-w-[220px] truncate" title={d.campaignTitle}>{d.campaignTitle}</td>

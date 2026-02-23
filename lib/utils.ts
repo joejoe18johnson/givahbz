@@ -5,6 +5,13 @@ export function formatCurrency(amount: number): string {
   return `BZ$${amount.toLocaleString()}`;
 }
 
+/** Generate a short reference for donations: one letter (A–Z) + 4 digits (e.g. A1234). */
+export function generateShortRef(): string {
+  const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  const digits = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+  return letter + digits;
+}
+
 /**
  * Format date as relative time (e.g. "5 minutes ago", "2 hours ago", "3 days ago")
  */

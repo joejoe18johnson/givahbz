@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Heart, CreditCard, Building2, Wallet, CheckCircle2, Copy } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, generateShortRef } from "@/lib/utils";
 import { recordDonationAndUpdateCampaign, createDonation } from "@/lib/firebase/firestore";
 import { useThemedModal } from "@/components/ThemedModal";
 
@@ -43,6 +43,8 @@ export default function DonationModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [donationWasPending, setDonationWasPending] = useState(false);
+  /** Short reference for bank/digi transfer (e.g. A123). Set when user selects bank or digiwallet. */
+  const [paymentReference, setPaymentReference] = useState<string | null>(null);
 
   const bankAccountDetails = {
     bankName: "Belize Bank",
@@ -76,6 +78,7 @@ export default function DonationModal({
         status: (isPendingMethod ? "pending" : "completed") as "pending" | "completed",
         note: note.trim() || undefined,
         createdAt: new Date().toISOString(),
+        ...(isPendingMethod && paymentReference && { referenceNumber: paymentReference }),
       };
 
       if (isPendingMethod) {
@@ -92,6 +95,7 @@ export default function DonationModal({
         setIsSuccess(false);
         setDonationWasPending(false);
         setSelectedMethod(null);
+        setPaymentReference(null);
         setDonorInfo({ name: "", email: "", phone: "", anonymous: false });
         setNote("");
         setCardDetails({ cardNumber: "", expiryDate: "", cvv: "", cardholderName: "" });
@@ -111,7 +115,8 @@ export default function DonationModal({
   };
 
   const copyBankDetails = () => {
-    const details = `Bank: ${bankAccountDetails.bankName}\nAccount Name: ${bankAccountDetails.accountName}\nAccount Number: ${bankAccountDetails.accountNumber}\nRouting Number: ${bankAccountDetails.routingNumber}\nSWIFT Code: ${bankAccountDetails.swiftCode}\nAmount: BZ$${amount}`;
+    const refLine = paymentReference ? `Reference: ${paymentReference}\n` : "";
+    const details = `Bank: ${bankAccountDetails.bankName}\nAccount Name: ${bankAccountDetails.accountName}\nAccount Number: ${bankAccountDetails.accountNumber}\nRouting Number: ${bankAccountDetails.routingNumber}\nSWIFT Code: ${bankAccountDetails.swiftCode}\nAmount: BZ$${amount}\n${refLine}`;
     navigator.clipboard.writeText(details);
     setBankDetailsCopied(true);
     setTimeout(() => setBankDetailsCopied(false), 2000);
@@ -276,7 +281,7 @@ export default function DonationModal({
 
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod("bank")}
+                    onClick={() => { setSelectedMethod("bank"); setPaymentReference(generateShortRef()); }}
                     className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
                       selectedMethod === "bank"
                         ? "border-primary-600 bg-primary-50"
@@ -290,7 +295,7 @@ export default function DonationModal({
 
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod("digiwallet")}
+                    onClick={() => { setSelectedMethod("digiwallet"); setPaymentReference(generateShortRef()); }}
                     className={`min-h-[56px] sm:min-h-0 p-4 border-2 rounded-xl sm:rounded-full transition-all ${
                       selectedMethod === "digiwallet"
                         ? "border-primary-600 bg-primary-50"
@@ -423,6 +428,14 @@ export default function DonationModal({
                         </span>
                       </div>
                     </div>
+                    {paymentReference && (
+                      <div className="border-t border-gray-300 pt-3 mt-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Reference:</span>
+                          <span className="font-mono font-semibold text-primary-600">{paymentReference}</span>
+                        </div>
+                      </div>
+                    )}
                     <button
                       onClick={copyBankDetails}
                       className="w-full mt-4 bg-success-500 text-white px-4 py-2 rounded-full font-medium hover:bg-success-600 transition-colors flex items-center justify-center gap-2"
@@ -441,8 +454,11 @@ export default function DonationModal({
                     </button>
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
                       <p className="text-xs text-yellow-800">
-                        ⚠️ Please include the campaign ID ({campaignId}) in your transfer reference. 
-                        Transfers typically take 1-3 business days to process.
+                        {paymentReference ? (
+                          <>⚠️ Please include reference <strong>{paymentReference}</strong> in your transfer. Transfers typically take 1-3 business days to process.</>
+                        ) : (
+                          <>⚠️ Please include the reference shown above in your transfer. Transfers typically take 1-3 business days to process.</>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -473,7 +489,7 @@ export default function DonationModal({
                         <li>Select &quot;Send Money&quot; or &quot;Pay&quot;</li>
                         <li>Enter phone number: <strong>{digiWalletDetails.phoneNumber}</strong></li>
                         <li>Enter amount: <strong>{formatCurrency(amount)}</strong></li>
-                        <li>Add reference: Campaign {campaignId}</li>
+                        <li>Add reference: <strong>{paymentReference || "—"}</strong></li>
                         <li>Confirm payment</li>
                       </ol>
                     </div>

@@ -25,6 +25,8 @@ export interface AdminDonation {
   method: "credit-card" | "bank" | "digiwallet" | "paypal";
   status: "completed" | "pending" | "failed";
   createdAt: string;
+  /** Short reference for payment (e.g. A1234). One letter + 4 digits. */
+  referenceNumber?: string;
   /** Optional message from the donor, max 100 characters. */
   note?: string;
 }

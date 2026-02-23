@@ -17,6 +17,7 @@ import {
 import { db } from "./config";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
+import { generateShortRef } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // QUARANTINE: Campaigns under review are never posted publicly.
@@ -227,6 +228,7 @@ export async function getDonations(campaignId?: string): Promise<AdminDonation[]
       ...data,
       id: docSnap.id,
       createdAt: createdAt || new Date().toISOString(),
+      referenceNumber: data.referenceNumber ?? undefined,
     };
   }) as AdminDonation[];
 
@@ -266,7 +268,8 @@ export async function recordDonationAndUpdateCampaign(
     throw new Error("Campaign has been fully funded. No further donations are accepted.");
   }
 
-  const donationId = await createDonation(donation);
+  const donationWithRef = { ...donation, referenceNumber: donation.referenceNumber || generateShortRef() };
+  const donationId = await createDonation(donationWithRef);
   await updateDoc(campaignRef, {
     raised: increment(donation.amount),
     backers: increment(1),

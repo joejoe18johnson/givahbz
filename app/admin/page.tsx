@@ -461,6 +461,7 @@ export default function AdminDashboardPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-left text-gray-500">
+                <th className="px-5 py-3 font-medium">Ref</th>
                 <th className="px-5 py-3 font-medium">Date</th>
                 <th className="px-5 py-3 font-medium">Campaign</th>
                 <th className="px-5 py-3 font-medium">Donor</th>
@@ -472,6 +473,15 @@ export default function AdminDashboardPage() {
             <tbody>
               {recentDonations.map((d) => (
                 <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
+                  <td className="px-5 py-3">
+                    {d.referenceNumber ? (
+                      <Link href={`/campaigns/${d.campaignId}`} className="font-mono font-medium text-primary-600 hover:underline">
+                        {d.referenceNumber}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3 text-gray-600">{new Date(d.createdAt).toLocaleDateString()}</td>
                   <td className="px-5 py-3 text-gray-900 max-w-[200px] truncate">{d.campaignTitle}</td>
                   <td className="px-5 py-3 text-gray-600">{d.anonymous ? "Anonymous" : d.donorName}</td>
