@@ -278,7 +278,9 @@ export async function adminUploadVerificationDocument(
       if (!isBucketNotFoundError(err)) throw err;
     }
   }
-  throw lastErr;
+  throw new Error(
+    "Storage bucket not found. Enable Firebase Storage: Firebase Console → Build → Storage → Get started. Then set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env to your bucket name (e.g. givah-1655f.firebasestorage.app or givah-1655f.appspot.com)."
+  );
 }
 
 /**
@@ -318,7 +320,9 @@ export async function adminUploadCampaignUnderReviewImage(
       if (!isBucketNotFoundError(err)) throw err;
     }
   }
-  throw lastErr;
+  throw new Error(
+    "Storage bucket not found. Enable Firebase Storage: Firebase Console → Build → Storage → Get started. Then set NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET in .env to your bucket name (e.g. givah-1655f.firebasestorage.app or givah-1655f.appspot.com)."
+  );
 }
 
 // ---------------------------------------------------------------------------
