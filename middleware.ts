@@ -2,7 +2,8 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedPaths = ["/profile", "/admin"];
+// Only protect paths that use NextAuth session. /admin uses Firebase Auth and is handled by the admin layout.
+const protectedPaths = ["/profile"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -34,5 +35,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/profile", "/profile/:path*", "/admin", "/admin/:path*"],
+  matcher: ["/profile", "/profile/:path*"],
 };
