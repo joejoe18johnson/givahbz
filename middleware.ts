@@ -2,7 +2,7 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Only protect paths that use NextAuth session. /admin uses Firebase Auth and is handled by the admin layout.
+// Only protect paths that use NextAuth session. /admin uses Supabase Auth and is handled by the admin layout.
 const protectedPaths = ["/profile"];
 
 export async function middleware(request: NextRequest) {

@@ -64,7 +64,7 @@ function LoginForm() {
       if (code === "auth/popup-closed-by-user") {
         message = "Sign-in was cancelled.";
       } else if (code === "auth/unauthorized-domain") {
-        message = "This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains (e.g. localhost or your Vercel domain).";
+        message = "This domain is not authorized for sign-in. Add it in Supabase Dashboard → Authentication → URL Configuration → Redirect URLs (e.g. localhost or your Vercel domain).";
       } else if (err && typeof err === "object" && "message" in err && typeof (err as { message: string }).message === "string") {
         message = (err as { message: string }).message;
       }

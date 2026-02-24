@@ -126,7 +126,7 @@ export default function SignupPage() {
                   const errMsg = code === "auth/popup-closed-by-user"
                     ? "Sign-in was cancelled."
                     : code === "auth/unauthorized-domain"
-                      ? "This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains (e.g. localhost or your Vercel domain)."
+                      ? "This domain is not authorized for sign-in. Add it in Supabase Dashboard → Authentication → URL Configuration → Redirect URLs (e.g. localhost or your Vercel domain)."
                       : (err && typeof err === "object" && "message" in err && typeof (err as { message: string }).message === "string")
                         ? (err as { message: string }).message
                         : "Google sign-in failed. Please try again.";

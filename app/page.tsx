@@ -55,7 +55,7 @@ export default function Home() {
         setCampaigns(fetchedCampaigns);
       } catch (error) {
         console.error("Error loading campaigns:", error);
-        const message = error instanceof Error ? error.message : "Campaigns could not be loaded. Check Firebase is connected.";
+        const message = error instanceof Error ? error.message : "Campaigns could not be loaded. Check Supabase is connected.";
         setCampaignsError(message);
       } finally {
         setIsLoading(false);
@@ -231,7 +231,7 @@ export default function Home() {
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
             <p className="font-medium">{campaignsError}</p>
             <p className="text-sm mt-1">
-              <a href="/api/firebase-check" className="underline" target="_blank" rel="noopener noreferrer">Check Firebase connection</a>
+              <a href="/api/campaigns" className="underline" target="_blank" rel="noopener noreferrer">Check campaigns API</a>
               {" · "}
               <a href="/campaigns" className="underline">Try campaigns page</a>
             </p>

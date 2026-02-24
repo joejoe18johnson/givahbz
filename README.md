@@ -24,7 +24,7 @@ A Belizean-based crowdfunding platform for organizations, charities, and individ
 
 - Node.js 18+ installed
 - npm or yarn package manager
-- Firebase account (for production/testing)
+- **Supabase** account (primary backend: auth, database, storage)
 
 ### Installation
 
@@ -33,30 +33,31 @@ A Belizean-based crowdfunding platform for organizations, charities, and individ
 npm install
 ```
 
-2. Set up Firebase (see [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed instructions):
-   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-   - Enable Authentication (Email/Password and Google)
-   - Create a Firestore database
-   - Set up Storage
-   - Copy your Firebase config to `.env`
+2. Set up **Supabase** (primary backend):
+   - Create a project at [Supabase Dashboard](https://supabase.com/dashboard)
+   - In **SQL Editor**, run the migration: `supabase/migrations/20260223000000_initial.sql`
+   - In **Authentication → Providers**, enable **Email** and **Google** (add your Google OAuth client ID/secret in Google Cloud Console and Supabase redirect URL)
+   - In **Storage**, create buckets: `profile-photos`, `campaigns`, `verification-docs` (public read if you want public URLs, or use RLS)
+   - In **Project Settings → API**, copy the project URL, anon key, and service_role key
 
 3. Configure environment variables:
 ```bash
 cp .env.example .env
 ```
-   Then edit `.env` and add your Firebase configuration values.
+   Then edit `.env` and set:
+   - `NEXT_PUBLIC_SUPABASE_URL` = your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = anon (public) key
+   - `SUPABASE_SERVICE_ROLE_KEY` = service_role key (keep secret)
+   - `ADMIN_EMAILS` and `NEXT_PUBLIC_ADMIN_EMAILS` = comma-separated admin emails
 
-4. Seed Firestore with initial data (optional):
-```bash
-npx ts-node scripts/seedFirestore.ts
-```
-
-5. Run the development server:
+4. Run the development server:
 ```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+**Google OAuth:** In Supabase → Authentication → URL Configuration, set **Site URL** to `http://localhost:3000` (or your production URL) and **Redirect URLs** to include `http://localhost:3000/auth/callback` and your production callback URL.
 
 ### Test accounts (email / password)
 
@@ -77,15 +78,18 @@ The app supports multiple authentication methods:
 - **Email/Password** - Traditional email and password signup/login
 - **Google Sign-in** - OAuth authentication with Google
 
-For **Sign in with Google**, the app uses Firebase Authentication. Enable Google in [Firebase Console](https://console.firebase.google.com/) → Authentication → Sign-in method, and optionally set `NEXT_PUBLIC_ADMIN_EMAILS` for admin access. See **[FIREBASE_GOOGLE_SIGNIN.md](FIREBASE_GOOGLE_SIGNIN.md)**.
+**Authentication** is handled by **Supabase Auth** (email/password and Google OAuth). Enable Google in Supabase → Authentication → Providers and set redirect URL to `https://your-domain.com/auth/callback`. Admin access is controlled by `ADMIN_EMAILS` / `NEXT_PUBLIC_ADMIN_EMAILS`.
 
-**Note:** Firebase Authentication is now the primary authentication system. See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for complete Firebase configuration instructions.
+### Deploy (e.g. Vercel)
 
-### Connect Firebase to Vercel
+Add these environment variables in your host (e.g. Vercel → Settings → Environment Variables):
 
-**Localhost works but Vercel doesn’t?** Vercel doesn’t use your `.env`. Add the **same 6** `NEXT_PUBLIC_FIREBASE_*` variables in **Vercel → Project → Settings → Environment Variables**, then **Redeploy**. See **[VERCEL_FIREBASE.md](VERCEL_FIREBASE.md)** for step-by-step instructions and **[api/firebase-check](https://givahbz.vercel.app/api/firebase-check)** to verify after deploy.
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_EMAILS` and `NEXT_PUBLIC_ADMIN_EMAILS`
 
-**Campaign list data** is loaded dynamically from the server API (`GET /api/campaigns`), which reads from Firestore. The home page, campaigns page, my-campaigns, liked-campaigns, admin, and hearted-campaigns modal all use this API so Vercel gets live data when env vars are set.
+**Campaign list data** is loaded from the server API (`GET /api/campaigns`), which reads from Supabase. The home page, campaigns page, my-campaigns, admin, and hearted-campaigns modal all use this API when Supabase env vars are set.
 
 ## Project Structure
 
@@ -134,15 +138,15 @@ All campaigns must provide proof of need, such as:
 
 Campaigns are reviewed and verified before being published to ensure transparency and trust.
 
-## Firebase Integration
+## Supabase Integration
 
-This project uses Firebase for backend services:
+This project uses **Supabase** as the primary backend:
 
-- ✅ **Firebase Authentication** - User signup, login, and session management
-- ✅ **Firestore Database** - Campaigns, users, and donations storage
-- ✅ **Firebase Storage** - Profile photos and campaign images
+- ✅ **Supabase Auth** - User signup, login (email/password + Google), and session management
+- ✅ **PostgreSQL (Supabase)** - Campaigns, profiles, donations, notifications, site config
+- ✅ **Supabase Storage** - Profile photos, campaign images, verification documents
 
-See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed setup instructions.
+Run the SQL migration in `supabase/migrations/20260223000000_initial.sql` in the Supabase SQL Editor, then create Storage buckets `profile-photos`, `campaigns`, and `verification-docs` in the dashboard.
 
 ## Future Enhancements
 

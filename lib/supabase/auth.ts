@@ -1,5 +1,5 @@
 /**
- * Supabase Auth — mirrors lib/firebase/auth API for drop-in replacement.
+ * Supabase Auth — sign in, sign out, session, OAuth callback.
  * Uses Supabase Auth (email/password + Google OAuth).
  */
 

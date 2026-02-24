@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { auth } from "@/lib/firebase/config";
 import { compressImageForUpload } from "@/lib/compressImage";
 import { useThemedModal } from "@/components/ThemedModal";
 import { Upload, ArrowLeft, Shield } from "lucide-react";
@@ -88,8 +87,7 @@ export default function AdminCreateCampaignPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    if (!user) {
       alert("You must be signed in.", { variant: "error" });
       return;
     }
@@ -111,7 +109,6 @@ export default function AdminCreateCampaignPage() {
     setIsSubmitting(true);
     const pendingId = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     try {
-      const token = await currentUser.getIdToken();
       const [file1, file2] = await Promise.all([
         compressImageForUpload(imageFiles[0]),
         compressImageForUpload(imageFiles[1]),
@@ -123,7 +120,7 @@ export default function AdminCreateCampaignPage() {
         form.append("index", String(index));
         const res = await fetch("/api/upload-campaign-image", {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
           body: form,
         });
         const data = await res.json().catch(() => ({}));
@@ -141,10 +138,8 @@ export default function AdminCreateCampaignPage() {
       ]);
       const apiRes = await fetch("/api/admin/create-campaign", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title: formData.title.trim(),
           description: formData.description.trim(),
@@ -157,7 +152,7 @@ export default function AdminCreateCampaignPage() {
           image: imageUrl1,
           image2: imageUrl2,
           creatorName: user?.name ?? "Admin",
-          creatorId: user?.id ?? currentUser.uid,
+          creatorId: user?.id ?? null,
         }),
       });
       const result = await apiRes.json().catch(() => ({}));

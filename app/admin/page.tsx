@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
 import { AdminDonation } from "@/lib/adminData";
 import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
-import { getDonationsCached, getCampaignsUnderReviewCountCached, getUsersFromFirestoreCached, invalidateUsersCache } from "@/lib/supabase/adminCache";
+import { getDonationsCached, getCampaignsUnderReviewCountCached, getUsersCached, invalidateUsersCache } from "@/lib/supabase/adminCache";
 import type { AdminUserDoc, UserStatus } from "@/lib/supabase/database";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
@@ -28,7 +28,7 @@ export default function AdminDashboardPage() {
         fetchCampaignsFromAPI(),
         getDonationsCached(),
         getCampaignsUnderReviewCountCached(),
-        getUsersFromFirestoreCached(),
+        getUsersCached(),
       ]);
       // Sort all dashboard data by date (newest first)
       const campaignsNewestFirst = [...fetchedCampaigns].sort((a, b) =>

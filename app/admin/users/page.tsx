@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getUsersFromFirestoreCached, invalidateUsersCache } from "@/lib/supabase/adminCache";
+import { getUsersCached, invalidateUsersCache } from "@/lib/supabase/adminCache";
 import type { AdminUserDoc, UserStatus } from "@/lib/supabase/database";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
@@ -20,7 +20,7 @@ export default function AdminUsersPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const list = await getUsersFromFirestoreCached();
+      const list = await getUsersCached();
       // Filter out disabled users (status === "deleted")
       const activeUsers = list.filter((u) => u.status !== "deleted");
       const sorted = [...activeUsers].sort((a, b) =>

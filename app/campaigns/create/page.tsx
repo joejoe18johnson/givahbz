@@ -225,7 +225,7 @@ export default function CreateCampaignPage() {
         compressImageForUpload(imageFiles[1]!),
       ]);
 
-      // Upload via our API (server uploads to Storage). Do NOT use client Firebase Storage - it causes CORS/preflight 404.
+      // Upload via our API (server uploads to Supabase Storage).
       const uploadViaApi = async (file: File, index: 0 | 1): Promise<string> => {
         const form = new FormData();
         form.append("file", file);
@@ -309,7 +309,7 @@ export default function CreateCampaignPage() {
         userMessage = "Permission denied. Please check that you're signed in and have permission to create campaigns.";
       } else if (errorMessage.includes("upload") || errorMessage.includes("Upload")) {
         userMessage = errorMessage.length > 120 ? `Upload failed: ${errorMessage.slice(0, 120)}…` : errorMessage;
-      } else if (errorMessage.includes("Firestore") || errorMessage.includes("firestore")) {
+      } else if (errorMessage.includes("Supabase") || errorMessage.includes("campaign")) {
         userMessage = "Failed to save campaign data. Please check your connection and try again.";
       } else if (errorMessage.length < 200) {
         userMessage = errorMessage;

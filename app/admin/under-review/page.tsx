@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCampaignsUnderReviewFromFirestoreCached, invalidateUnderReviewCache, invalidateCampaignsCache } from "@/lib/supabase/adminCache";
+import { getCampaignsUnderReviewCached, invalidateUnderReviewCache, invalidateCampaignsCache } from "@/lib/supabase/adminCache";
 import type { CampaignUnderReviewDoc } from "@/lib/supabase/database";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
@@ -15,7 +15,7 @@ export default function AdminUnderReviewPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await getCampaignsUnderReviewFromFirestoreCached();
+      const data = await getCampaignsUnderReviewCached();
       const sorted = [...data].sort((a, b) =>
         new Date(b.submittedAt ?? 0).getTime() - new Date(a.submittedAt ?? 0).getTime()
       );

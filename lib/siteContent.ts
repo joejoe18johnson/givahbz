@@ -6,7 +6,7 @@ export interface HomeFaqItem {
 
 /**
  * Editable site content (admin "Edit site info").
- * Stored in Firestore siteConfig/content; fallback to these defaults when empty.
+ * Stored in Supabase site_config; fallback to these defaults when empty.
  */
 export interface SiteContent {
   siteName: string;
@@ -19,7 +19,7 @@ export interface SiteContent {
   aboutTitle: string;
   aboutSubtitle: string;
   aboutMission: string;
-  /** Homepage FAQ section (stored as JSON string in Firestore). */
+  /** Homepage FAQ section (stored as JSON string in Supabase). */
   homeFaqs: HomeFaqItem[];
 }
 

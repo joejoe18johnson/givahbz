@@ -1,5 +1,5 @@
 /**
- * Supabase database layer — mirrors lib/firebase/firestore API.
+ * Supabase database layer — campaigns, donations, profiles, under-review, notifications, site config.
  * All functions take the Supabase client as first argument (use getSupabaseAdmin() in API routes, useSupabase() in client).
  */
 

@@ -1,5 +1,5 @@
 /**
- * Supabase Storage — mirrors lib/firebase/storage for profile photos, campaign images, verification docs.
+ * Supabase Storage — profile photos, campaign images, verification docs.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";

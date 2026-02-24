@@ -8,9 +8,9 @@ import { LayoutDashboard, Megaphone, Users, Heart, ArrowLeft, Clock, Bell, LogOu
 import Image from "next/image";
 import {
   getCampaignsUnderReviewCountCached,
-  getCampaignsUnderReviewFromFirestoreCached,
+  getCampaignsUnderReviewCached,
   getCampaignsCached,
-  getUsersFromFirestoreCached,
+  getUsersCached,
   getDonationsCached,
 } from "@/lib/supabase/adminCache";
 import type { CampaignUnderReviewDoc } from "@/lib/supabase/database";
@@ -66,9 +66,9 @@ export default function AdminLayout({
       try {
         const [underReviewCount, list, campaigns, users, donations] = await Promise.all([
           getCampaignsUnderReviewCountCached(),
-          getCampaignsUnderReviewFromFirestoreCached(),
+          getCampaignsUnderReviewCached(),
           getCampaignsCached(),
-          getUsersFromFirestoreCached(),
+          getUsersCached(),
           getDonationsCached(),
         ]);
         const underReviewNewestFirst = [...list].sort(

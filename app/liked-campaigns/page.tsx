@@ -18,13 +18,13 @@ export default function LikedCampaignsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        // Load all campaigns from Firestore
+        // Load all campaigns from API (Supabase)
         const fetchedCampaigns = await fetchCampaignsFromAPI();
         setCampaigns(fetchedCampaigns);
         
         // Load hearted campaign IDs
         if (user) {
-          // TODO: Load from Firestore user document
+          // TODO: Load from Supabase profile/hearts
           setHeartedIds(getHeartedCampaignIds());
         } else {
           setHeartedIds(getHeartedCampaignIds());

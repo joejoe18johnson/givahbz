@@ -71,7 +71,7 @@ export async function getCampaignsForAdminCached(): Promise<(Campaign & { status
   return data;
 }
 
-export async function getUsersFromFirestoreCached(): Promise<AdminUserDoc[]> {
+export async function getUsersCached(): Promise<AdminUserDoc[]> {
   const hit = get<AdminUserDoc[]>("users");
   if (hit != null) return hit;
   const data = await fetchWithAuth<AdminUserDoc[]>("/api/admin/data/users");
@@ -79,7 +79,7 @@ export async function getUsersFromFirestoreCached(): Promise<AdminUserDoc[]> {
   return data;
 }
 
-export async function getCampaignsUnderReviewFromFirestoreCached(): Promise<CampaignUnderReviewDoc[]> {
+export async function getCampaignsUnderReviewCached(): Promise<CampaignUnderReviewDoc[]> {
   const hit = get<CampaignUnderReviewDoc[]>("underReviewList");
   if (hit != null) return hit;
   const data = await fetchWithAuth<CampaignUnderReviewDoc[]>("/api/admin/data/campaigns-under-review");
@@ -90,7 +90,7 @@ export async function getCampaignsUnderReviewFromFirestoreCached(): Promise<Camp
 export async function getCampaignsUnderReviewCountCached(): Promise<number> {
   const list = get<CampaignUnderReviewDoc[]>("underReviewList");
   if (list != null) return list.length;
-  const data = await getCampaignsUnderReviewFromFirestoreCached();
+  const data = await getCampaignsUnderReviewCached();
   return data.length;
 }
 
