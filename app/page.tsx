@@ -204,14 +204,14 @@ export default function Home() {
         </section>
       </div>
 
-      {/* Trending Campaigns */}
+      {/* Top Campaigns */}
       <section className="mb-12 relative py-8 md:py-12 overflow-hidden bg-white">
         <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 shrink-0" />
-              <h2 className="text-2xl sm:text-3xl font-medium text-gray-900">Trending Campaigns</h2>
+              <h2 className="text-2xl sm:text-3xl font-medium text-gray-900">Top Campaigns</h2>
               <div className="bg-success-100 text-success-700 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
                 <TrendingUp className="w-3 h-3" />
                 TRENDING
@@ -352,7 +352,7 @@ export default function Home() {
             href="/campaigns?filter=trending"
             className="inline-block bg-success-500 text-white px-8 py-3 rounded-full font-medium hover:bg-success-600 transition-colors shadow-md"
           >
-            View All Trending Campaigns →
+            View All Top Campaigns →
           </Link>
         </div>
         </div>

@@ -75,7 +75,7 @@ function CampaignsContent() {
           ) : showTrending ? (
             <span className="flex items-center gap-3">
               <TrendingUp className="w-10 h-10 text-primary-600" />
-              Trending Campaigns
+              Top Campaigns
             </span>
           ) : (
             "All Campaigns"
