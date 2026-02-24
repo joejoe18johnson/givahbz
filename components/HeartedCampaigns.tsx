@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import Link from "next/link";
 import { X, Heart } from "lucide-react";
 import { Campaign } from "@/lib/data";
@@ -8,77 +8,118 @@ import { fetchCampaignsFromAPI } from "@/lib/services/campaignService";
 import SafeImage from "./SafeImage";
 import { formatCurrency } from "@/lib/utils";
 import { Users, Calendar, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSupabase } from "@/lib/supabase/hooks";
+import { getHeartedCampaignIds as getHeartedFromSupabase, toggleHeartCampaign as toggleHeartInSupabase } from "@/lib/supabase/database";
 
 interface HeartedCampaignsProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-import { getHeartedCampaignIds as getHeartedIdsFromFirestore, toggleHeartCampaign as toggleHeartInFirestore } from "@/lib/firebase/firestore";
-import { useAuth } from "@/contexts/AuthContext";
-
-// Legacy localStorage functions for backward compatibility (will be removed)
-export function getHeartedCampaignIds(): string[] {
+function getHeartedFromStorage(): string[] {
   if (typeof window === "undefined") return [];
   const stored = localStorage.getItem("hearted_campaigns");
   return stored ? JSON.parse(stored) : [];
 }
 
-export async function toggleHeartCampaign(campaignId: string): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  
-  // Try to use Firestore if user is logged in
-  const storedUser = localStorage.getItem("belizeFund_user");
-  if (storedUser) {
-    try {
-      const userData = JSON.parse(storedUser);
-      if (userData.id) {
-        return await toggleHeartInFirestore(userData.id, campaignId);
-      }
-    } catch (e) {
-      // Fall back to localStorage
+type HeartedContextType = {
+  heartedIds: string[];
+  toggleHeart: (campaignId: string) => Promise<boolean>;
+  isCampaignHearted: (campaignId: string) => boolean;
+  refreshHeartedIds: () => Promise<void>;
+};
+
+const HeartedContext = createContext<HeartedContextType | undefined>(undefined);
+
+export function HeartedProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const supabase = useSupabase();
+  const [heartedIds, setHeartedIds] = useState<string[]>([]);
+
+  const refreshHeartedIds = useCallback(async () => {
+    if (user?.id && supabase) {
+      const ids = await getHeartedFromSupabase(supabase, user.id);
+      setHeartedIds(ids);
+    } else {
+      setHeartedIds(getHeartedFromStorage());
     }
-  }
-  
-  // Fallback to localStorage for non-authenticated users
-  const hearted = getHeartedCampaignIds();
+  }, [user?.id, supabase]);
+
+  useEffect(() => {
+    refreshHeartedIds();
+  }, [refreshHeartedIds]);
+
+  const toggleHeart = useCallback(
+    async (campaignId: string): Promise<boolean> => {
+      if (user?.id && supabase) {
+        const isHearted = await toggleHeartInSupabase(supabase, user.id, campaignId);
+        await refreshHeartedIds();
+        window.dispatchEvent(new Event("heartedCampaignsChanged"));
+        return isHearted;
+      }
+      const hearted = getHeartedFromStorage();
+      const index = hearted.indexOf(campaignId);
+      if (index > -1) hearted.splice(index, 1);
+      else hearted.push(campaignId);
+      localStorage.setItem("hearted_campaigns", JSON.stringify(hearted));
+      setHeartedIds([...hearted]);
+      window.dispatchEvent(new Event("heartedCampaignsChanged"));
+      return index === -1;
+    },
+    [user?.id, supabase, refreshHeartedIds]
+  );
+
+  const isCampaignHearted = useCallback(
+    (campaignId: string) => heartedIds.includes(campaignId),
+    [heartedIds]
+  );
+
+  return (
+    <HeartedContext.Provider value={{ heartedIds, toggleHeart, isCampaignHearted, refreshHeartedIds }}>
+      {children}
+    </HeartedContext.Provider>
+  );
+}
+
+export function useHearted() {
+  const ctx = useContext(HeartedContext);
+  if (ctx === undefined) throw new Error("useHearted must be used within HeartedProvider");
+  return ctx;
+}
+
+/** Use useHearted() when inside HeartedProvider; otherwise fallback for SSR/legacy. */
+export function getHeartedCampaignIds(): string[] {
+  if (typeof window === "undefined") return [];
+  return getHeartedFromStorage();
+}
+
+export async function toggleHeartCampaign(campaignId: string): Promise<boolean> {
+  const hearted = getHeartedFromStorage();
   const index = hearted.indexOf(campaignId);
-  
-  if (index > -1) {
-    hearted.splice(index, 1);
-  } else {
-    hearted.push(campaignId);
-  }
-  
+  if (index > -1) hearted.splice(index, 1);
+  else hearted.push(campaignId);
   localStorage.setItem("hearted_campaigns", JSON.stringify(hearted));
-  // Dispatch custom event to notify other components
   window.dispatchEvent(new Event("heartedCampaignsChanged"));
-  return index === -1; // Returns true if added, false if removed
+  return index === -1;
 }
 
 export function isCampaignHearted(campaignId: string): boolean {
-  return getHeartedCampaignIds().includes(campaignId);
+  return getHeartedFromStorage().includes(campaignId);
 }
 
 export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsProps) {
-  const [heartedIds, setHeartedIds] = useState<string[]>([]);
+  const { heartedIds, refreshHeartedIds } = useHearted();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const updateHeartedIds = () => {
-    setHeartedIds(getHeartedCampaignIds());
-  };
-
   useEffect(() => {
     if (isOpen) {
-      updateHeartedIds();
-      // Listen for changes when modal is open
-      window.addEventListener("heartedCampaignsChanged", updateHeartedIds);
-      return () => {
-        window.removeEventListener("heartedCampaignsChanged", updateHeartedIds);
-      };
+      refreshHeartedIds();
+      window.addEventListener("heartedCampaignsChanged", refreshHeartedIds);
+      return () => window.removeEventListener("heartedCampaignsChanged", refreshHeartedIds);
     }
-  }, [isOpen]);
+  }, [isOpen, refreshHeartedIds]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -99,13 +140,13 @@ export default function HeartedCampaigns({ isOpen, onClose }: HeartedCampaignsPr
     };
   }, [isOpen]);
 
+  const { toggleHeart } = useHearted();
   const heartedCampaigns = campaigns.filter((campaign) => heartedIds.includes(campaign.id));
 
   const handleRemoveHeart = (campaignId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleHeartCampaign(campaignId);
-    setHeartedIds(getHeartedCampaignIds());
+    toggleHeart(campaignId);
   };
 
   if (!isOpen) return null;

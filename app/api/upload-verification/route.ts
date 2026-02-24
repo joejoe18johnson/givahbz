@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-import { adminUploadVerificationDocument, isAdminConfigured, getConfigDiagnostic } from "@/lib/firebase/admin";
+import { getSupabaseUserFromRequest } from "@/lib/supabase/auth-server";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
+import { uploadVerificationDocumentServer } from "@/lib/supabase/storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,11 +17,6 @@ const ALLOWED_TYPES = [
 const ALLOWED_EXT = ["jpg", "jpeg", "png", "gif", "webp", "heic", "pdf"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
-function getAdminAuth(): admin.auth.Auth | null {
-  const app = admin.apps[0];
-  return app ? admin.auth(app as admin.app.App) : null;
-}
-
 function isAllowedFile(file: File): boolean {
   const ext = (file.name.split(".").pop() || "").toLowerCase();
   return (
@@ -30,41 +26,20 @@ function isAllowedFile(file: File): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdminConfigured()) {
-    const hint = getConfigDiagnostic();
+  if (!isSupabaseConfigured()) {
     return NextResponse.json(
       {
         error: "Server is not configured for uploads.",
-        hint: hint ?? "Set FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json in .env (with the key file in project root) or FIREBASE_SERVICE_ACCOUNT_JSON with the full JSON, then restart.",
+        hint: "Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.",
       },
       { status: 503 }
     );
   }
 
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!token) {
+  const user = await getSupabaseUserFromRequest(request);
+  if (!user?.id) {
     return NextResponse.json(
       { error: "You must be signed in to upload." },
-      { status: 401 }
-    );
-  }
-
-  const auth = getAdminAuth();
-  if (!auth) {
-    return NextResponse.json(
-      { error: "Server upload is not available." },
-      { status: 503 }
-    );
-  }
-
-  let uid: string;
-  try {
-    const decoded = await auth.verifyIdToken(token);
-    uid = decoded.uid;
-  } catch {
-    return NextResponse.json(
-      { error: "Your session may have expired. Sign out and sign in again." },
       { status: 401 }
     );
   }
@@ -73,20 +48,14 @@ export async function POST(request: NextRequest) {
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid request." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
   const file = formData.get("file") as File | null;
   const documentType = (formData.get("documentType") as string)?.trim() || "";
 
   if (!file || typeof file.arrayBuffer !== "function") {
-    return NextResponse.json(
-      { error: "No file provided." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "No file provided." }, { status: 400 });
   }
   if (!documentType) {
     return NextResponse.json(
@@ -114,9 +83,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const supabase = getSupabaseAdmin()!;
     const buffer = Buffer.from(await file.arrayBuffer());
-    const url = await adminUploadVerificationDocument(
-      uid,
+    const url = await uploadVerificationDocumentServer(
+      supabase,
+      user.id,
       buffer,
       documentType,
       file.name,
@@ -125,9 +96,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed.";
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

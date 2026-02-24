@@ -12,8 +12,8 @@ import {
   getCampaignsCached,
   getUsersFromFirestoreCached,
   getDonationsCached,
-} from "@/lib/firebase/adminCache";
-import type { CampaignUnderReviewDoc } from "@/lib/firebase/firestore";
+} from "@/lib/supabase/adminCache";
+import type { CampaignUnderReviewDoc } from "@/lib/supabase/database";
 
 export default function AdminLayout({
   children,

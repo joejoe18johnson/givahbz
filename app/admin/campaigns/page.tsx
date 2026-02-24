@@ -2,18 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
-import { getCampaignsForAdminCached, invalidateCampaignsCache } from "@/lib/firebase/adminCache";
-import { deleteCampaign, setCampaignOnHold } from "@/lib/firebase/firestore";
+import { getCampaignsForAdminCached, invalidateCampaignsCache } from "@/lib/supabase/adminCache";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Trash2, PauseCircle, PlayCircle, Pencil, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import { auth } from "@/lib/firebase/config";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PAGE_SIZE = 50;
 type CampaignWithStatus = Campaign & { status?: string };
 
 export default function AdminCampaignsPage() {
+  const { user: currentUser } = useAuth();
   const [campaigns, setCampaigns] = useState<CampaignWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -62,7 +62,7 @@ export default function AdminCampaignsPage() {
     if (!ok) return;
     setDeletingId(campaignId);
     try {
-      await deleteCampaign(campaignId);
+      await fetch(`/api/admin/campaigns/${campaignId}/delete`, { method: "DELETE", credentials: "include" });
       invalidateCampaignsCache();
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
     } catch (err) {
@@ -76,7 +76,7 @@ export default function AdminCampaignsPage() {
   const handleSetOnHold = async (campaignId: string, onHold: boolean) => {
     setOnHoldId(campaignId);
     try {
-      await setCampaignOnHold(campaignId, onHold);
+      await fetch(`/api/admin/campaigns/${campaignId}/on-hold`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ onHold }), credentials: "include" });
       invalidateCampaignsCache();
       setCampaigns((prev) =>
         prev.map((c) => (c.id === campaignId ? { ...c, status: onHold ? "on_hold" : "live" } : c))
@@ -100,20 +100,16 @@ export default function AdminCampaignsPage() {
 
   const handleSaveText = async () => {
     if (!editingCampaign) return;
-    const currentUser = auth.currentUser;
     if (!currentUser) {
       alert("You must be signed in to edit.", { variant: "error" });
       return;
     }
     setSavingText(true);
     try {
-      const token = await currentUser.getIdToken();
       const res = await fetch(`/api/admin/campaigns/${editingCampaign.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(editForm),
       });
       const data = await res.json();

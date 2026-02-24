@@ -10,13 +10,7 @@ import {
   setStoppedCampaignIds,
   setDeletedCampaignIds,
 } from "@/lib/campaignState";
-import {
-  getCampaignsUnderReviewForUser,
-  getCampaignsOnHoldForUser,
-  deleteCampaignUnderReview,
-  deleteCampaign,
-  type CampaignUnderReviewDoc,
-} from "@/lib/firebase/firestore";
+import type { CampaignUnderReviewDoc } from "@/lib/supabase/database";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 import SafeImage from "@/components/SafeImage";
@@ -58,7 +52,8 @@ export default function MyCampaignsPage() {
   const loadUnderReview = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const list = await getCampaignsUnderReviewForUser(user.id);
+      const res = await fetch("/api/my/campaigns-under-review", { credentials: "include" });
+      const list = res.ok ? await res.json() : [];
       setUnderReview(list);
     } catch (error) {
       console.error("Error loading campaigns under review:", error);
@@ -69,7 +64,8 @@ export default function MyCampaignsPage() {
   const loadOnHold = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const list = await getCampaignsOnHoldForUser(user.id);
+      const res = await fetch("/api/my/campaigns-on-hold", { credentials: "include" });
+      const list = res.ok ? await res.json() : [];
       setOnHold(list);
     } catch (error) {
       console.error("Error loading campaigns on hold:", error);
@@ -136,7 +132,7 @@ export default function MyCampaignsPage() {
     );
     if (!ok) return;
     try {
-      await deleteCampaign(campaignId);
+      await fetch(`/api/admin/campaigns/${campaignId}/delete`, { method: "DELETE", credentials: "include" });
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
       const nextDeleted = new Set(deletedIds).add(campaignId);
       setDeletedIds(nextDeleted);
@@ -158,7 +154,7 @@ export default function MyCampaignsPage() {
     });
     if (!ok) return;
     try {
-      await deleteCampaignUnderReview(id);
+      await fetch(`/api/admin/campaigns-under-review/${id}`, { method: "DELETE", credentials: "include" });
       setUnderReview((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       console.error("Error withdrawing campaign:", err);

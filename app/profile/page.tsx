@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { uploadProfilePhoto } from "@/lib/firebase/storage";
-import { auth } from "@/lib/firebase/config";
 import { compressImageForUpload } from "@/lib/compressImage";
 import Link from "next/link";
 import Image from "next/image";
@@ -175,7 +173,12 @@ export default function ProfilePage() {
     // Upload and save immediately
     setIsUploadingPhoto(true);
     try {
-      const photoUrl = await uploadProfilePhoto(user.id, file);
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/profile/photo", { method: "POST", credentials: "include", body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      const photoUrl = data.url;
       await updateUser({ profilePhoto: photoUrl });
       setProfilePhoto(photoUrl);
       setLastSavedState((prev) => ({ ...prev, profilePhoto: photoUrl }));

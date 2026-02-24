@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-import { adminUploadCampaignUnderReviewImage, isAdminConfigured, getConfigDiagnostic } from "@/lib/firebase/admin";
+import { getSupabaseUserFromRequest } from "@/lib/supabase/auth-server";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
+import { uploadCampaignUnderReviewImageServer } from "@/lib/supabase/storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic"];
 const ALLOWED_EXT = ["jpg", "jpeg", "png", "gif", "webp", "heic"];
-const MAX_SIZE = 2 * 1024 * 1024; // 2MB per image - keeps server upload to Storage within retry limits
-
-function getAdminAuth(): admin.auth.Auth | null {
-  const app = admin.apps[0];
-  return app ? admin.auth(app as admin.app.App) : null;
-}
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB per image
 
 function isAllowedImage(file: File): boolean {
   const ext = (file.name.split(".").pop() || "").toLowerCase();
@@ -23,39 +19,20 @@ function isAllowedImage(file: File): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdminConfigured()) {
-    const hint = getConfigDiagnostic();
+  if (!isSupabaseConfigured()) {
     return NextResponse.json(
       {
         error: "Server is not configured for uploads.",
-        hint: hint ?? "Set FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json in .env (with the key file in project root) or FIREBASE_SERVICE_ACCOUNT_JSON with the full JSON, then restart.",
+        hint: "Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.",
       },
       { status: 503 }
     );
   }
 
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!token) {
+  const user = await getSupabaseUserFromRequest(request);
+  if (!user?.id) {
     return NextResponse.json(
       { error: "You must be signed in to upload campaign images." },
-      { status: 401 }
-    );
-  }
-
-  const auth = getAdminAuth();
-  if (!auth) {
-    return NextResponse.json(
-      { error: "Server upload is not available." },
-      { status: 503 }
-    );
-  }
-
-  try {
-    await auth.verifyIdToken(token);
-  } catch {
-    return NextResponse.json(
-      { error: "Your session may have expired. Sign out and sign in again." },
       { status: 401 }
     );
   }
@@ -64,10 +41,7 @@ export async function POST(request: NextRequest) {
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid request." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
   const file = formData.get("file") as File | null;
@@ -76,23 +50,14 @@ export async function POST(request: NextRequest) {
   const indexStr = indexRaw != null ? String(indexRaw) : "";
 
   if (!file || typeof file.arrayBuffer !== "function") {
-    return NextResponse.json(
-      { error: "No file provided." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "No file provided." }, { status: 400 });
   }
   if (!pendingId || pendingId.length > 128) {
-    return NextResponse.json(
-      { error: "Valid pendingId is required." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Valid pendingId is required." }, { status: 400 });
   }
   const index = indexStr === "0" ? 0 : indexStr === "1" ? 1 : null;
   if (index !== 0 && index !== 1) {
-    return NextResponse.json(
-      { error: "index must be 0 or 1." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "index must be 0 or 1." }, { status: 400 });
   }
   if (!isAllowedImage(file)) {
     return NextResponse.json(
@@ -108,8 +73,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const supabase = getSupabaseAdmin()!;
     const buffer = Buffer.from(await file.arrayBuffer());
-    const url = await adminUploadCampaignUnderReviewImage(
+    const url = await uploadCampaignUnderReviewImageServer(
+      supabase,
       pendingId,
       index as 0 | 1,
       buffer,
@@ -119,13 +86,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed.";
-    const isRetryExceeded = typeof message === "string" && (message.includes("retry-limit-exceeded") || message.includes("Max retry time"));
-    const error = isRetryExceeded
-      ? "Upload timed out. Try images under 2MB each (crop or compress before uploading)."
-      : message;
-    return NextResponse.json(
-      { error },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

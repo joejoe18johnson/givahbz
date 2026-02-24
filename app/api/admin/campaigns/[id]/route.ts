@@ -1,55 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-import { adminUpdateCampaignText, isAdminConfigured } from "@/lib/firebase/admin";
+import { getSupabaseUserFromRequest, getAdminEmails } from "@/lib/supabase/auth-server";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
+import { updateCampaignText } from "@/lib/supabase/database";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-function getAdminAuth(): admin.auth.Auth | null {
-  const app = admin.apps[0];
-  return app ? admin.auth(app as admin.app.App) : null;
-}
-
-function getAdminEmails(): string[] {
-  const raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
-  return raw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-}
 
 /** PATCH - update campaign text (title, description, fullDescription). Admin only. */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdminConfigured()) {
+  if (!isSupabaseConfigured()) {
     return NextResponse.json(
-      { error: "Server is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON." },
+      { error: "Server is not configured. Set Supabase env vars." },
       { status: 503 }
     );
   }
 
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!token) {
+  const user = await getSupabaseUserFromRequest(request);
+  if (!user?.email) {
     return NextResponse.json({ error: "You must be signed in." }, { status: 401 });
   }
 
-  const auth = getAdminAuth();
-  if (!auth) {
-    return NextResponse.json({ error: "Auth not available." }, { status: 503 });
-  }
-
-  let decoded: admin.auth.DecodedIdToken;
-  try {
-    decoded = await auth.verifyIdToken(token);
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid or expired session. Sign in again." },
-      { status: 401 }
-    );
-  }
-
   const adminEmails = getAdminEmails();
-  const email = (decoded.email ?? "").toLowerCase();
+  const email = (user.email ?? "").toLowerCase();
   if (!adminEmails.includes(email)) {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
@@ -82,7 +57,8 @@ export async function PATCH(
   }
 
   try {
-    await adminUpdateCampaignText(campaignId, updates);
+    const supabase = getSupabaseAdmin()!;
+    await updateCampaignText(supabase, campaignId, updates);
     return NextResponse.json({ ok: true, message: "Campaign text updated." });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update.";

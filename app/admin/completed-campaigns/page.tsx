@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Campaign } from "@/lib/data";
-import { getCampaignsForAdminCached, invalidateCampaignsCache } from "@/lib/firebase/adminCache";
-import { deleteCampaign } from "@/lib/firebase/firestore";
+import { getCampaignsForAdminCached, invalidateCampaignsCache } from "@/lib/supabase/adminCache";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
@@ -54,7 +53,7 @@ export default function AdminCompletedCampaignsPage() {
     if (!ok) return;
     setDeletingId(campaignId);
     try {
-      await deleteCampaign(campaignId);
+      await fetch(`/api/admin/campaigns/${campaignId}/delete`, { method: "DELETE", credentials: "include" });
       invalidateCampaignsCache();
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
     } catch (err) {

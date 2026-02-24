@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCampaignsUnderReviewFromFirestoreCached, invalidateUnderReviewCache, invalidateCampaignsCache } from "@/lib/firebase/adminCache";
-import { approveAndPublishCampaign, updateCampaignUnderReviewStatus, type CampaignUnderReviewDoc } from "@/lib/firebase/firestore";
+import { getCampaignsUnderReviewFromFirestoreCached, invalidateUnderReviewCache, invalidateCampaignsCache } from "@/lib/supabase/adminCache";
+import type { CampaignUnderReviewDoc } from "@/lib/supabase/database";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
@@ -42,7 +42,8 @@ export default function AdminUnderReviewPage() {
     });
     if (!ok) return;
     try {
-      await approveAndPublishCampaign(id);
+      const res = await fetch("/api/admin/approve-campaign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ underReviewId: id }), credentials: "include" });
+      if (!res.ok) throw new Error(await res.text());
       invalidateUnderReviewCache();
       invalidateCampaignsCache();
       setList((prev) => prev.filter((c) => c.id !== id));
@@ -61,7 +62,7 @@ export default function AdminUnderReviewPage() {
     });
     if (!ok) return;
     try {
-      await updateCampaignUnderReviewStatus(id, "rejected");
+      await fetch(`/api/admin/campaigns-under-review/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "rejected" }), credentials: "include" });
       invalidateUnderReviewCache();
       setList((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {

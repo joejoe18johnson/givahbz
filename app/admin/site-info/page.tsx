@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { auth } from "@/lib/firebase/config";
 import { mergeWithDefaults, type SiteContent, type HomeFaqItem } from "@/lib/siteContent";
 import { useThemedModal } from "@/components/ThemedModal";
 import { FileText, Save, Plus, Trash2 } from "lucide-react";
@@ -78,20 +77,12 @@ export default function AdminSiteInfoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser) {
-      alert("Session expired. Please sign in again.", { variant: "error" });
-      return;
-    }
     setSaving(true);
     try {
-      const token = await firebaseUser.getIdToken(true);
       const res = await fetch("/api/admin/site-content", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(form),
       });
       const data = await res.json();

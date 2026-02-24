@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { X, Heart, Building2, CheckCircle2, Copy } from "lucide-react";
 import { formatCurrency, generateShortRef } from "@/lib/utils";
-import { recordDonationAndUpdateCampaign, createDonation } from "@/lib/firebase/firestore";
 import { useThemedModal } from "@/components/ThemedModal";
 
 interface DonationModalProps {
@@ -74,17 +73,18 @@ export default function DonationModal({
         donorName: donorInfo.anonymous ? "Anonymous" : donorInfo.name.trim(),
         anonymous: donorInfo.anonymous,
         method: selectedMethod as "bank" | "digiwallet" | "ekyash",
-        status: "pending" as const,
+        status: (isPendingMethod ? "pending" : "completed") as "pending" | "completed",
         note: note.trim() || undefined,
-        createdAt: new Date().toISOString(),
         ...(paymentReference && { referenceNumber: paymentReference }),
       };
 
-      if (isPendingMethod) {
-        await createDonation(donation);
-      } else {
-        await recordDonationAndUpdateCampaign(donation, campaignId);
-      }
+      const res = await fetch("/api/donations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(donation),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to record donation");
 
       setDonationWasPending(isPendingMethod);
       setIsProcessing(false);

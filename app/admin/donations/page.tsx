@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getDonationsCached, invalidateDonationsCache } from "@/lib/firebase/adminCache";
-import { auth } from "@/lib/firebase/config";
+import { getDonationsCached, invalidateDonationsCache } from "@/lib/supabase/adminCache";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency } from "@/lib/utils";
 import { useThemedModal } from "@/components/ThemedModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 const PAGE_SIZE = 50;
 
 export default function AdminDonationsPage() {
+  const { user } = useAuth();
   const { alert } = useThemedModal();
   const [donations, setDonations] = useState<AdminDonation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,24 +54,15 @@ export default function AdminDonationsPage() {
   async function handleApprove(donationId: string) {
     setApprovingId(donationId);
     try {
-      const user = auth.currentUser;
       if (!user) {
         throw new Error("You must be signed in to approve donations.");
       }
-      let token = await user.getIdToken(true);
-      let res = await fetch("/api/admin/approve-donation", {
+      const res = await fetch("/api/admin/approve-donation", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ donationId }),
       });
-      if (res.status === 401) {
-        token = await user.getIdToken(true);
-        res = await fetch("/api/admin/approve-donation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ donationId }),
-        });
-      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const msg = typeof data.error === "string" ? data.error : "Failed to approve donation.";

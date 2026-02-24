@@ -1,5 +1,4 @@
 import { Campaign } from "@/lib/data";
-import { getCampaigns, getCampaign } from "@/lib/firebase/firestore";
 
 /** Build query string for /api/campaigns */
 function campaignsApiQuery(filters?: {
@@ -20,9 +19,8 @@ function campaignsApiQuery(filters?: {
 const CAMPAIGNS_FETCH_TIMEOUT_MS = 20000;
 
 /**
- * Fetch campaigns from the server API (Firestore on Vercel uses runtime env vars).
- * Use this for the campaigns list and home so data is never static/cached.
- * By default returns only campaigns still needing support; use onlyFullyFunded: true for Success Stories.
+ * Fetch campaigns from the server API (Supabase).
+ * Use this for the campaigns list and home.
  */
 export async function fetchCampaignsFromAPI(filters?: {
   category?: string;
@@ -41,7 +39,7 @@ export async function fetchCampaignsFromAPI(filters?: {
     });
     clearTimeout(timeoutId);
     if (!res.ok) {
-      const err = await res.json().catch(() => ({})) as { error?: string; hint?: string; missing?: string[] };
+      const err = (await res.json().catch(() => ({}))) as { error?: string; hint?: string };
       const msg = err?.error ?? "Failed to load campaigns";
       const hint = err?.hint;
       throw new Error(hint ? `${msg} ${hint}` : msg);
@@ -50,32 +48,29 @@ export async function fetchCampaignsFromAPI(filters?: {
   } catch (err) {
     clearTimeout(timeoutId);
     if (err instanceof Error && err.name === "AbortError") {
-      throw new Error("Campaigns are taking too long to load. Check your connection and that Firebase (givah-mvp) is set up correctly.");
+      throw new Error("Campaigns are taking too long to load. Check your connection and Supabase setup.");
     }
     throw err;
   }
 }
 
-// Always fetch from Firestore - no fallback to mock data
 export async function fetchCampaigns(filters?: {
   category?: string;
   search?: string;
   trending?: boolean;
   limitCount?: number;
 }): Promise<Campaign[]> {
-  try {
-    return await getCampaigns(filters);
-  } catch (error) {
-    console.error("Error fetching campaigns from Firestore:", error);
-    throw error; // Re-throw error instead of falling back to mock data
-  }
+  return fetchCampaignsFromAPI(filters);
 }
 
 export async function fetchCampaign(campaignId: string): Promise<Campaign | null> {
   try {
-    return await getCampaign(campaignId);
+    const res = await fetch(`/api/campaigns/${campaignId}`, { cache: "no-store" });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error("Failed to load campaign");
+    return res.json();
   } catch (error) {
-    console.error("Error fetching campaign from Firestore:", error);
-    throw error; // Re-throw error instead of falling back to mock data
+    console.error("Error fetching campaign:", error);
+    throw error;
   }
 }

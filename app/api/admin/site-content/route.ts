@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-import { adminSetSiteContent, isAdminConfigured, getConfigDiagnostic } from "@/lib/firebase/admin";
+import { getSupabaseUserFromRequest, getAdminEmails } from "@/lib/supabase/auth-server";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
+import { setSiteContent } from "@/lib/supabase/database";
 import { type SiteContent } from "@/lib/siteContent";
 
 export const dynamic = "force-dynamic";
@@ -17,52 +18,28 @@ const SITE_CONTENT_KEYS: (keyof SiteContent)[] = [
   "aboutTitle",
   "aboutSubtitle",
   "aboutMission",
-  "homeFaqs", // stored as JSON string; handled separately below
+  "homeFaqs",
 ];
-
-function getAdminAuth(): admin.auth.Auth | null {
-  const app = admin.apps[0];
-  return app ? admin.auth(app as admin.app.App) : null;
-}
-
-function getAdminEmails(): string[] {
-  const raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
-  return raw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-}
 
 /** POST - update site content (admin only) */
 export async function POST(request: NextRequest) {
-  if (!isAdminConfigured()) {
-    const hint = getConfigDiagnostic();
-    const message = hint
-      ? `Server is not configured for admin operations. ${hint}`
-      : "Set FIREBASE_SERVICE_ACCOUNT_JSON (full JSON) or FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json in .env. Get the key from Firebase Console → Project settings → Service accounts → Generate new private key.";
+  if (!isSupabaseConfigured()) {
     return NextResponse.json(
-      { error: message, hint: hint ?? undefined },
+      {
+        error: "Server is not configured for admin operations.",
+        hint: "Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.",
+      },
       { status: 503 }
     );
   }
 
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!token) {
+  const user = await getSupabaseUserFromRequest(request);
+  if (!user?.email) {
     return NextResponse.json({ error: "You must be signed in." }, { status: 401 });
   }
 
-  const auth = getAdminAuth();
-  if (!auth) {
-    return NextResponse.json({ error: "Auth not available." }, { status: 503 });
-  }
-
-  let decoded: admin.auth.DecodedIdToken;
-  try {
-    decoded = await auth.verifyIdToken(token);
-  } catch {
-    return NextResponse.json({ error: "Invalid or expired session. Sign in again." }, { status: 401 });
-  }
-
   const adminEmails = getAdminEmails();
-  const email = (decoded.email || "").toLowerCase();
+  const email = (user.email || "").toLowerCase();
   if (!adminEmails.includes(email)) {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
@@ -81,7 +58,6 @@ export async function POST(request: NextRequest) {
       const v = b[key];
       if (typeof v === "string") data[key] = v;
     }
-    // homeFaqs is stored as JSON string
     const homeFaqs = b.homeFaqs;
     if (Array.isArray(homeFaqs)) {
       data.homeFaqs = JSON.stringify(
@@ -93,7 +69,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await adminSetSiteContent(data);
+    const supabase = getSupabaseAdmin()!;
+    await setSiteContent(supabase, data);
     return NextResponse.json({ ok: true, message: "Site content saved." });
   } catch (err) {
     console.error("Error saving site content:", err);

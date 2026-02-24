@@ -6,13 +6,18 @@ import { Search, Heart, LogOut, Menu, X, Bell } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
-import { getHeartedCampaignIds } from "./HeartedCampaigns";
-import {
-  getUserNotifications,
-  getUnreadNotificationCount,
-  markNotificationRead,
-  type UserNotification,
-} from "@/lib/firebase/firestore";
+import { useHearted } from "./HeartedCampaigns";
+
+interface UserNotification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  campaignId?: string;
+  read: boolean;
+  createdAt: string;
+}
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,12 +36,10 @@ export default function Header() {
   const loadNotifications = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const [list, count] = await Promise.all([
-        getUserNotifications(user.id),
-        getUnreadNotificationCount(user.id),
-      ]);
-      setNotifications(list.slice(0, 10));
-      setUnreadCount(count);
+      const res = await fetch("/api/notifications", { cache: "no-store" });
+      const data = res.ok ? await res.json() : { notifications: [], unreadCount: 0 };
+      setNotifications(data.notifications ?? []);
+      setUnreadCount(data.unreadCount ?? 0);
     } catch {
       setNotifications([]);
       setUnreadCount(0);
@@ -62,7 +65,7 @@ export default function Header() {
   const handleNotificationClick = async (n: UserNotification) => {
     if (!n.read) {
       try {
-        await markNotificationRead(n.id);
+        await fetch(`/api/notifications/${n.id}/read`, { method: "PATCH" });
         setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
         setUnreadCount((c) => Math.max(0, c - 1));
       } catch {
@@ -75,26 +78,10 @@ export default function Header() {
     else router.push("/my-campaigns");
   };
   
-  // Update heart count
-  const updateHeartCount = () => {
-    if (typeof window !== "undefined") {
-      setHeartedCount(getHeartedCampaignIds().length);
-    }
-  };
-
-  // Initialize and listen for storage changes
+  const { heartedIds } = useHearted();
   useEffect(() => {
-    updateHeartCount();
-    if (typeof window !== "undefined") {
-      window.addEventListener("storage", updateHeartCount);
-      // Custom event for same-tab updates
-      window.addEventListener("heartedCampaignsChanged", updateHeartCount);
-      return () => {
-        window.removeEventListener("storage", updateHeartCount);
-        window.removeEventListener("heartedCampaignsChanged", updateHeartCount);
-      };
-    }
-  }, []);
+    setHeartedCount(heartedIds.length);
+  }, [heartedIds.length]);
 
 
   const handleLogout = () => {

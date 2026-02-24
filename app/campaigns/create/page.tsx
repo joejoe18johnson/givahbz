@@ -8,9 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const REQUIRE_VERIFICATION_TO_CREATE = false;
 import { useRouter } from "next/navigation";
 import { addCampaignUnderReview } from "@/lib/campaignsUnderReview";
-import { addCampaignUnderReviewToFirestore } from "@/lib/firebase/firestore";
 import { compressImageForUpload } from "@/lib/compressImage";
-import { auth } from "@/lib/firebase/config";
 import { useThemedModal } from "@/components/ThemedModal";
 import Link from "next/link";
 
@@ -217,11 +215,9 @@ export default function CreateCampaignPage() {
     const UPLOAD_TIMEOUT_MS = 90000; // 90 seconds total for uploads + save
 
     const runSubmit = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
+      if (!user) {
         throw new Error("You must be signed in to submit. Please sign in and try again.");
       }
-      const token = await currentUser.getIdToken();
 
       // Compress images to speed up upload and avoid timeouts
       const [file1, file2] = await Promise.all([
@@ -241,7 +237,7 @@ export default function CreateCampaignPage() {
         try {
           const res = await fetch(apiUrl, {
             method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
             body: form,
             signal: controller.signal,
           });
@@ -274,18 +270,25 @@ export default function CreateCampaignPage() {
         }),
       ]);
 
-      // Only under-review: never written to public "campaigns". Appears in "all campaigns" only after admin approval.
-      await addCampaignUnderReviewToFirestore({
-        title: formData.title,
-        description: formData.description,
-        fullDescription: formData.fullDescription || "",
-        goal: goalNum,
-        category: formData.category,
-        creatorName,
-        creatorId,
-        image: imageUrl1,
-        image2: imageUrl2,
+      const res = await fetch("/api/campaigns-under-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          fullDescription: formData.fullDescription || "",
+          goal: goalNum,
+          category: formData.category,
+          creatorName,
+          image: imageUrl1,
+          image2: imageUrl2,
+        }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Failed to submit campaign");
+      }
       router.push("/my-campaigns");
     };
 

@@ -13,7 +13,7 @@ import ProofDocuments from "@/components/ProofDocuments";
 import ShareCampaign from "@/components/ShareCampaign";
 import DonorsList from "@/components/DonorsList";
 import { formatCurrency } from "@/lib/utils";
-import { toggleHeartCampaign, isCampaignHearted } from "@/components/HeartedCampaigns";
+import { useHearted } from "@/components/HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { useToast } from "@/components/Toast";
@@ -27,12 +27,13 @@ interface PageProps {
 export default function CampaignPage({ params }: PageProps) {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isHearted, setIsHearted] = useState(false);
   const [coverIndex, setCoverIndex] = useState(0);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
   const coverCarouselRef = useRef<HTMLDivElement>(null);
   const scrollRAF = useRef<number | null>(null);
   const { user } = useAuth();
+  const { isCampaignHearted, toggleHeart } = useHearted();
+  const isHearted = campaign ? isCampaignHearted(campaign.id) : false;
   const { alert } = useThemedModal();
   const toast = useToast();
 
@@ -51,12 +52,6 @@ export default function CampaignPage({ params }: PageProps) {
     }
     loadCampaign();
   }, [params.id]);
-
-  useEffect(() => {
-    if (campaign && user) {
-      setIsHearted(isCampaignHearted(campaign.id));
-    }
-  }, [campaign, user]);
 
   useEffect(() => {
     return () => {
@@ -94,8 +89,7 @@ export default function CampaignPage({ params }: PageProps) {
       return;
     }
     if (campaign) {
-      const newState = await toggleHeartCampaign(campaign.id);
-      setIsHearted(newState);
+      const newState = await toggleHeart(campaign.id);
       if (newState) toast.show("Campaign Saved to Favorites");
     }
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { getDonationsCached } from "@/lib/firebase/adminCache";
+import { getDonationsCached } from "@/lib/supabase/adminCache";
 import { type AdminDonation } from "@/lib/adminData";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";

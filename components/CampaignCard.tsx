@@ -6,7 +6,7 @@ import SafeImage from "./SafeImage";
 import ShareCampaign from "./ShareCampaign";
 import { Calendar, Users, CheckCircle2, Heart, Trophy, ShieldCheck } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { toggleHeartCampaign, isCampaignHearted } from "./HeartedCampaigns";
+import { useHearted } from "./HeartedCampaigns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "./ThemedModal";
 import { useToast } from "./Toast";
@@ -33,8 +33,9 @@ interface CampaignCardProps {
 }
 
 export default function CampaignCard({ campaign }: CampaignCardProps) {
-  const [isHearted, setIsHearted] = useState(false);
   const { user } = useAuth();
+  const { isCampaignHearted, toggleHeart } = useHearted();
+  const isHearted = isCampaignHearted(campaign.id);
   const { alert } = useThemedModal();
   const toast = useToast();
   const goal = Number(campaign.goal) || 1;
@@ -42,12 +43,6 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
   const goalReached = goal > 0 && raised >= goal;
   const progress = (raised / goal) * 100;
   const progressPercentage = Math.min(progress, 100);
-
-  useEffect(() => {
-    if (user) {
-      setIsHearted(isCampaignHearted(campaign.id));
-    }
-  }, [campaign.id, user]);
 
   const handleToggleHeart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -59,8 +54,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
       });
       return;
     }
-    const newState = await toggleHeartCampaign(campaign.id);
-    setIsHearted(newState);
+    const newState = await toggleHeart(campaign.id);
     if (newState) toast.show("Campaign Saved to Favorites");
   };
 

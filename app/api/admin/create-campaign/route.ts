@@ -1,85 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-import { adminCreateCampaign, isAdminConfigured, getConfigDiagnostic, type AdminCreateCampaignPayload } from "@/lib/firebase/admin";
+import { getSupabaseUserFromRequest, getAdminEmails } from "@/lib/supabase/auth-server";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
+import { adminCreateCampaign, type AdminCreateCampaignPayload } from "@/lib/supabase/database";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function getAdminAuth(): admin.auth.Auth | null {
-  const app = admin.apps[0];
-  return app ? admin.auth(app as admin.app.App) : null;
-}
-
-function getAdminEmails(): string[] {
-  let raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
-  if (!raw.trim()) {
-    try {
-      const path = require("path");
-      const dotenv = require("dotenv");
-      const cwd = process.cwd();
-      dotenv.config({ path: path.join(cwd, ".env.local") });
-      dotenv.config({ path: path.join(cwd, ".env") });
-      raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
-    } catch {
-      // ignore
-    }
-  }
-  return raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export async function POST(request: NextRequest) {
-  if (!isAdminConfigured()) {
-    const hint = getConfigDiagnostic();
+  if (!isSupabaseConfigured()) {
     return NextResponse.json(
       {
         error: "Server is not configured for admin operations.",
-        hint: hint ?? "Configure Firebase service account.",
+        hint: "Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.",
       },
       { status: 503 }
     );
   }
 
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!token) {
+  const user = await getSupabaseUserFromRequest(request);
+  if (!user?.email) {
     return NextResponse.json(
       { error: "You must be signed in to create a campaign." },
       { status: 401 }
     );
   }
 
-  const auth = getAdminAuth();
-  if (!auth) {
-    return NextResponse.json(
-      { error: "Server is not configured for admin operations." },
-      { status: 503 }
-    );
-  }
-
-  let decoded: admin.auth.DecodedIdToken;
-  try {
-    decoded = await auth.verifyIdToken(token);
-  } catch {
-    return NextResponse.json(
-      { error: "Your session may have expired. Sign out and sign in again." },
-      { status: 401 }
-    );
-  }
-
   const adminEmails = getAdminEmails();
-  const email = (decoded.email ?? "").toLowerCase();
+  const email = (user.email ?? "").toLowerCase();
   if (adminEmails.length > 0 && !adminEmails.includes(email)) {
     return NextResponse.json(
       { error: "Your account is not listed as an admin." },
       { status: 403 }
     );
   }
-  if (adminEmails.length === 0 && email !== "admin@givahbz.com") {
+  if (adminEmails.length === 0) {
     return NextResponse.json(
-      { error: "No admin emails configured. Set ADMIN_EMAILS or sign in as the default admin." },
+      { error: "No admin emails configured. Set ADMIN_EMAILS in .env." },
       { status: 503 }
     );
   }
@@ -88,10 +44,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
   const b = body as Record<string, unknown>;
@@ -105,8 +58,8 @@ export async function POST(request: NextRequest) {
   const location = typeof b.location === "string" ? b.location.trim() : undefined;
   const daysLeft = typeof b.daysLeft === "number" ? b.daysLeft : b.daysLeft != null ? Number(b.daysLeft) : undefined;
   const creatorType = b.creatorType === "individual" || b.creatorType === "organization" || b.creatorType === "charity" ? b.creatorType : undefined;
-  const creatorName = typeof b.creatorName === "string" ? b.creatorName.trim() : (decoded.name as string) ?? "Admin";
-  const creatorId = typeof b.creatorId === "string" ? b.creatorId : decoded.uid ?? null;
+  const creatorName = typeof b.creatorName === "string" ? b.creatorName.trim() : (user.user_metadata?.name as string) ?? "Admin";
+  const creatorId = typeof b.creatorId === "string" ? b.creatorId : user.id ?? null;
 
   if (!title || !description) {
     return NextResponse.json(
@@ -143,7 +96,8 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    const campaignId = await adminCreateCampaign(payload);
+    const supabase = getSupabaseAdmin()!;
+    const campaignId = await adminCreateCampaign(supabase, payload);
     return NextResponse.json({ success: true, campaignId });
   } catch (err) {
     console.error("Admin create campaign error:", err);

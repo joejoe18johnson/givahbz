@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getUsersFromFirestoreCached, invalidateUsersCache } from "@/lib/firebase/adminCache";
-import { setUserPhoneVerified, setIdVerified, setAddressVerified, setUserStatus, deleteUserFromFirestore, type AdminUserDoc, type UserStatus } from "@/lib/firebase/firestore";
+import { getUsersFromFirestoreCached, invalidateUsersCache } from "@/lib/supabase/adminCache";
+import type { AdminUserDoc, UserStatus } from "@/lib/supabase/database";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemedModal } from "@/components/ThemedModal";
 import { CheckCircle2, XCircle, Phone, PauseCircle, PlayCircle, Trash2, Shield, AlertTriangle, UserX, UserCheck, FileText, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
@@ -49,7 +49,7 @@ export default function AdminUsersPage() {
   const handleApprovePhone = async (userId: string) => {
     setUpdatingId(userId);
     try {
-      await setUserPhoneVerified(userId, true);
+      await fetch(`/api/admin/users/${userId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phoneVerified: true }), credentials: "include" });
       invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, phoneVerified: true } : u)));
     } catch (error) {
@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
   const handleApproveId = async (userId: string) => {
     setUpdatingId(userId);
     try {
-      await setIdVerified(userId, true);
+      await fetch(`/api/admin/users/${userId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idVerified: true }), credentials: "include" });
       invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, idVerified: true, idPending: false } : u)));
     } catch (error) {
@@ -77,7 +77,7 @@ export default function AdminUsersPage() {
   const handleApproveAddress = async (userId: string) => {
     setUpdatingId(userId);
     try {
-      await setAddressVerified(userId, true);
+      await fetch(`/api/admin/users/${userId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addressVerified: true }), credentials: "include" });
       invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, addressVerified: true, addressPending: false } : u)));
     } catch (error) {
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
     }
     setUpdatingId(userId);
     try {
-      await setUserStatus(userId, status);
+      await fetch(`/api/admin/users/${userId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }), credentials: "include" });
       invalidateUsersCache();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status } : u)));
     } catch (error) {
@@ -158,7 +158,7 @@ export default function AdminUsersPage() {
     if (ok) {
       setUpdatingId(userId);
       try {
-        await deleteUserFromFirestore(userId);
+        await fetch(`/api/admin/users/${userId}`, { method: "DELETE", credentials: "include" });
         invalidateUsersCache();
         setUsers((prev) => prev.filter((u) => u.id !== userId));
         alert(`User "${name}" has been permanently deleted from the system.`, { variant: "success" });
