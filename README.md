@@ -164,3 +164,4 @@ Run the SQL migration in `supabase/migrations/20260223000000_initial.sql` in the
 MIT
 # givahsb
 # givahsb
+# GivahSB
