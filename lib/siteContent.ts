@@ -36,7 +36,7 @@ const DEFAULT_HOME_FAQS: HomeFaqItem[] = [
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   siteName: "GivahBz",
-  heroTitle: "our own Supporting Belizean Communities",
+  heroTitle: "Belizeans Supporting Belizeans",
   heroSubtitle: "Life is either a daring adventure or nothing. Help real people and causes across Belize—verified, transparent, and community-driven.",
   communityHeadingPart1: "Communities Share ",
   communityHeadingPart2: "Burdens",
