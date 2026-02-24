@@ -237,19 +237,17 @@ export default function ProfilePage() {
     documentType: string,
     onProgress?: (p: number) => void
   ): Promise<string> {
-    const currentUser = auth.currentUser;
-    if (!currentUser) throw new Error("You must be signed in to upload.");
+    if (!user) throw new Error("You must be signed in to upload.");
     onProgress?.(10);
     const fileToSend = await compressImageForUpload(file);
     onProgress?.(30);
-    const token = await currentUser.getIdToken();
     const formData = new FormData();
     formData.append("file", fileToSend);
     formData.append("documentType", documentType);
     onProgress?.(50);
     const res = await fetch("/api/upload-verification", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
       body: formData,
     });
     const data = await res.json().catch(() => ({}));

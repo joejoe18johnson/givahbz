@@ -4,7 +4,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserNotifications, markNotificationRead, type UserNotification } from "@/lib/firebase/firestore";
+interface UserNotification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  campaignId?: string;
+  read: boolean;
+  createdAt: string;
+}
 import { Bell, CheckCircle2 } from "lucide-react";
 
 export default function NotificationsPage() {
@@ -20,16 +29,19 @@ export default function NotificationsPage() {
     }
     if (!user?.id) return;
     let cancelled = false;
-    getUserNotifications(user.id).then((list) => {
-      if (!cancelled) setNotifications(list);
-    }).finally(() => { if (!cancelled) setLoading(false); });
+    fetch("/api/notifications", { credentials: "include" })
+      .then((res) => res.ok ? res.json() : { notifications: [] })
+      .then((data) => {
+        if (!cancelled) setNotifications(data.notifications ?? []);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [user, isLoading, router]);
 
   const handleClick = async (n: UserNotification) => {
     if (!n.read) {
       try {
-        await markNotificationRead(n.id);
+        await fetch(`/api/notifications/${n.id}/read`, { method: "PATCH", credentials: "include" });
         setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
       } catch {
         // ignore
