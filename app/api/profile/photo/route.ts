@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseUserFromRequest } from "@/lib/supabase/auth-server";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
-import { uploadProfilePhotoSupabase } from "@/lib/supabase/storage";
-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -22,8 +20,14 @@ export async function POST(request: NextRequest) {
   }
   try {
     const supabase = getSupabaseAdmin()!;
-    const url = await uploadProfilePhotoSupabase(supabase, user.id, file);
-    return NextResponse.json({ url });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const path = `${user.id}/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage
+      .from("profile-photos")
+      .upload(path, buffer, { contentType: file.type || "image/jpeg", upsert: true });
+    if (error) throw error;
+    const { data } = supabase.storage.from("profile-photos").getPublicUrl(path);
+    return NextResponse.json({ url: data.publicUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed.";
     return NextResponse.json({ error: message }, { status: 500 });
